@@ -1,0 +1,1240 @@
+import { gql } from '@apollo/client';
+
+export const GET_SCHOOL_BY_CODE = gql`
+  query GetSchoolByCode($code: String!) {
+    getSchoolByCode(code: $code) {
+      id
+      name
+      schoolName
+      slug
+      schoolCode
+      logo
+      schoolLogo
+      themeColor
+      subscriptionPlan
+      subscriptionStatus
+      status
+    }
+  }
+`;
+
+export const LOGIN_WITH_PASSWORD = gql`
+  mutation LoginWithPassword($email: String!, $password: String!, $schoolId: ID) {
+    loginWithPassword(email: $email, password: $password, schoolId: $schoolId) {
+      token
+      refreshToken
+      user {
+        id
+        name
+        firstName
+        lastName
+        email
+        role
+        schoolId
+        phone
+        mobile
+        avatar
+      }
+    }
+  }
+`;
+
+export const SEND_OTP = gql`
+  mutation SendOTP($mobile: String!, $schoolId: ID!) {
+    sendOTP(mobile: $mobile, schoolId: $schoolId)
+  }
+`;
+
+export const VERIFY_OTP = gql`
+  mutation VerifyOTP($mobile: String!, $otp: String!, $schoolId: ID!) {
+    verifyOTP(mobile: $mobile, otp: $otp, schoolId: $schoolId) {
+      token
+      refreshToken
+      user {
+        id
+        name
+        firstName
+        lastName
+        email
+        role
+        schoolId
+        phone
+        mobile
+        avatar
+      }
+    }
+  }
+`;
+
+export const LOGIN_MUTATION = gql`
+  mutation Login($email: String!, $password: String!) {
+    login(email: $email, password: $password) {
+      token
+      refreshToken
+      user {
+        id
+        name
+        email
+        role
+        schoolId
+        phone
+        avatar
+      }
+    }
+  }
+`;
+
+export const GET_ME_QUERY = gql`
+  query GetMe {
+    getMe {
+      id
+      name
+      email
+      role
+      schoolId
+      phone
+      avatar
+    }
+  }
+`;
+
+export const GET_SUPER_ADMIN_DASHBOARD = gql`
+  query GetSuperAdminDashboard {
+    getSuperAdminDashboard {
+      totalSchools
+      totalStudents
+      totalTeachers
+      activeSchools
+      expiredSubscriptions
+      monthlyRevenue
+      annualRevenue
+      monthlyRevenueSeries {
+        month
+        revenue
+      }
+    }
+  }
+`;
+
+export const GET_SCHOOL_ADMIN_DASHBOARD = gql`
+  query GetSchoolAdminDashboard {
+    getSchoolAdminDashboard {
+      studentCount
+      teacherCount
+      staffCount
+      attendanceSummary {
+        presentPercent
+        absentPercent
+        latePercent
+      }
+      teacherAttendanceSummary {
+        presentPercent
+        absentPercent
+        latePercent
+      }
+      staffAttendanceSummary {
+        presentPercent
+        absentPercent
+        latePercent
+      }
+      feeCollectionSummary {
+        totalExpected
+        totalCollected
+        totalOutstanding
+      }
+      classEnrollmentSummary {
+        className
+        studentCount
+      }
+      gradeDistribution {
+        grade
+        count
+      }
+      upcomingExamsCount
+    }
+  }
+`;
+
+export const GET_CLASSES = gql`
+  query GetClasses {
+    getClasses {
+      id
+      name
+      code
+      description
+    }
+  }
+`;
+
+export const GET_SECTIONS = gql`
+  query GetSections($classId: ID) {
+    getSections(classId: $classId) {
+      id
+      name
+      roomNumber
+      capacity
+      classId {
+        id
+        name
+      }
+      classTeacherId {
+        id
+        firstName
+        lastName
+      }
+    }
+  }
+`;
+
+export const GET_SUBJECTS = gql`
+  query GetSubjects($classId: ID) {
+    getSubjects(classId: $classId) {
+      id
+      name
+      code
+      type
+      classId {
+        id
+        name
+      }
+    }
+  }
+`;
+
+export const GET_STUDENTS = gql`
+  query GetStudents($classId: ID, $sectionId: ID, $search: String) {
+    getStudents(classId: $classId, sectionId: $sectionId, search: $search) {
+      id
+      userId {
+        id
+        email
+        avatar
+      }
+      admissionNo
+      rollNo
+      firstName
+      lastName
+      gender
+      dateOfBirth
+      classId {
+        id
+        name
+      }
+      sectionId {
+        id
+        name
+      }
+      parentId {
+        id
+        firstName
+        lastName
+      }
+    }
+  }
+`;
+
+export const REGISTER_STUDENT = gql`
+  mutation RegisterStudent(
+    $email: String!
+    $admissionNo: String!
+    $rollNo: String
+    $firstName: String!
+    $lastName: String!
+    $gender: String!
+    $dateOfBirth: Date!
+    $classId: ID!
+    $sectionId: ID!
+    $parentId: ID
+    $address: AddressInput
+    $medicalInfo: MedicalInfoInput
+    $avatar: String
+  ) {
+    registerStudent(
+      email: $email
+      admissionNo: $admissionNo
+      rollNo: $rollNo
+      firstName: $firstName
+      lastName: $lastName
+      gender: $gender
+      dateOfBirth: $dateOfBirth
+      classId: $classId
+      sectionId: $sectionId
+      parentId: $parentId
+      address: $address
+      medicalInfo: $medicalInfo
+      avatar: $avatar
+    ) {
+      id
+      admissionNo
+      firstName
+      lastName
+    }
+  }
+`;
+
+export const UPDATE_STUDENT = gql`
+  mutation UpdateStudent(
+    $id: ID!
+    $email: String
+    $admissionNo: String
+    $rollNo: String
+    $firstName: String
+    $lastName: String
+    $gender: String
+    $dateOfBirth: Date
+    $classId: ID
+    $sectionId: ID
+    $parentId: ID
+  ) {
+    updateStudent(
+      id: $id
+      email: $email
+      admissionNo: $admissionNo
+      rollNo: $rollNo
+      firstName: $firstName
+      lastName: $lastName
+      gender: $gender
+      dateOfBirth: $dateOfBirth
+      classId: $classId
+      sectionId: $sectionId
+      parentId: $parentId
+    ) {
+      id
+      admissionNo
+      rollNo
+      firstName
+      lastName
+      gender
+      dateOfBirth
+      userId {
+        id
+        email
+      }
+      classId {
+        id
+        name
+      }
+      sectionId {
+        id
+        name
+      }
+      parentId {
+        id
+        firstName
+        lastName
+      }
+    }
+  }
+`;
+
+export const DELETE_STUDENT = gql`
+  mutation DeleteStudent($id: ID!) {
+    deleteStudent(id: $id)
+  }
+`;
+
+export const GET_TEACHERS = gql`
+  query GetTeachers {
+    getTeachers {
+      id
+      firstName
+      lastName
+      phone
+      email
+      qualification
+      designation
+      userId {
+        id
+        email
+        avatar
+      }
+    }
+  }
+`;
+
+export const GET_STAFF = gql`
+  query GetStaff {
+    getStaff {
+      id
+      firstName
+      lastName
+      gender
+      phone
+      email
+      department
+      designation
+    }
+  }
+`;
+
+export const REGISTER_TEACHER = gql`
+  mutation RegisterTeacher(
+    $email: String!
+    $firstName: String!
+    $lastName: String!
+    $gender: String!
+    $dateOfBirth: Date!
+    $phone: String!
+    $qualification: String!
+    $designation: String
+    $password: String!
+    $avatar: String
+  ) {
+    registerTeacher(
+      email: $email
+      firstName: $firstName
+      lastName: $lastName
+      gender: $gender
+      dateOfBirth: $dateOfBirth
+      phone: $phone
+      qualification: $qualification
+      designation: $designation
+      password: $password
+      avatar: $avatar
+    ) {
+      id
+      firstName
+      lastName
+      email
+    }
+  }
+`;
+
+export const REGISTER_PARENT = gql`
+  mutation RegisterParent(
+    $email: String!
+    $firstName: String!
+    $lastName: String!
+    $relation: String!
+    $phone: String!
+    $password: String!
+    $address: AddressInput
+    $childrenIds: [ID!]
+  ) {
+    registerParent(
+      email: $email
+      firstName: $firstName
+      lastName: $lastName
+      relation: $relation
+      phone: $phone
+      password: $password
+      address: $address
+      childrenIds: $childrenIds
+    ) {
+      id
+      firstName
+      lastName
+      relation
+      phone
+      email
+    }
+  }
+`;
+
+export const GET_PARENTS = gql`
+  query GetParents {
+    getParents {
+      id
+      firstName
+      lastName
+      relation
+      phone
+      email
+      userId {
+        id
+        email
+      }
+    }
+  }
+`;
+
+export const GET_FEES_LIST = gql`
+  query GetFeesList($classId: ID) {
+    getFeesList(classId: $classId) {
+      id
+      title
+      category
+      amount
+      dueDate
+      academicYear
+      classId {
+        id
+        name
+      }
+    }
+  }
+`;
+
+export const CREATE_FEE_STRUCTURE = gql`
+  mutation CreateFeeStructure(
+    $title: String!
+    $category: String!
+    $amount: Float!
+    $classId: ID!
+    $dueDate: Date!
+    $academicYear: String!
+    $description: String
+  ) {
+    createFeeStructure(
+      title: $title
+      category: $category
+      amount: $amount
+      classId: $classId
+      dueDate: $dueDate
+      academicYear: $academicYear
+      description: $description
+    ) {
+      id
+      title
+      amount
+      dueDate
+    }
+  }
+`;
+
+export const COLLECT_STUDENT_FEE = gql`
+  mutation CollectStudentFee(
+    $studentId: ID!
+    $feeId: ID!
+    $amountPaid: Float!
+    $paymentMethod: String!
+    $referenceNo: String
+    $remarks: String
+  ) {
+    collectStudentFee(
+      studentId: $studentId
+      feeId: $feeId
+      amountPaid: $amountPaid
+      paymentMethod: $paymentMethod
+      referenceNo: $referenceNo
+      remarks: $remarks
+    ) {
+      id
+      amountPaid
+      paymentDate
+      receiptNo
+    }
+  }
+`;
+
+export const GET_AUDIT_LOGS = gql`
+  query GetAuditLogs {
+    getGlobalAuditLogs {
+      id
+      action
+      details
+      ipAddress
+      createdAt
+      userId {
+        id
+        name
+        role
+      }
+    }
+  }
+`;
+
+export const GET_SCHOOLS = gql`
+  query GetSchools {
+    getSchools {
+      id
+      name
+      slug
+      status
+      subscription {
+        plan
+        status
+        endDate
+      }
+      contact {
+        email
+        phone
+      }
+      createdAt
+    }
+  }
+`;
+
+export const CREATE_SCHOOL = gql`
+  mutation CreateSchool(
+    $name: String!
+    $slug: String!
+    $schoolCode: String!
+    $contactEmail: String!
+    $contactPhone: String!
+    $plan: String!
+    $adminName: String!
+    $adminEmail: String!
+    $adminPassword: String!
+    $address: AddressInput
+  ) {
+    createSchool(
+      name: $name
+      slug: $slug
+      schoolCode: $schoolCode
+      contactEmail: $contactEmail
+      contactPhone: $contactPhone
+      plan: $plan
+      adminName: $adminName
+      adminEmail: $adminEmail
+      adminPassword: $adminPassword
+      address: $address
+    ) {
+      id
+      name
+      slug
+      status
+    }
+  }
+`;
+export const UPDATE_SCHOOL = gql`
+  mutation UpdateSchool($id: ID!, $name: String, $plan: String, $status: String, $address: AddressInput) {
+    updateSchool(id: $id, name: $name, plan: $plan, status: $status, address: $address) {
+      id
+      name
+      status
+      subscription {
+        plan
+        status
+        endDate
+      }
+      contact {
+        email
+        phone
+      }
+    }
+  }
+`;
+
+export const CREATE_CLASS = gql`
+  mutation CreateClass($name: String!, $code: String!, $description: String) {
+    createClass(name: $name, code: $code, description: $description) {
+      id
+      name
+      code
+    }
+  }
+`;
+
+export const CREATE_SECTION = gql`
+  mutation CreateSection($classId: ID!, $name: String!, $roomNumber: String, $capacity: Int, $classTeacherId: ID) {
+    createSection(classId: $classId, name: $name, roomNumber: $roomNumber, capacity: $capacity, classTeacherId: $classTeacherId) {
+      id
+      name
+    }
+  }
+`;
+
+export const CREATE_SUBJECT = gql`
+  mutation CreateSubject($classId: ID!, $name: String!, $code: String!, $type: String!) {
+    createSubject(classId: $classId, name: $name, code: $code, type: $type) {
+      id
+      name
+      code
+    }
+  }
+`;
+
+export const GET_STUDENT_ATTENDANCE = gql`
+  query GetStudentAttendance($classId: ID!, $sectionId: ID!, $date: Date!) {
+    getStudentAttendance(classId: $classId, sectionId: $sectionId, date: $date) {
+      id
+      status
+      remarks
+      studentId {
+        id
+        firstName
+        lastName
+        rollNo
+      }
+    }
+  }
+`;
+
+export const MARK_BULK_ATTENDANCE = gql`
+  mutation MarkBulkAttendance($classId: ID!, $sectionId: ID!, $date: Date!, $records: [BulkAttendanceInput!]!) {
+    markBulkAttendance(classId: $classId, sectionId: $sectionId, date: $date, records: $records)
+  }
+`;
+
+export const GET_HOMEWORK = gql`
+  query GetHomework($classId: ID!, $sectionId: ID!) {
+    getHomework(classId: $classId, sectionId: $sectionId) {
+      id
+      title
+      description
+      dueDate
+      subjectId {
+        name
+      }
+      teacherId {
+        firstName
+        lastName
+      }
+    }
+  }
+`;
+
+export const CREATE_HOMEWORK = gql`
+  mutation CreateHomework(
+    $title: String!
+    $description: String!
+    $classId: ID!
+    $sectionId: ID!
+    $subjectId: ID!
+    $teacherId: ID
+    $dueDate: Date!
+  ) {
+    createHomework(
+      title: $title
+      description: $description
+      classId: $classId
+      sectionId: $sectionId
+      subjectId: $subjectId
+      teacherId: $teacherId
+      dueDate: $dueDate
+    ) {
+      id
+      title
+    }
+  }
+`;
+
+export const FORGOT_PASSWORD = gql`
+  mutation ForgotPassword($email: String!) {
+    forgotPassword(email: $email)
+  }
+`;
+
+export const GET_PARENT_PROFILE = gql`
+  query GetParentProfile {
+    getParentProfile {
+      id
+      firstName
+      lastName
+      relation
+      phone
+      email
+      children {
+        id
+        firstName
+        lastName
+        admissionNo
+        rollNo
+        classId {
+          id
+          name
+        }
+        sectionId {
+          id
+          name
+        }
+      }
+    }
+  }
+`;
+
+export const GET_STUDENT_ATTENDANCE_SUMMARY = gql`
+  query GetStudentAttendanceSummary($studentId: ID!) {
+    getStudentAttendanceSummary(studentId: $studentId) {
+      presentPercent
+      absentPercent
+      latePercent
+    }
+  }
+`;
+
+export const GET_STUDENT_MARKS = gql`
+  query GetStudentMarks($studentId: ID!, $examId: ID) {
+    getStudentMarks(studentId: $studentId, examId: $examId) {
+      id
+      marksObtained
+      grade
+      remarks
+      examId {
+        id
+        name
+        academicYear
+      }
+      subjectId {
+        id
+        name
+        code
+      }
+    }
+  }
+`;
+
+export const GET_STUDENT_FEE_STATUS = gql`
+  query GetStudentFeeStatus($studentId: ID!) {
+    getStudentFeeStatus(studentId: $studentId) {
+      id
+      amountPaid
+      paymentDate
+      paymentMethod
+      status
+      referenceNo
+      receiptNo
+      remarks
+      feeId {
+        id
+        title
+        category
+        amount
+        dueDate
+        academicYear
+      }
+    }
+  }
+`;
+
+export const GET_TRANSPORT_ROUTES = gql`
+  query GetTransportRoutes {
+    getTransportRoutes {
+      id
+      routeName
+      startLocation
+      endLocation
+      routeFee
+      status
+      stops {
+        stopName
+        arrivalTime
+      }
+    }
+  }
+`;
+
+export const GET_VEHICLES = gql`
+  query GetVehicles {
+    getVehicles {
+      id
+      vehicleNo
+      model
+      capacity
+      driverName
+      driverPhone
+      routeId {
+        id
+        routeName
+      }
+      status
+    }
+  }
+`;
+
+// --- CRUD OPERATIONS MUTATIONS ---
+
+export const UPDATE_CLASS = gql`
+  mutation UpdateClass($id: ID!, $name: String, $code: String, $description: String) {
+    updateClass(id: $id, name: $name, code: $code, description: $description) {
+      id
+      name
+      code
+      description
+    }
+  }
+`;
+
+export const DELETE_CLASS = gql`
+  mutation DeleteClass($id: ID!) {
+    deleteClass(id: $id)
+  }
+`;
+
+export const UPDATE_SECTION = gql`
+  mutation UpdateSection($id: ID!, $classId: ID, $name: String, $roomNumber: String, $capacity: Int, $classTeacherId: ID) {
+    updateSection(id: $id, classId: $classId, name: $name, roomNumber: $roomNumber, capacity: $capacity, classTeacherId: $classTeacherId) {
+      id
+      name
+      classId {
+        id
+        name
+      }
+      classTeacherId {
+        id
+        firstName
+        lastName
+      }
+    }
+  }
+`;
+
+export const DELETE_SECTION = gql`
+  mutation DeleteSection($id: ID!) {
+    deleteSection(id: $id)
+  }
+`;
+
+export const UPDATE_SUBJECT = gql`
+  mutation UpdateSubject($id: ID!, $classId: ID, $name: String, $code: String, $type: String) {
+    updateSubject(id: $id, classId: $classId, name: $name, code: $code, type: $type) {
+      id
+      name
+      code
+      type
+      classId {
+        id
+        name
+      }
+    }
+  }
+`;
+
+export const DELETE_SUBJECT = gql`
+  mutation DeleteSubject($id: ID!) {
+    deleteSubject(id: $id)
+  }
+`;
+
+export const UPDATE_TEACHER = gql`
+  mutation UpdateTeacher($id: ID!, $email: String, $firstName: String, $lastName: String, $gender: String, $dateOfBirth: Date, $phone: String, $qualification: String, $designation: String) {
+    updateTeacher(id: $id, email: $email, firstName: $firstName, lastName: $lastName, gender: $gender, dateOfBirth: $dateOfBirth, phone: $phone, qualification: $qualification, designation: $designation) {
+      id
+      firstName
+      lastName
+      email
+      phone
+      qualification
+      designation
+    }
+  }
+`;
+
+export const DELETE_TEACHER = gql`
+  mutation DeleteTeacher($id: ID!) {
+    deleteTeacher(id: $id)
+  }
+`;
+
+export const UPDATE_PARENT = gql`
+  mutation UpdateParent($id: ID!, $email: String, $firstName: String, $lastName: String, $relation: String, $phone: String, $childrenIds: [ID!]) {
+    updateParent(id: $id, email: $email, firstName: $firstName, lastName: $lastName, relation: $relation, phone: $phone, childrenIds: $childrenIds) {
+      id
+      firstName
+      lastName
+      relation
+      phone
+      email
+    }
+  }
+`;
+
+export const DELETE_PARENT = gql`
+  mutation DeleteParent($id: ID!) {
+    deleteParent(id: $id)
+  }
+`;
+
+export const UPDATE_FEE_STRUCTURE = gql`
+  mutation UpdateFeeStructure($id: ID!, $title: String, $category: String, $amount: Float, $classId: ID, $dueDate: Date, $academicYear: String, $description: String) {
+    updateFeeStructure(id: $id, title: $title, category: $category, amount: $amount, classId: $classId, dueDate: $dueDate, academicYear: $academicYear, description: $description) {
+      id
+      title
+      category
+      amount
+      dueDate
+      academicYear
+    }
+  }
+`;
+
+export const DELETE_FEE_STRUCTURE = gql`
+  mutation DeleteFeeStructure($id: ID!) {
+    deleteFeeStructure(id: $id)
+  }
+`;
+
+export const UPDATE_HOMEWORK = gql`
+  mutation UpdateHomework($id: ID!, $title: String, $description: String, $classId: ID, $sectionId: ID, $subjectId: ID, $teacherId: ID, $dueDate: Date) {
+    updateHomework(id: $id, title: $title, description: $description, classId: $classId, sectionId: $sectionId, subjectId: $subjectId, teacherId: $teacherId, dueDate: $dueDate) {
+      id
+      title
+      description
+      dueDate
+    }
+  }
+`;
+
+export const DELETE_HOMEWORK = gql`
+  mutation DeleteHomework($id: ID!) {
+    deleteHomework(id: $id)
+  }
+`;
+
+export const DELETE_SCHOOL = gql`
+  mutation DeleteSchool($id: ID!) {
+    deleteSchool(id: $id)
+  }
+`;
+
+export const GET_TEACHER_ATTENDANCE = gql`
+  query GetTeacherAttendance($date: Date!) {
+    getTeacherAttendance(date: $date) {
+      id
+      status
+      remarks
+      teacherId {
+        id
+        firstName
+        lastName
+        phone
+      }
+    }
+  }
+`;
+
+export const GET_STAFF_ATTENDANCE = gql`
+  query GetStaffAttendance($date: Date!) {
+    getStaffAttendance(date: $date) {
+      id
+      status
+      remarks
+      staffId {
+        id
+        firstName
+        lastName
+        department
+        phone
+      }
+    }
+  }
+`;
+
+export const MARK_BULK_TEACHER_ATTENDANCE = gql`
+  mutation MarkBulkTeacherAttendance($date: Date!, $records: [BulkTeacherAttendanceInput!]!) {
+    markBulkTeacherAttendance(date: $date, records: $records)
+  }
+`;
+
+export const MARK_BULK_STAFF_ATTENDANCE = gql`
+  mutation MarkBulkStaffAttendance($date: Date!, $records: [BulkStaffAttendanceInput!]!) {
+    markBulkStaffAttendance(date: $date, records: $records)
+  }
+`;
+
+export const REGISTER_STAFF = gql`
+  mutation RegisterStaff(
+    $email: String!
+    $firstName: String!
+    $lastName: String!
+    $gender: String!
+    $phone: String!
+    $department: String!
+    $designation: String!
+  ) {
+    registerStaff(
+      email: $email
+      firstName: $firstName
+      lastName: $lastName
+      gender: $gender
+      phone: $phone
+      department: $department
+      designation: $designation
+    ) {
+      id
+      firstName
+      lastName
+      email
+      department
+      designation
+    }
+  }
+`;
+
+export const UPDATE_STAFF = gql`
+  mutation UpdateStaff(
+    $id: ID!
+    $email: String
+    $firstName: String
+    $lastName: String
+    $gender: String
+    $phone: String
+    $department: String
+    $designation: String
+  ) {
+    updateStaff(
+      id: $id
+      email: $email
+      firstName: $firstName
+      lastName: $lastName
+      gender: $gender
+      phone: $phone
+      department: $department
+      designation: $designation
+    ) {
+      id
+      firstName
+      lastName
+      email
+      phone
+      department
+      designation
+    }
+  }
+`;
+
+export const DELETE_STAFF = gql`
+  mutation DeleteStaff($id: ID!) {
+    deleteStaff(id: $id)
+  }
+`;
+
+export const GET_EXAMS = gql`
+  query GetExams {
+    getExams {
+      id
+      name
+      academicYear
+      startDate
+      endDate
+    }
+  }
+`;
+
+export const ENTER_STUDENT_MARKS = gql`
+  mutation EnterStudentMarks($studentId: ID!, $examId: ID!, $subjectId: ID!, $marksObtained: Float!, $grade: String, $remarks: String) {
+    enterStudentMarks(studentId: $studentId, examId: $examId, subjectId: $subjectId, marksObtained: $marksObtained, grade: $grade, remarks: $remarks) {
+      id
+      marksObtained
+      grade
+      remarks
+    }
+  }
+`;
+
+export const GET_TIMETABLES = gql`
+  query GetTimetables($classId: ID, $sectionId: ID, $teacherId: ID) {
+    getTimetables(classId: $classId, sectionId: $sectionId, teacherId: $teacherId) {
+      id
+      dayOfWeek
+      startTime
+      endTime
+      classId {
+        id
+        name
+        code
+      }
+      sectionId {
+        id
+        name
+        roomNumber
+      }
+      subjectId {
+        id
+        name
+        code
+      }
+      teacherId {
+        id
+        firstName
+        lastName
+      }
+      roomNumber
+    }
+  }
+`;
+
+export const CREATE_TIMETABLE_ENTRY = gql`
+  mutation CreateTimetableEntry(
+    $dayOfWeek: String!
+    $startTime: String!
+    $endTime: String!
+    $classId: ID!
+    $sectionId: ID!
+    $subjectId: ID!
+    $teacherId: ID!
+    $roomNumber: String
+  ) {
+    createTimetableEntry(
+      dayOfWeek: $dayOfWeek
+      startTime: $startTime
+      endTime: $endTime
+      classId: $classId
+      sectionId: $sectionId
+      subjectId: $subjectId
+      teacherId: $teacherId
+      roomNumber: $roomNumber
+    ) {
+      id
+      dayOfWeek
+      startTime
+      endTime
+      classId {
+        id
+        name
+      }
+      sectionId {
+        id
+        name
+      }
+      subjectId {
+        id
+        name
+      }
+      teacherId {
+        id
+        firstName
+        lastName
+      }
+      roomNumber
+    }
+  }
+`;
+
+export const UPDATE_TIMETABLE_ENTRY = gql`
+  mutation UpdateTimetableEntry(
+    $id: ID!
+    $dayOfWeek: String
+    $startTime: String
+    $endTime: String
+    $classId: ID
+    $sectionId: ID
+    $subjectId: ID
+    $teacherId: ID
+    $roomNumber: String
+  ) {
+    updateTimetableEntry(
+      id: $id
+      dayOfWeek: $dayOfWeek
+      startTime: $startTime
+      endTime: $endTime
+      classId: $classId
+      sectionId: $sectionId
+      subjectId: $subjectId
+      teacherId: $teacherId
+      roomNumber: $roomNumber
+    ) {
+      id
+      dayOfWeek
+      startTime
+      endTime
+      classId {
+        id
+        name
+      }
+      sectionId {
+        id
+        name
+      }
+      subjectId {
+        id
+        name
+      }
+      teacherId {
+        id
+        firstName
+        lastName
+      }
+      roomNumber
+    }
+  }
+`;
+
+export const DELETE_TIMETABLE_ENTRY = gql`
+  mutation DeleteTimetableEntry($id: ID!) {
+    deleteTimetableEntry(id: $id)
+  }
+`;
+
+
