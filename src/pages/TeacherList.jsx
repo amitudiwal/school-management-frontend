@@ -17,7 +17,8 @@ import {
 const getAvatarUrl = (avatarPath) => {
   if (!avatarPath) return '';
   if (avatarPath.startsWith('http')) return avatarPath;
-  return `http://localhost:5000${avatarPath}`;
+  // return `http://localhost:5000${avatarPath}`;
+  return `https://school-management-backend-izxj.onrender.com${avatarPath}`;
 };
 
 function TeacherList() {
