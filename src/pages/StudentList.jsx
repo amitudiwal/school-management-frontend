@@ -69,7 +69,8 @@ function StudentList() {
     
     setUploading(true);
     try {
-      const response = await fetch('http://localhost:5000/api/upload', {
+      // const response = await fetch('http://localhost:5000/api/upload', {
+            const response = await fetch('https://school-management-backend-izxj.onrender.com/graphql/api/upload', {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`
