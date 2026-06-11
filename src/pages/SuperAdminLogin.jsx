@@ -130,7 +130,7 @@ function SuperAdminLogin() {
           <Box sx={{ textAlign: 'center', mb: 4 }}>
             <Box
               component="img"
-              src="https://img.sanishtech.com/u/a99ef24c366daabd5232b241e5a8fcfe.png"
+              src="https://img.sanishtech.com/u/c93347419d27696b910aaa84d01a9d7f.png"
               alt="VidyaFlow Logo"
               sx={{
                 width: 72,

@@ -108,7 +108,7 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
         <Box sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
           <Avatar
             variant="rounded"
-            src="https://img.sanishtech.com/u/a99ef24c366daabd5232b241e5a8fcfe.png"
+            src="https://img.sanishtech.com/u/c93347419d27696b910aaa84d01a9d7f.png"
             sx={{ width: 40, height: 40, background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)' }}
           />
           <Box>
