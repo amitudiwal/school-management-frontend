@@ -1,9 +1,12 @@
 import { ApolloClient, InMemoryCache, createHttpLink } from '@apollo/client';
 import { setContext } from '@apollo/client/link/context';
 
+export const BACKEND_URL = window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1'
+  ? 'http://localhost:5000'
+  : 'https://school-management-backend-izxj.onrender.com';
+
 const httpLink = createHttpLink({
-  // uri: 'http://localhost:5000/graphql',
-  uri:'https://school-management-backend-izxj.onrender.com/graphql'
+  uri: `${BACKEND_URL}/graphql`
 });
 
 const authLink = setContext((_, { headers }) => {

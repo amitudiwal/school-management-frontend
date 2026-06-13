@@ -4,15 +4,23 @@ import {
   Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent,
   DialogTitle, Grid, TextField, MenuItem, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress,
-  Alert, Chip, IconButton
+  Alert, Chip, IconButton, Avatar, InputAdornment
 } from '@mui/material';
-import { Add as AddIcon, CheckCircle as ApproveIcon, Cancel as RejectIcon, Block as SuspendIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { useDispatch } from 'react-redux';
+import { Add as AddIcon, CheckCircle as ApproveIcon, Cancel as RejectIcon, Block as SuspendIcon, Edit as EditIcon, Delete as DeleteIcon, Visibility, VisibilityOff } from '@mui/icons-material';
+import { useDispatch, useSelector } from 'react-redux';
 import { showToast } from '../store/slices/uiSlice';
 import { GET_SCHOOLS, CREATE_SCHOOL, UPDATE_SCHOOL, DELETE_SCHOOL } from '../graphql/operations';
+import { BACKEND_URL } from '../graphql/client';
+
+const getSchoolLogoUrl = (logoPath) => {
+  if (!logoPath) return '';
+  if (logoPath.startsWith('http')) return logoPath;
+  return `${BACKEND_URL}${logoPath}`;
+};
 
 function SchoolsList() {
   const dispatch = useDispatch();
+  const { token } = useSelector((state) => state.auth);
   const [openModal, setOpenModal] = useState(false);
   const [selectedSchool, setSelectedSchool] = useState(null);
   const [schoolToDelete, setSchoolToDelete] = useState(null);
@@ -27,6 +35,42 @@ function SchoolsList() {
   const [adminPassword, setAdminPassword] = useState('');
   const [formError, setFormError] = useState('');
   const [schoolCode, setSchoolCode] = useState('');
+  const [logo, setLogo] = useState('');
+  const [schoolLogo, setSchoolLogo] = useState('');
+  const [uploading, setUploading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  const handleImageUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    
+    const formData = new FormData();
+    formData.append('file', file);
+    
+    setUploading(true);
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+      const result = await response.json();
+      if (response.ok) {
+        setLogo(result.url);
+        setSchoolLogo(result.url);
+        dispatch(showToast({ message: 'Logo uploaded successfully!', severity: 'success' }));
+      } else {
+        dispatch(showToast({ message: result.error || 'Upload failed', severity: 'error' }));
+      }
+    } catch (err) {
+      console.error(err);
+      dispatch(showToast({ message: 'Error uploading logo', severity: 'error' }));
+    } finally {
+      setUploading(false);
+    }
+  };
 
   // Queries
   const { loading, error, data, refetch } = useQuery(GET_SCHOOLS);
@@ -81,6 +125,10 @@ function SchoolsList() {
     setSchoolCode('');
     setFormError('');
     setSelectedSchool(null);
+    setLogo('');
+    setSchoolLogo('');
+    setShowPassword(false);
+    setOpenModal(false);
   };
 
   const handleOpenRegister = () => {
@@ -96,6 +144,8 @@ function SchoolsList() {
     setPhone(sch.contact?.phone || '');
     setPlan(sch.subscription?.plan || 'BASIC');
     setSchoolCode(sch.schoolCode || '');
+    setLogo(sch.logo || '');
+    setSchoolLogo(sch.schoolLogo || '');
     setFormError('');
     setOpenModal(true);
   };
@@ -118,7 +168,9 @@ function SchoolsList() {
         variables: {
           id: selectedSchool.id,
           name,
-          plan
+          plan,
+          logo,
+          schoolLogo
         }
       });
       return;
@@ -139,7 +191,9 @@ function SchoolsList() {
         plan,
         adminName,
         adminEmail,
-        adminPassword
+        adminPassword,
+        logo,
+        schoolLogo
       }
     });
   };
@@ -179,6 +233,7 @@ function SchoolsList() {
           <Table sx={{ minWidth: 900 }}>
             <TableHead>
               <TableRow>
+                <TableCell sx={{ fontWeight: 700 }} width="80px">Logo</TableCell>
                 <TableCell>School Name</TableCell>
                 <TableCell>Subdomain Slug</TableCell>
                 <TableCell>Subscription Plan</TableCell>
@@ -191,6 +246,15 @@ function SchoolsList() {
             <TableBody>
               {data?.getSchools.map((sch) => (
                 <TableRow key={sch.id} hover>
+                  <TableCell>
+                    <Avatar 
+                      src={getSchoolLogoUrl(sch.schoolLogo || sch.logo)} 
+                      variant="rounded"
+                      sx={{ width: 40, height: 40, border: '1px solid', borderColor: 'divider', bgcolor: '#f8fafc' }}
+                    >
+                      {sch.name?.charAt(0) || ''}
+                    </Avatar>
+                  </TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>{sch.name}</TableCell>
                   <TableCell>{sch.slug}</TableCell>
                   <TableCell>
@@ -268,12 +332,67 @@ function SchoolsList() {
       )}
 
       {/* Provision/Edit School Dialog Modal */}
-      <Dialog open={openModal} onClose={clearForm} maxWidth="sm" fullWidth>
+      <Dialog 
+        open={openModal} 
+        onClose={clearForm} 
+        maxWidth="sm" 
+        fullWidth
+        PaperProps={{
+          component: 'form',
+          onSubmit: handleSubmit,
+          sx: {
+            borderRadius: 3,
+            maxHeight: '90vh',
+            '&::-webkit-scrollbar': {
+              width: '6px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: 'transparent',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: 'rgba(148, 163, 184, 0.3)',
+              borderRadius: '4px',
+            },
+            '&::-webkit-scrollbar-thumb:hover': {
+              background: 'rgba(148, 163, 184, 0.5)',
+            },
+          }
+        }}
+      >
         <DialogTitle sx={{ fontWeight: 800 }}>{selectedSchool ? 'Edit School Details' : 'Register School for Approval'}</DialogTitle>
-        <form onSubmit={handleSubmit}>
-          <DialogContent>
+        <DialogContent
+          dividers
+          sx={{
+            '&::-webkit-scrollbar': {
+              width: '6px',
+            },
+            '&::-webkit-scrollbar-track': {
+              background: 'transparent',
+            },
+            '&::-webkit-scrollbar-thumb': {
+              background: 'rgba(148, 163, 184, 0.3)',
+              borderRadius: '4px',
+            },
+            '&::-webkit-scrollbar-thumb:hover': {
+              background: 'rgba(148, 163, 184, 0.5)',
+            },
+          }}
+        >
             {formError && <Alert severity="error" sx={{ mb: 2 }}>{formError}</Alert>}
             <Grid container spacing={2}>
+              <Grid item xs={12} sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                <Avatar 
+                  src={getSchoolLogoUrl(schoolLogo || logo)} 
+                  variant="rounded" 
+                  sx={{ width: 64, height: 64, border: '1px solid', borderColor: 'divider', bgcolor: '#f8fafc' }}
+                >
+                  {name?.charAt(0) || 'S'}
+                </Avatar>
+                <Button variant="outlined" component="label" disabled={uploading}>
+                  {uploading ? 'Uploading...' : 'Upload School Logo'}
+                  <input type="file" hidden accept="image/*" onChange={handleImageUpload} />
+                </Button>
+              </Grid>
               <Grid item xs={12}>
                 <TextField fullWidth required label="School Entity Name" value={name} onChange={(e) => setName(e.target.value)} />
               </Grid>
@@ -322,7 +441,23 @@ function SchoolsList() {
                     <TextField fullWidth required type="email" label="Admin Login Email" value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} />
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <TextField fullWidth required type="password" label="Admin Password" value={adminPassword} onChange={(e) => setAdminPassword(e.target.value)} />
+                    <TextField 
+                      fullWidth 
+                      required 
+                      type={showPassword ? 'text' : 'password'} 
+                      label="Admin Password" 
+                      value={adminPassword} 
+                      onChange={(e) => setAdminPassword(e.target.value)} 
+                      InputProps={{
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                              {showPassword ? <VisibilityOff /> : <Visibility />}
+                            </IconButton>
+                          </InputAdornment>
+                        )
+                      }}
+                    />
                   </Grid>
                 </>
               )}
@@ -334,7 +469,6 @@ function SchoolsList() {
               {addLoading || updateLoading ? 'Saving...' : selectedSchool ? 'Save Changes' : 'Register School'}
             </Button>
           </DialogActions>
-        </form>
       </Dialog>
 
       {/* Delete School Confirmation Dialog */}

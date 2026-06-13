@@ -4,9 +4,9 @@ import {
   Alert, Box, Button, CircularProgress, Dialog, DialogActions,
   DialogContent, DialogTitle, Grid, MenuItem, Paper, Table,
   TableBody, TableCell, TableContainer, TableHead, TableRow,
-  TextField, Typography, IconButton, Tabs, Tab, Avatar
+  TextField, Typography, IconButton, Tabs, Tab, Avatar, InputAdornment
 } from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Visibility, VisibilityOff } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { showToast } from '../store/slices/uiSlice';
 import {
@@ -52,6 +52,7 @@ function TeacherList() {
   const { token } = useSelector((state) => state.auth);
   const [avatar, setAvatar] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
@@ -178,6 +179,7 @@ function TeacherList() {
     setFormError('');
     setSelectedTeacher(null);
     setAvatar('');
+    setShowPassword(false);
   };
 
   const clearStaffForm = () => {
@@ -480,7 +482,23 @@ function TeacherList() {
               </Grid>
               {!selectedTeacher && (
                 <Grid item xs={12} sm={6}>
-                  <TextField fullWidth required={!selectedTeacher} type="password" label="Teacher Login Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                  <TextField 
+                    fullWidth 
+                    required={!selectedTeacher} 
+                    type={showPassword ? 'text' : 'password'} 
+                    label="Teacher Login Password" 
+                    value={password} 
+                    onChange={(e) => setPassword(e.target.value)} 
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      )
+                    }}
+                  />
                 </Grid>
               )}
             </Grid>

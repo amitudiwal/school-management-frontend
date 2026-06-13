@@ -4,9 +4,9 @@ import {
   Alert, Box, Button, Card, CardContent, CircularProgress, Dialog,
   DialogActions, DialogContent, DialogTitle, Grid, MenuItem, Paper,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  TextField, Typography, IconButton
+  TextField, Typography, IconButton, InputAdornment
 } from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Visibility, VisibilityOff } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { showToast } from '../store/slices/uiSlice';
 import { GET_PARENTS, REGISTER_PARENT, UPDATE_PARENT, DELETE_PARENT, GET_STUDENTS } from '../graphql/operations';
@@ -24,6 +24,7 @@ function ParentList() {
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState('');
   const [selectedChildren, setSelectedChildren] = useState([]);
+  const [showPassword, setShowPassword] = useState(false);
 
   const { loading, error, data, refetch } = useQuery(GET_PARENTS);
   const { data: studentsData } = useQuery(GET_STUDENTS);
@@ -75,6 +76,7 @@ function ParentList() {
     setFormError('');
     setSelectedChildren([]);
     setSelectedParent(null);
+    setShowPassword(false);
   };
 
   const handleClose = () => {
@@ -220,7 +222,23 @@ function ParentList() {
               </Grid>
               {!selectedParent && (
                 <Grid item xs={12}>
-                  <TextField fullWidth required={!selectedParent} type="password" label="Parent Login Password" value={password} onChange={(e) => setPassword(e.target.value)} />
+                  <TextField 
+                    fullWidth 
+                    required={!selectedParent} 
+                    type={showPassword ? 'text' : 'password'} 
+                    label="Parent Login Password" 
+                    value={password} 
+                    onChange={(e) => setPassword(e.target.value)} 
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      )
+                    }}
+                  />
                 </Grid>
               )}
               <Grid item xs={12}>

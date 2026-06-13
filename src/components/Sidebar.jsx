@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
+import { useQuery } from '@apollo/client';
 import {
   Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText,
   Avatar, Box, Typography, Divider, IconButton, Chip, useTheme
@@ -20,6 +21,8 @@ import {
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
 import { toggleTheme } from '../store/slices/uiSlice';
+import { GET_SCHOOL } from '../graphql/operations';
+import { BACKEND_URL } from '../graphql/client';
 
 const DRAWER_WIDTH = 280;
 
@@ -30,6 +33,14 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
+
+  const { data: schoolData } = useQuery(GET_SCHOOL, {
+    variables: { id: user?.schoolId },
+    skip: !user?.schoolId || user?.role === 'SUPER_ADMIN',
+  });
+
+  const schoolLogo = schoolData?.getSchool?.schoolLogo || schoolData?.getSchool?.logo;
+  const schoolName = schoolData?.getSchool?.schoolName || schoolData?.getSchool?.name;
 
   const handleLogout = () => {
     dispatch(logout());
@@ -66,11 +77,13 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
       ...(['TEACHER', 'CLASS_TEACHER'].includes(user?.role) ? [
         { text: 'Daily Attendance', icon: <AttendanceIcon />, path: '/attendance' },
         { text: 'Homework Board', icon: <HomeworkIcon />, path: '/homework' },
-        { text: 'Grades Entry', icon: <GradesIcon />, path: '/grades' }
+        { text: 'Grades Entry', icon: <GradesIcon />, path: '/grades' },
+        { text: 'Performance Analytics', icon: <DashboardIcon />, path: '/analytics' }
       ] : []),
       ...(['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) ? [
         { text: 'Teachers', icon: <TeacherIcon />, path: '/teachers' },
         { text: 'Class Management', icon: <SchoolIcon />, path: '/classes' },
+        { text: 'Exam Schedules', icon: <GradesIcon />, path: '/exams' },
         { text: 'Staff Attendance', icon: <AttendanceIcon />, path: '/staff-attendance' }
       ] : []),
       ...(['PARENT'].includes(user?.role) ? [
@@ -108,15 +121,17 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
         <Box sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
           <Avatar
             variant="rounded"
-            src="https://img.sanishtech.com/u/c93347419d27696b910aaa84d01a9d7f.png"
+            src={schoolLogo ? (schoolLogo.startsWith('http') ? schoolLogo : `${BACKEND_URL}${schoolLogo}`) : "https://img.sanishtech.com/u/c93347419d27696b910aaa84d01a9d7f.png"}
             sx={{ width: 40, height: 40, background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)' }}
-          />
+          >
+            {schoolName?.charAt(0) || ''}
+          </Avatar>
           <Box>
             <Typography variant="h6" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, lineHeight: 1.2 }}>
-              VidyaFlow
+              {schoolName || "VidyaFlow"}
             </Typography>
             <Typography variant="caption" color="text.secondary">
-              School ERP System
+              {schoolName ? "School ERP Portal" : "School ERP System"}
             </Typography>
           </Box>
         </Box>

@@ -17,6 +17,7 @@ import { GET_SCHOOL_BY_CODE, LOGIN_WITH_PASSWORD, SEND_OTP, VERIFY_OTP, FORGOT_P
 import { loginStart, loginSuccess, loginFailure } from '../store/slices/authSlice';
 
 import { showToast } from '../store/slices/uiSlice';
+import { BACKEND_URL } from '../graphql/client';
 
 function Login() {
   const globalTheme = useTheme();
@@ -406,7 +407,7 @@ function Login() {
                 <>
                   <Box
                     component="img"
-                    src={school?.schoolLogo || 'https://img.sanishtech.com/u/c93347419d27696b910aaa84d01a9d7f.png'}
+                    src={school?.schoolLogo ? (school.schoolLogo.startsWith('http') ? school.schoolLogo : `${BACKEND_URL}${school.schoolLogo}`) : 'https://img.sanishtech.com/u/c93347419d27696b910aaa84d01a9d7f.png'}
                     alt="School Logo"
                     sx={{
                       width: 64,

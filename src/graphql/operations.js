@@ -534,6 +534,18 @@ export const GET_AUDIT_LOGS = gql`
   }
 `;
 
+export const GET_SCHOOL = gql`
+  query GetSchool($id: ID!) {
+    getSchool(id: $id) {
+      id
+      name
+      schoolName
+      logo
+      schoolLogo
+    }
+  }
+`;
+
 export const GET_SCHOOLS = gql`
   query GetSchools {
     getSchools {
@@ -541,6 +553,8 @@ export const GET_SCHOOLS = gql`
       name
       slug
       status
+      logo
+      schoolLogo
       subscription {
         plan
         status
@@ -567,6 +581,8 @@ export const CREATE_SCHOOL = gql`
     $adminEmail: String!
     $adminPassword: String!
     $address: AddressInput
+    $logo: String
+    $schoolLogo: String
   ) {
     createSchool(
       name: $name
@@ -579,20 +595,27 @@ export const CREATE_SCHOOL = gql`
       adminEmail: $adminEmail
       adminPassword: $adminPassword
       address: $address
+      logo: $logo
+      schoolLogo: $schoolLogo
     ) {
       id
       name
       slug
       status
+      logo
+      schoolLogo
     }
   }
 `;
+
 export const UPDATE_SCHOOL = gql`
-  mutation UpdateSchool($id: ID!, $name: String, $plan: String, $status: String, $address: AddressInput) {
-    updateSchool(id: $id, name: $name, plan: $plan, status: $status, address: $address) {
+  mutation UpdateSchool($id: ID!, $name: String, $plan: String, $status: String, $address: AddressInput, $logo: String, $schoolLogo: String) {
+    updateSchool(id: $id, name: $name, plan: $plan, status: $status, address: $address, logo: $logo, schoolLogo: $schoolLogo) {
       id
       name
       status
+      logo
+      schoolLogo
       subscription {
         plan
         status
@@ -1236,5 +1259,149 @@ export const DELETE_TIMETABLE_ENTRY = gql`
     deleteTimetableEntry(id: $id)
   }
 `;
+
+export const GET_GRADES = gql`
+  query GetGrades {
+    getGrades {
+      id
+      gradeName
+      minPercentage
+      maxPercentage
+      gradePoint
+      remarks
+    }
+  }
+`;
+
+export const GET_CLASS_PERFORMANCE_ANALYTICS = gql`
+  query GetClassPerformanceAnalytics($classId: ID!, $examId: ID!) {
+    getClassPerformanceAnalytics(classId: $classId, examId: $examId) {
+      classAverage
+      totalStudents
+      strugglingCount
+      highestScore
+      gradeDistribution {
+        grade
+        count
+      }
+      studentAnalytics {
+        studentId
+        rollNo
+        name
+        totalObtained
+        totalMax
+        percentage
+        grade
+        isStruggling
+        subjectsCount
+        homeworkAverage
+        homeworkCompletionRate
+        marks {
+          subjectId
+          subjectName
+          marksObtained
+          maxMarks
+          passMarks
+          grade
+          pass
+        }
+      }
+      subjectAnalytics {
+        subjectId
+        subjectName
+        averagePercentage
+        highestScore
+        passCount
+        failCount
+      }
+    }
+  }
+`;
+
+export const CREATE_EXAM = gql`
+  mutation CreateExam($name: String!, $academicYear: String!, $startDate: Date, $endDate: Date, $description: String) {
+    createExam(name: $name, academicYear: $academicYear, startDate: $startDate, endDate: $endDate, description: $description) {
+      id
+      name
+      academicYear
+      startDate
+      endDate
+    }
+  }
+`;
+
+export const DELETE_EXAM = gql`
+  mutation DeleteExam($id: ID!) {
+    deleteExam(id: $id)
+  }
+`;
+
+export const GET_EXAM_SCHEDULES = gql`
+  query GetExamSchedules($examId: ID, $classId: ID) {
+    getExamSchedules(examId: $examId, classId: $classId) {
+      id
+      examId {
+        id
+        name
+      }
+      subjectId {
+        id
+        name
+        code
+      }
+      classId {
+        id
+        name
+      }
+      date
+      startTime
+      endTime
+      maxMarks
+      passMarks
+      roomNo
+    }
+  }
+`;
+
+export const CREATE_EXAM_SCHEDULE = gql`
+  mutation CreateExamSchedule(
+    $examId: ID!
+    $subjectId: ID!
+    $classId: ID!
+    $date: Date!
+    $startTime: String!
+    $endTime: String!
+    $maxMarks: Float!
+    $passMarks: Float!
+    $roomNo: String
+  ) {
+    createExamSchedule(
+      examId: $examId
+      subjectId: $subjectId
+      classId: $classId
+      date: $date
+      startTime: $startTime
+      endTime: $endTime
+      maxMarks: $maxMarks
+      passMarks: $passMarks
+      roomNo: $roomNo
+    ) {
+      id
+      date
+      startTime
+      endTime
+      maxMarks
+      passMarks
+      roomNo
+    }
+  }
+`;
+
+export const DELETE_EXAM_SCHEDULE = gql`
+  mutation DeleteExamSchedule($id: ID!) {
+    deleteExamSchedule(id: $id)
+  }
+`;
+
 
 
