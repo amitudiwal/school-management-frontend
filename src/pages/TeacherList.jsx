@@ -13,6 +13,7 @@ import {
   GET_TEACHERS, REGISTER_TEACHER, UPDATE_TEACHER, DELETE_TEACHER,
   GET_STAFF, REGISTER_STAFF, UPDATE_STAFF, DELETE_STAFF
 } from '../graphql/operations';
+import CustomDatePicker from '../components/CustomDatePicker';
 
 const getAvatarUrl = (avatarPath) => {
   if (!avatarPath) return '';
@@ -469,7 +470,7 @@ function TeacherList() {
                 </TextField>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth required type="date" label="Date of Birth" InputLabelProps={{ shrink: true }} value={dob} onChange={(e) => setDob(e.target.value)} />
+                <CustomDatePicker fullWidth required label="Date of Birth" value={dob} onChange={(e) => setDob(e.target.value)} />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField fullWidth required label="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} />

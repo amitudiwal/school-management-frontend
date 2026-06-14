@@ -23,6 +23,7 @@ import { logout } from '../store/slices/authSlice';
 import { toggleTheme } from '../store/slices/uiSlice';
 import { GET_SCHOOL } from '../graphql/operations';
 import { BACKEND_URL } from '../graphql/client';
+import vidyaflowLogo from '../assets/vidyaflowlogo.png';
 
 const DRAWER_WIDTH = 280;
 
@@ -121,7 +122,7 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
         <Box sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
           <Avatar
             variant="rounded"
-            src={schoolLogo ? (schoolLogo.startsWith('http') ? schoolLogo : `${BACKEND_URL}${schoolLogo}`) : "https://img.sanishtech.com/u/c93347419d27696b910aaa84d01a9d7f.png"}
+            src={schoolLogo ? (schoolLogo.startsWith('http') ? schoolLogo : `${BACKEND_URL}${schoolLogo}`) : vidyaflowLogo}
             sx={{ width: 40, height: 40, background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)' }}
           >
             {schoolName?.charAt(0) || ''}

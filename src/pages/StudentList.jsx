@@ -13,6 +13,7 @@ import {
 } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { showToast } from '../store/slices/uiSlice';
+import CustomDatePicker from '../components/CustomDatePicker';
 import {
   GET_STUDENTS,
   GET_CLASSES,
@@ -460,7 +461,7 @@ function StudentList() {
                 </TextField>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth required type="date" label="Date of Birth" InputLabelProps={{ shrink: true }} value={dob} onChange={(e) => setDob(e.target.value)} />
+                <CustomDatePicker fullWidth required label="Date of Birth" value={dob} onChange={(e) => setDob(e.target.value)} />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField

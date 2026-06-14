@@ -11,6 +11,7 @@ import { useDispatch } from 'react-redux';
 import { Add as AddIcon, FileDownload as ExportIcon, Settings as SettingsIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { GET_FEES_LIST, GET_CLASSES, GET_STUDENTS, COLLECT_STUDENT_FEE, CREATE_FEE_STRUCTURE, UPDATE_FEE_STRUCTURE, DELETE_FEE_STRUCTURE } from '../graphql/operations';
 import { showToast } from '../store/slices/uiSlice';
+import CustomDatePicker from '../components/CustomDatePicker';
 
 function FeesList() {
   const dispatch = useDispatch();
@@ -446,9 +447,8 @@ function FeesList() {
               </Grid>
 
               <Grid item xs={12} sm={6}>
-                <TextField 
-                  fullWidth required type="date" label="Due Date" 
-                  InputLabelProps={{ shrink: true }}
+                <CustomDatePicker 
+                  fullWidth required label="Due Date" 
                   value={structDueDate} 
                   onChange={(e) => setStructDueDate(e.target.value)} 
                 />

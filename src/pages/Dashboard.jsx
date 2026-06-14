@@ -5,7 +5,7 @@ import {
   Box, Grid, Card, CardContent, Typography, Avatar, 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
   Paper, CircularProgress, Alert, Button, useTheme, LinearProgress, Chip,
-  Tabs, Tab
+  Tabs, Tab, TextField
 } from '@mui/material';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
@@ -17,22 +17,34 @@ import {
   Warning as AlertIcon, Security as AuditIcon 
 } from '@mui/icons-material';
 import { GET_SUPER_ADMIN_DASHBOARD, GET_SCHOOL_ADMIN_DASHBOARD, GET_AUDIT_LOGS } from '../graphql/operations';
+import CustomDatePicker from '../components/CustomDatePicker';
 
 function Dashboard() {
   const { user } = useSelector((state) => state.auth);
   const theme = useTheme();
   const [activeAttendanceTab, setActiveAttendanceTab] = useState(0);
+  const [dashboardDate, setDashboardDate] = useState(new Date().toISOString().split('T')[0]);
 
   // Load appropriate dashboard queries based on user role
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
   
-  const { loading: saLoading, error: saError, data: saData } = useQuery(GET_SUPER_ADMIN_DASHBOARD, {
+  const { loading: saLoading, error: saError, data: saData, refetch: refetchSuperDashboard } = useQuery(GET_SUPER_ADMIN_DASHBOARD, {
     skip: !isSuperAdmin
   });
   
-  const { loading: schoolLoading, error: schoolError, data: schoolData } = useQuery(GET_SCHOOL_ADMIN_DASHBOARD, {
-    skip: isSuperAdmin
+  const { loading: schoolLoading, error: schoolError, data: schoolData, refetch: refetchSchoolDashboard } = useQuery(GET_SCHOOL_ADMIN_DASHBOARD, {
+    skip: isSuperAdmin,
+    variables: { date: new Date(dashboardDate) },
+    fetchPolicy: 'network-only'
   });
+
+  React.useEffect(() => {
+    if (isSuperAdmin) {
+      refetchSuperDashboard?.();
+    } else {
+      refetchSchoolDashboard?.({ date: new Date(dashboardDate) });
+    }
+  }, [isSuperAdmin, dashboardDate, refetchSuperDashboard, refetchSchoolDashboard]);
 
   const { loading: logsLoading, data: logsData } = useQuery(GET_AUDIT_LOGS, {
     skip: !['SUPER_ADMIN', 'SCHOOL_ADMIN'].includes(user?.role)
@@ -249,9 +261,17 @@ function Dashboard() {
 
   return (
     <Box>
-      <Typography variant="h4" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, mb: 3, fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
-        School Overview Portal
-      </Typography>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 3 }}>
+        <Typography variant="h4" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
+          School Overview Portal
+        </Typography>
+        <CustomDatePicker
+          label="Attendance & Metrics Date"
+          value={dashboardDate}
+          onChange={(e) => setDashboardDate(e.target.value)}
+          sx={{ width: { xs: '100%', sm: 240 } }}
+        />
+      </Box>
 
       {/* Stats Grid */}
       <Grid container spacing={3} sx={{ mb: 4 }}>

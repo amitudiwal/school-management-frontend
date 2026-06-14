@@ -11,6 +11,7 @@ import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/ico
 import { useDispatch } from 'react-redux';
 import { showToast } from '../store/slices/uiSlice';
 import { GET_HOMEWORK, GET_CLASSES, GET_SECTIONS, GET_SUBJECTS, CREATE_HOMEWORK, GET_TEACHERS, UPDATE_HOMEWORK, DELETE_HOMEWORK } from '../graphql/operations';
+import CustomDatePicker from '../components/CustomDatePicker';
 
 function HomeworkList() {
   const dispatch = useDispatch();
@@ -306,7 +307,7 @@ function HomeworkList() {
                 </Grid>
               )}
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth required type="date" label="Due Date" InputLabelProps={{ shrink: true }} value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
+                <CustomDatePicker fullWidth required label="Due Date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
               </Grid>
             </Grid>
           </DialogContent>

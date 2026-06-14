@@ -128,6 +128,31 @@ const getDesignTokens = (mode) => ({
         },
       },
     },
+    MuiOutlinedInput: {
+      styleOverrides: {
+        root: {
+          transition: 'all 0.2s ease-in-out',
+          '& input[type="date"]': {
+            cursor: 'pointer',
+          },
+          '& input::-webkit-calendar-picker-indicator': {
+            filter: mode === 'dark' 
+              ? 'invert(0.8) sepia(100%) saturate(2000%) hue-rotate(220deg) brightness(1.2)' 
+              : 'sepia(100%) saturate(2000%) hue-rotate(220deg) brightness(0.6)',
+            cursor: 'pointer',
+            padding: '6px',
+            marginRight: '-4px',
+            borderRadius: '50%',
+            backgroundColor: mode === 'dark' ? 'rgba(99, 102, 241, 0.15)' : 'rgba(99, 102, 241, 0.08)',
+            transition: 'all 0.2s ease-in-out',
+            '&:hover': {
+              backgroundColor: mode === 'dark' ? 'rgba(99, 102, 241, 0.3)' : 'rgba(99, 102, 241, 0.18)',
+              transform: 'scale(1.1)',
+            }
+          },
+        },
+      },
+    },
   },
 });
 

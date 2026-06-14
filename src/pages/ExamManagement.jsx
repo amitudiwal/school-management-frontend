@@ -14,6 +14,7 @@ import {
 } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { showToast } from '../store/slices/uiSlice';
+import CustomDatePicker from '../components/CustomDatePicker';
 import {
   GET_EXAMS,
   CREATE_EXAM,
@@ -366,10 +367,10 @@ function ExamManagement() {
                 <TextField fullWidth required label="Academic Year (e.g. 2026)" value={academicYear} onChange={(e) => setAcademicYear(e.target.value)} />
               </Grid>
               <Grid item xs={12}>
-                <TextField fullWidth type="date" label="Start Date" InputLabelProps={{ shrink: true }} value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+                <CustomDatePicker fullWidth label="Start Date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
               </Grid>
               <Grid item xs={12}>
-                <TextField fullWidth type="date" label="End Date" InputLabelProps={{ shrink: true }} value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+                <CustomDatePicker fullWidth label="End Date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
               </Grid>
               <Grid item xs={12}>
                 <TextField fullWidth multiline rows={3} label="Description (Optional)" value={examDesc} onChange={(e) => setExamDesc(e.target.value)} />
@@ -407,7 +408,7 @@ function ExamManagement() {
                 </TextField>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth required type="date" label="Exam Date" InputLabelProps={{ shrink: true }} value={schedDate} onChange={(e) => setSchedDate(e.target.value)} />
+                <CustomDatePicker fullWidth required label="Exam Date" value={schedDate} onChange={(e) => setSchedDate(e.target.value)} />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField fullWidth label="Room Number (Optional)" placeholder="e.g. Room 102" value={schedRoomNo} onChange={(e) => setSchedRoomNo(e.target.value)} />

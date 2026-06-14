@@ -5,7 +5,8 @@ import {
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
   Paper, Typography, CircularProgress, Alert, ToggleButton, ToggleButtonGroup 
 } from '@mui/material';
-import { GET_CLASSES, GET_SECTIONS, GET_STUDENTS, MARK_BULK_ATTENDANCE } from '../graphql/operations';
+import { GET_CLASSES, GET_SECTIONS, GET_STUDENTS, MARK_BULK_ATTENDANCE, GET_SCHOOL_ADMIN_DASHBOARD } from '../graphql/operations';
+import CustomDatePicker from '../components/CustomDatePicker';
 
 function AttendanceMark() {
   const [classId, setClassId] = useState('');
@@ -40,6 +41,8 @@ function AttendanceMark() {
 
   // Mutation
   const [markAttendanceMutation, { loading: saveLoading }] = useMutation(MARK_BULK_ATTENDANCE, {
+    refetchQueries: ['GetSchoolAdminDashboard'],
+    awaitRefetchQueries: true,
     onCompleted: () => {
       setSaveStatus('Attendance saved successfully!');
       setTimeout(() => setSaveStatus(''), 4000);
@@ -126,11 +129,9 @@ function AttendanceMark() {
             </Grid>
 
             <Grid item xs={12} sm={4}>
-              <TextField
+              <CustomDatePicker
                 fullWidth
-                type="date"
                 label="Attendance Date"
-                InputLabelProps={{ shrink: true }}
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
               />

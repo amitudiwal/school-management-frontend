@@ -8,8 +8,8 @@ import {
   Tabs, Tab, ThemeProvider, createTheme
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
-import { 
-  Visibility, VisibilityOff, Email, Lock, ArrowBack, 
+import {
+  Visibility, VisibilityOff, Email, Lock, ArrowBack,
   School as SchoolIcon, Smartphone, VpnKey, Business,
   AdminPanelSettings, Person, SupervisorAccount
 } from '@mui/icons-material';
@@ -18,6 +18,7 @@ import { loginStart, loginSuccess, loginFailure } from '../store/slices/authSlic
 
 import { showToast } from '../store/slices/uiSlice';
 import { BACKEND_URL } from '../graphql/client';
+import vidyaflowLogo from '../assets/vidyaflowlogo.png';
 
 function Login() {
   const globalTheme = useTheme();
@@ -25,12 +26,12 @@ function Login() {
 
   // Multi-step steps: 'SCHOOL_CODE' | 'SELECT_ROLE' | 'ADMIN_LOGIN' | 'TEACHER_LOGIN' | 'PARENT_LOGIN' | 'OTP_VERIFICATION' | 'FORGOT_PASSWORD'
   const [step, setStep] = useState('SCHOOL_CODE');
-  
+
   // Auth state
   const [schoolCode, setSchoolCode] = useState('');
   const [school, setSchool] = useState(null); // Stores school information
   const [selectedRole, setSelectedRole] = useState('SCHOOL_ADMIN');
-  
+
   // Form inputs
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
@@ -38,7 +39,7 @@ function Login() {
   const [otp, setOtp] = useState('');
   const [teacherMethod, setTeacherMethod] = useState(0); // 0 = Mobile/OTP, 1 = Email/Password
   const [parentMethod, setParentMethod] = useState(0); // 0 = Mobile/OTP, 1 = Email/Password
-  
+
   // UI UX helper states
   const [showPassword, setShowPassword] = useState(false);
   const [validationError, setValidationError] = useState('');
@@ -344,7 +345,7 @@ function Login() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: themeMode === 'dark' 
+        background: themeMode === 'dark'
           ? 'linear-gradient(135deg, #0B0F19 0%, #111827 50%, #1F2937 100%)'
           : 'linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%)',
         p: { xs: 2, sm: 4 }
@@ -359,7 +360,7 @@ function Login() {
           border: themeMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.05)',
         }}>
           <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
-            
+
             {/* GO BACK ACTION (if not on step 1) */}
             {step !== 'SCHOOL_CODE' && (
               <Button
@@ -392,7 +393,7 @@ function Login() {
                 <>
                   <Box
                     component="img"
-                    src="https://img.sanishtech.com/u/c93347419d27696b910aaa84d01a9d7f.png"
+                    src={vidyaflowLogo}
                     alt="VidyaFlow Logo"
                     sx={{ width: 72, height: 72, objectFit: 'contain', mb: 2 }}
                   />
@@ -407,7 +408,7 @@ function Login() {
                 <>
                   <Box
                     component="img"
-                    src={school?.schoolLogo ? (school.schoolLogo.startsWith('http') ? school.schoolLogo : `${BACKEND_URL}${school.schoolLogo}`) : 'https://img.sanishtech.com/u/c93347419d27696b910aaa84d01a9d7f.png'}
+                    src={school?.schoolLogo ? (school.schoolLogo.startsWith('http') ? school.schoolLogo : `${BACKEND_URL}${school.schoolLogo}`) : vidyaflowLogo}
                     alt="School Logo"
                     sx={{
                       width: 64,
@@ -651,8 +652,8 @@ function Login() {
                   <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 600 }}>
                     Remember me (Mock)
                   </Typography>
-                  <Link 
-                    onClick={() => setStep('FORGOT_PASSWORD')} 
+                  <Link
+                    onClick={() => setStep('FORGOT_PASSWORD')}
                     sx={{ color: activeColor, cursor: 'pointer', fontWeight: 700, fontSize: '0.875rem' }}
                   >
                     Forgot Password?
@@ -686,7 +687,7 @@ function Login() {
                 <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, textAlign: 'center' }}>
                   Faculty Teacher Sign In
                 </Typography>
-                
+
                 <form onSubmit={handleLoginSubmit}>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textAlign: 'center' }}>
                     Enter your teacher credentials to log in.
@@ -759,7 +760,7 @@ function Login() {
                 <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, textAlign: 'center' }}>
                   Parent / Guardian Sign In
                 </Typography>
-                
+
                 <form onSubmit={handleLoginSubmit}>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textAlign: 'center' }}>
                     Enter your parent credentials to log in.

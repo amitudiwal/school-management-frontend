@@ -117,8 +117,8 @@ export const GET_SUPER_ADMIN_DASHBOARD = gql`
 `;
 
 export const GET_SCHOOL_ADMIN_DASHBOARD = gql`
-  query GetSchoolAdminDashboard {
-    getSchoolAdminDashboard {
+  query GetSchoolAdminDashboard($date: Date) {
+    getSchoolAdminDashboard(date: $date) {
       studentCount
       teacherCount
       staffCount

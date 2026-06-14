@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useMutation } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
+import vidyaflowLogo from '../assets/vidyaflowlogo.png';
 import {
   Box, Card, CardContent, TextField, Button, Typography,
   Alert, InputAdornment, IconButton, CircularProgress, Chip, Grid, FormControlLabel, Switch
@@ -130,7 +131,7 @@ function SuperAdminLogin() {
           <Box sx={{ textAlign: 'center', mb: 4 }}>
             <Box
               component="img"
-              src="https://img.sanishtech.com/u/c93347419d27696b910aaa84d01a9d7f.png"
+              src={vidyaflowLogo}
               alt="VidyaFlow Logo"
               sx={{
                 width: 72,

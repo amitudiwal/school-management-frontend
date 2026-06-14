@@ -12,11 +12,13 @@ import {
   GET_TEACHER_ATTENDANCE, 
   GET_STAFF_ATTENDANCE, 
   MARK_BULK_TEACHER_ATTENDANCE, 
-  MARK_BULK_STAFF_ATTENDANCE 
+  MARK_BULK_STAFF_ATTENDANCE,
+  GET_SCHOOL_ADMIN_DASHBOARD
 } from '../graphql/operations';
 import { useDispatch } from 'react-redux';
 import { showToast } from '../store/slices/uiSlice';
 import { People as StaffIcon, PersonAdd as TeacherIcon } from '@mui/icons-material';
+import CustomDatePicker from '../components/CustomDatePicker';
 
 function StaffAttendance() {
   const dispatch = useDispatch();
@@ -81,6 +83,8 @@ function StaffAttendance() {
 
   // Mutations
   const [markTeacherAttendanceMutation, { loading: saveTeacherLoading }] = useMutation(MARK_BULK_TEACHER_ATTENDANCE, {
+    refetchQueries: ['GetSchoolAdminDashboard'],
+    awaitRefetchQueries: true,
     onCompleted: () => {
       dispatch(showToast({ message: 'Teacher attendance saved successfully!', severity: 'success' }));
     },
@@ -90,6 +94,8 @@ function StaffAttendance() {
   });
 
   const [markStaffAttendanceMutation, { loading: saveStaffLoading }] = useMutation(MARK_BULK_STAFF_ATTENDANCE, {
+    refetchQueries: ['GetSchoolAdminDashboard'],
+    awaitRefetchQueries: true,
     onCompleted: () => {
       dispatch(showToast({ message: 'Staff attendance saved successfully!', severity: 'success' }));
     },
@@ -152,10 +158,8 @@ function StaffAttendance() {
         <Typography variant="h4" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
           Staff Attendance Manager
         </Typography>
-        <TextField
-          type="date"
+        <CustomDatePicker
           label="Attendance Date"
-          InputLabelProps={{ shrink: true }}
           value={date}
           onChange={(e) => setDate(e.target.value)}
           sx={{ width: { xs: '100%', sm: 220 } }}
