@@ -1274,8 +1274,8 @@ export const GET_GRADES = gql`
 `;
 
 export const GET_CLASS_PERFORMANCE_ANALYTICS = gql`
-  query GetClassPerformanceAnalytics($classId: ID!, $examId: ID!) {
-    getClassPerformanceAnalytics(classId: $classId, examId: $examId) {
+  query GetClassPerformanceAnalytics($classId: ID!, $examId: ID!, $sectionId: ID) {
+    getClassPerformanceAnalytics(classId: $classId, examId: $examId, sectionId: $sectionId) {
       classAverage
       totalStudents
       strugglingCount

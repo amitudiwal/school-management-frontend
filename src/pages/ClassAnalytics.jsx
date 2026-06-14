@@ -44,8 +44,8 @@ function ClassAnalytics() {
   const { loading: analyticsLoading, error: analyticsError, data: analyticsData } = useQuery(
     GET_CLASS_PERFORMANCE_ANALYTICS,
     {
-      skip: !classId || !examId,
-      variables: { classId, examId }
+      skip: !classId || !examId || !sectionId,
+      variables: { classId, examId, sectionId }
     }
   );
 
@@ -57,7 +57,10 @@ function ClassAnalytics() {
 
   const handleDownloadAllClassReportCards = () => {
     const token = localStorage.getItem('token');
-    const downloadUrl = `${BACKEND_URL}/api/report-cards/class/${classId}/exam/${examId}?token=${token}`;
+    let downloadUrl = `${BACKEND_URL}/api/report-cards/class/${classId}/exam/${examId}?token=${token}`;
+    if (sectionId) {
+      downloadUrl += `&sectionId=${sectionId}`;
+    }
     window.open(downloadUrl, '_blank');
   };
 
@@ -135,9 +138,9 @@ function ClassAnalytics() {
       </Card>
 
       {/* Selection prompt */}
-      {!classId || !examId ? (
+      {!classId || !examId || !sectionId ? (
         <Alert severity="info" sx={{ borderRadius: 3, p: 2, fontSize: '1rem' }}>
-          Please select both the **Exam Term** and the **Class** above to calculate and display class-wide grades, distributions, and report cards.
+          Please select **Exam Term**, **Class**, and **Section** above to calculate and display section-wide grades, distributions, and report cards.
         </Alert>
       ) : analyticsLoading ? (
         <Box sx={{ display: 'flex', justifyContent: 'center', p: 8 }}>

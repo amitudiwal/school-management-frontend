@@ -61,6 +61,33 @@ function GradesEntry() {
     }
   });
 
+  // Reset student states when filters change
+  React.useEffect(() => {
+    if (studentsData?.getStudents) {
+      const initialMarks = {};
+      const initialGrades = {};
+      const initialRemarks = {};
+      const initialStatuses = {};
+      
+      studentsData.getStudents.forEach(st => {
+        initialMarks[st.id] = '';
+        initialGrades[st.id] = 'A';
+        initialRemarks[st.id] = '';
+        initialStatuses[st.id] = 'idle';
+      });
+      
+      setMarksData(initialMarks);
+      setGradesData(initialGrades);
+      setRemarksData(initialRemarks);
+      setRowStatus(initialStatuses);
+    } else {
+      setMarksData({});
+      setGradesData({});
+      setRemarksData({});
+      setRowStatus({});
+    }
+  }, [examId, subjectId, classId, sectionId, studentsData]);
+
   // Mutation
   const [enterMarksMutation] = useMutation(ENTER_STUDENT_MARKS);
 
@@ -252,17 +279,50 @@ function GradesEntry() {
                       </TableCell>
                       <TableCell align="center">
                         {status === 'loading' ? (
-                          <CircularProgress size={24} />
+                          <Button
+                            variant="contained"
+                            disabled
+                            size="small"
+                            sx={{ borderRadius: 2, textTransform: 'none', minWidth: 100 }}
+                          >
+                            <CircularProgress size={16} sx={{ mr: 1 }} /> Saving
+                          </Button>
                         ) : status === 'success' ? (
-                          <SuccessIcon color="success" />
+                          <Button
+                            variant="contained"
+                            color="success"
+                            size="small"
+                            startIcon={<SuccessIcon />}
+                            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, minWidth: 100 }}
+                          >
+                            Saved
+                          </Button>
                         ) : (
-                          <IconButton 
-                            color="primary" 
+                          <Button
+                            variant="contained"
+                            size="small"
+                            startIcon={<SaveIcon />}
                             onClick={() => handleSaveRow(st.id)}
                             disabled={marksData[st.id] === ''}
+                            sx={{ 
+                              borderRadius: 2, 
+                              textTransform: 'none', 
+                              fontWeight: 700,
+                              minWidth: 100,
+                              background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)', 
+                              color: '#FFFFFF',
+                              '&:hover': {
+                                opacity: 0.9,
+                                background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)'
+                              },
+                              '&.Mui-disabled': {
+                                background: 'action.disabledBackground',
+                                color: 'action.disabled'
+                              }
+                            }}
                           >
-                            <SaveIcon />
-                          </IconButton>
+                            Save
+                          </Button>
                         )}
                       </TableCell>
                     </TableRow>
