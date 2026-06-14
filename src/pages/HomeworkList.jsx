@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
 import { useSelector } from 'react-redux';
 import { 
   Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, 
   DialogTitle, Grid, TextField, MenuItem, Table, TableBody, TableCell, 
   TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress, 
-  Alert, IconButton
+  Alert, IconButton, TablePagination
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
@@ -23,6 +23,12 @@ function HomeworkList() {
   const [openModal, setOpenModal] = useState(false);
   const [selectedHomework, setSelectedHomework] = useState(null);
   const [homeworkToDelete, setHomeworkToDelete] = useState(null);
+  const [page, setPage] = useState(0);
+
+  // Reset page when class or section selection changes
+  useEffect(() => {
+    setPage(0);
+  }, [classId, sectionId]);
 
   // Form States for creation
   const [title, setTitle] = useState('');
@@ -224,46 +230,60 @@ function HomeworkList() {
       ) : hwError ? (
         <Alert severity="error">{hwError.message}</Alert>
       ) : (
-        <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
-          <Table sx={{ minWidth: 780 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell>Homework Title</TableCell>
-                <TableCell>Subject</TableCell>
-                <TableCell>Assigned Task Description</TableCell>
-                <TableCell>Due Date</TableCell>
-                <TableCell>Assigned By</TableCell>
-                {['SUPER_ADMIN', 'SCHOOL_ADMIN', 'TEACHER', 'CLASS_TEACHER'].includes(user?.role) && <TableCell align="right">Actions</TableCell>}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {hwData?.getHomework.map((hw) => (
-                <TableRow key={hw.id} hover>
-                  <TableCell sx={{ fontWeight: 700 }}>{hw.title}</TableCell>
-                  <TableCell>{hw.subjectId?.name}</TableCell>
-                  <TableCell>{hw.description}</TableCell>
-                  <TableCell sx={{ color: 'error.main', fontWeight: 600 }}>{new Date(hw.dueDate).toISOString().split('T')[0]}</TableCell>
-                  <TableCell>{hw.teacherId ? `Prof. ${hw.teacherId.firstName} ${hw.teacherId.lastName}` : '-'}</TableCell>
-                  {['SUPER_ADMIN', 'SCHOOL_ADMIN', 'TEACHER', 'CLASS_TEACHER'].includes(user?.role) && (
-                    <TableCell align="right">
-                      <IconButton aria-label="Edit homework" color="primary" onClick={() => handleOpenEdit(hw)}>
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton aria-label="Delete homework" color="error" onClick={() => setHomeworkToDelete(hw)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-              {hwData?.getHomework.length === 0 && (
+        <>
+          <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+            <Table sx={{ minWidth: 780 }}>
+              <TableHead>
                 <TableRow>
-                  <TableCell colSpan={['SUPER_ADMIN', 'SCHOOL_ADMIN', 'TEACHER', 'CLASS_TEACHER'].includes(user?.role) ? 6 : 5} align="center">No active homework tasks assigned to this class section.</TableCell>
+                  <TableCell>Homework Title</TableCell>
+                  <TableCell>Subject</TableCell>
+                  <TableCell>Assigned Task Description</TableCell>
+                  <TableCell>Due Date</TableCell>
+                  <TableCell>Assigned By</TableCell>
+                  {['SUPER_ADMIN', 'SCHOOL_ADMIN', 'TEACHER', 'CLASS_TEACHER'].includes(user?.role) && <TableCell align="right">Actions</TableCell>}
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {(hwData?.getHomework || [])
+                  .slice(page * 10, (page + 1) * 10)
+                  .map((hw) => (
+                    <TableRow key={hw.id} hover>
+                      <TableCell sx={{ fontWeight: 700 }}>{hw.title}</TableCell>
+                      <TableCell>{hw.subjectId?.name}</TableCell>
+                      <TableCell>{hw.description}</TableCell>
+                      <TableCell sx={{ color: 'error.main', fontWeight: 600 }}>{new Date(hw.dueDate).toISOString().split('T')[0]}</TableCell>
+                      <TableCell>{hw.teacherId ? `Prof. ${hw.teacherId.firstName} ${hw.teacherId.lastName}` : '-'}</TableCell>
+                      {['SUPER_ADMIN', 'SCHOOL_ADMIN', 'TEACHER', 'CLASS_TEACHER'].includes(user?.role) && (
+                        <TableCell align="right">
+                          <IconButton aria-label="Edit homework" color="primary" onClick={() => handleOpenEdit(hw)}>
+                            <EditIcon />
+                          </IconButton>
+                          <IconButton aria-label="Delete homework" color="error" onClick={() => setHomeworkToDelete(hw)}>
+                            <DeleteIcon />
+                          </IconButton>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                {(!hwData?.getHomework || hwData.getHomework.length === 0) && (
+                  <TableRow>
+                    <TableCell colSpan={['SUPER_ADMIN', 'SCHOOL_ADMIN', 'TEACHER', 'CLASS_TEACHER'].includes(user?.role) ? 6 : 5} align="center">No data</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          {hwData?.getHomework?.length > 0 && (
+            <TablePagination
+              rowsPerPageOptions={[10]}
+              component="div"
+              count={hwData.getHomework.length}
+              rowsPerPage={10}
+              page={page}
+              onPageChange={(e, newPage) => setPage(newPage)}
+            />
+          )}
+        </>
       )}
 
       {/* Assign/Edit Homework Dialog */}

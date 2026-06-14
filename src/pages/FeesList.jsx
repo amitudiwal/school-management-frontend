@@ -5,7 +5,7 @@ import {
   Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, 
   DialogTitle, Grid, TextField, MenuItem, Table, TableBody, TableCell, 
   TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress, 
-  Alert, IconButton
+  Alert, IconButton, TablePagination
 } from '@mui/material';
 import { useDispatch } from 'react-redux';
 import { Add as AddIcon, FileDownload as ExportIcon, Settings as SettingsIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
@@ -26,6 +26,12 @@ function FeesList() {
   const [openStructureModal, setOpenStructureModal] = useState(false);
   const [selectedFeeStruct, setSelectedFeeStruct] = useState(null);
   const [feeStructToDelete, setFeeStructToDelete] = useState(null);
+  const [page, setPage] = useState(0);
+
+  // Reset page when class filter changes
+  React.useEffect(() => {
+    setPage(0);
+  }, [classId]);
 
   // Form States for fee payment collection
   const [selectedStudent, setSelectedStudent] = useState('');
@@ -272,44 +278,58 @@ function FeesList() {
       ) : feesError ? (
         <Alert severity="error">{feesError.message}</Alert>
       ) : (
-        <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
-          <Table sx={{ minWidth: 760 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell>Fee Invoice Title</TableCell>
-                <TableCell>Category</TableCell>
-                <TableCell>Billing Amount</TableCell>
-                <TableCell>Target Class</TableCell>
-                <TableCell>Due Date</TableCell>
-                <TableCell>Academic Term</TableCell>
-                {isAdmin && <TableCell align="right">Actions</TableCell>}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {feesData?.getFeesList.map((fee) => (
-                <TableRow key={fee.id} hover>
-                  <TableCell sx={{ fontWeight: 700 }}>{fee.title}</TableCell>
-                  <TableCell>{fee.category}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>${fee.amount}</TableCell>
-                  <TableCell>{fee.classId?.name}</TableCell>
-                  <TableCell>{new Date(fee.dueDate).toISOString().split('T')[0]}</TableCell>
-                  <TableCell>{fee.academicYear}</TableCell>
-                  {isAdmin && (
-                    <TableCell align="right">
-                      <IconButton color="primary" onClick={() => handleEditStruct(fee)}><EditIcon /></IconButton>
-                      <IconButton color="error" onClick={() => setFeeStructToDelete(fee)}><DeleteIcon /></IconButton>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-              {feesData?.getFeesList.length === 0 && (
+        <>
+          <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+            <Table sx={{ minWidth: 760 }}>
+              <TableHead>
                 <TableRow>
-                  <TableCell colSpan={isAdmin ? 7 : 6} align="center">No fee schedules mapped to filters.</TableCell>
+                  <TableCell>Fee Invoice Title</TableCell>
+                  <TableCell>Category</TableCell>
+                  <TableCell>Billing Amount</TableCell>
+                  <TableCell>Target Class</TableCell>
+                  <TableCell>Due Date</TableCell>
+                  <TableCell>Academic Term</TableCell>
+                  {isAdmin && <TableCell align="right">Actions</TableCell>}
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {(feesData?.getFeesList || [])
+                  .slice(page * 10, (page + 1) * 10)
+                  .map((fee) => (
+                    <TableRow key={fee.id} hover>
+                      <TableCell sx={{ fontWeight: 700 }}>{fee.title}</TableCell>
+                      <TableCell>{fee.category}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>${fee.amount}</TableCell>
+                      <TableCell>{fee.classId?.name}</TableCell>
+                      <TableCell>{new Date(fee.dueDate).toISOString().split('T')[0]}</TableCell>
+                      <TableCell>{fee.academicYear}</TableCell>
+                      {isAdmin && (
+                        <TableCell align="right">
+                          <IconButton color="primary" onClick={() => handleEditStruct(fee)}><EditIcon /></IconButton>
+                          <IconButton color="error" onClick={() => setFeeStructToDelete(fee)}><DeleteIcon /></IconButton>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                {(!feesData?.getFeesList || feesData.getFeesList.length === 0) && (
+                  <TableRow>
+                    <TableCell colSpan={isAdmin ? 7 : 6} align="center">No data</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          {feesData?.getFeesList?.length > 0 && (
+            <TablePagination
+              rowsPerPageOptions={[10]}
+              component="div"
+              count={feesData.getFeesList.length}
+              rowsPerPage={10}
+              page={page}
+              onPageChange={(e, newPage) => setPage(newPage)}
+            />
+          )}
+        </>
       )}
 
       {/* Collect Fee Payment Dialog Modal */}

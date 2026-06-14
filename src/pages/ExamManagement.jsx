@@ -4,7 +4,7 @@ import {
   Box, Button, Card, CardContent, Grid, TextField, MenuItem,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, Typography, CircularProgress, Alert, IconButton, Tabs, Tab,
-  Dialog, DialogTitle, DialogContent, DialogActions
+  Dialog, DialogTitle, DialogContent, DialogActions, TablePagination
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -29,6 +29,13 @@ import {
 function ExamManagement() {
   const dispatch = useDispatch();
   const [tabValue, setTabValue] = useState(0);
+  const [pageExams, setPageExams] = useState(0);
+  const [pageSchedules, setPageSchedules] = useState(0);
+
+  // Reset pageSchedules when filters change
+  React.useEffect(() => {
+    setPageSchedules(0);
+  }, [filterExamId, filterClassId]);
 
   // Exam Term States
   const [openExamModal, setOpenExamModal] = useState(false);
@@ -234,39 +241,53 @@ function ExamManagement() {
           {examsLoading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}><CircularProgress /></Box>
           ) : (
-            <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
-              <Table sx={{ minWidth: 600 }}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Exam Term Name</TableCell>
-                    <TableCell>Academic Year</TableCell>
-                    <TableCell>Start Date</TableCell>
-                    <TableCell>End Date</TableCell>
-                    <TableCell>Description</TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {examsData?.getExams.map((ex) => (
-                    <TableRow key={ex.id} hover>
-                      <TableCell sx={{ fontWeight: 700 }}>{ex.name}</TableCell>
-                      <TableCell>{ex.academicYear}</TableCell>
-                      <TableCell>{ex.startDate ? new Date(ex.startDate).toLocaleDateString() : '-'}</TableCell>
-                      <TableCell>{ex.endDate ? new Date(ex.endDate).toLocaleDateString() : '-'}</TableCell>
-                      <TableCell>{ex.description || '-'}</TableCell>
-                      <TableCell align="right">
-                        <IconButton color="error" onClick={() => setExamToDelete(ex)}><DeleteIcon /></IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {examsData?.getExams.length === 0 && (
+            <>
+              <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+                <Table sx={{ minWidth: 600 }}>
+                  <TableHead>
                     <TableRow>
-                      <TableCell colSpan={6} align="center">No exam terms created yet.</TableCell>
+                      <TableCell>Exam Term Name</TableCell>
+                      <TableCell>Academic Year</TableCell>
+                      <TableCell>Start Date</TableCell>
+                      <TableCell>End Date</TableCell>
+                      <TableCell>Description</TableCell>
+                      <TableCell align="right">Actions</TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {(examsData?.getExams || [])
+                      .slice(pageExams * 10, (pageExams + 1) * 10)
+                      .map((ex) => (
+                        <TableRow key={ex.id} hover>
+                          <TableCell sx={{ fontWeight: 700 }}>{ex.name}</TableCell>
+                          <TableCell>{ex.academicYear}</TableCell>
+                          <TableCell>{ex.startDate ? new Date(ex.startDate).toLocaleDateString() : '-'}</TableCell>
+                          <TableCell>{ex.endDate ? new Date(ex.endDate).toLocaleDateString() : '-'}</TableCell>
+                          <TableCell>{ex.description || '-'}</TableCell>
+                          <TableCell align="right">
+                            <IconButton color="error" onClick={() => setExamToDelete(ex)}><DeleteIcon /></IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    {(!examsData?.getExams || examsData.getExams.length === 0) && (
+                      <TableRow>
+                        <TableCell colSpan={6} align="center">No data</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              {examsData?.getExams?.length > 0 && (
+                <TablePagination
+                  rowsPerPageOptions={[10]}
+                  component="div"
+                  count={examsData.getExams.length}
+                  rowsPerPage={10}
+                  page={pageExams}
+                  onPageChange={(e, newPage) => setPageExams(newPage)}
+                />
+              )}
+            </>
           )}
         </Box>
       )}
@@ -312,43 +333,57 @@ function ExamManagement() {
           ) : schedulesLoading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}><CircularProgress /></Box>
           ) : (
-            <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
-              <Table sx={{ minWidth: 800 }}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Subject Name</TableCell>
-                    <TableCell>Subject Code</TableCell>
-                    <TableCell>Exam Date</TableCell>
-                    <TableCell>Time Slot</TableCell>
-                    <TableCell>Room No</TableCell>
-                    <TableCell align="right">Max Marks</TableCell>
-                    <TableCell align="right">Passing Marks</TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {schedulesData?.getExamSchedules.map((sc) => (
-                    <TableRow key={sc.id} hover>
-                      <TableCell sx={{ fontWeight: 700 }}>{sc.subjectId?.name || '-'}</TableCell>
-                      <TableCell>{sc.subjectId?.code || '-'}</TableCell>
-                      <TableCell>{sc.date ? new Date(sc.date).toLocaleDateString() : '-'}</TableCell>
-                      <TableCell>{`${sc.startTime} - ${sc.endTime}`}</TableCell>
-                      <TableCell>{sc.roomNo || '-'}</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 600 }}>{sc.maxMarks}</TableCell>
-                      <TableCell align="right" sx={{ fontWeight: 600 }}>{sc.passMarks}</TableCell>
-                      <TableCell align="right">
-                        <IconButton color="error" onClick={() => setSchedToDelete(sc)}><DeleteIcon /></IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {schedulesData?.getExamSchedules.length === 0 && (
+            <>
+              <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+                <Table sx={{ minWidth: 800 }}>
+                  <TableHead>
                     <TableRow>
-                      <TableCell colSpan={8} align="center">No exams scheduled for this class and term yet. Click "Schedule Subject Exam" to begin.</TableCell>
+                      <TableCell>Subject Name</TableCell>
+                      <TableCell>Subject Code</TableCell>
+                      <TableCell>Exam Date</TableCell>
+                      <TableCell>Time Slot</TableCell>
+                      <TableCell>Room No</TableCell>
+                      <TableCell align="right">Max Marks</TableCell>
+                      <TableCell align="right">Passing Marks</TableCell>
+                      <TableCell align="right">Actions</TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {(schedulesData?.getExamSchedules || [])
+                      .slice(pageSchedules * 10, (pageSchedules + 1) * 10)
+                      .map((sc) => (
+                        <TableRow key={sc.id} hover>
+                          <TableCell sx={{ fontWeight: 700 }}>{sc.subjectId?.name || '-'}</TableCell>
+                          <TableCell>{sc.subjectId?.code || '-'}</TableCell>
+                          <TableCell>{sc.date ? new Date(sc.date).toLocaleDateString() : '-'}</TableCell>
+                          <TableCell>{`${sc.startTime} - ${sc.endTime}`}</TableCell>
+                          <TableCell>{sc.roomNo || '-'}</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 600 }}>{sc.maxMarks}</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 600 }}>{sc.passMarks}</TableCell>
+                          <TableCell align="right">
+                            <IconButton color="error" onClick={() => setSchedToDelete(sc)}><DeleteIcon /></IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    {(!schedulesData?.getExamSchedules || schedulesData.getExamSchedules.length === 0) && (
+                      <TableRow>
+                        <TableCell colSpan={8} align="center">No data</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              {schedulesData?.getExamSchedules?.length > 0 && (
+                <TablePagination
+                  rowsPerPageOptions={[10]}
+                  component="div"
+                  count={schedulesData.getExamSchedules.length}
+                  rowsPerPage={10}
+                  page={pageSchedules}
+                  onPageChange={(e, newPage) => setPageSchedules(newPage)}
+                />
+              )}
+            </>
           )}
         </Box>
       )}

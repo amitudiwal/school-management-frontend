@@ -4,7 +4,7 @@ import {
   Box, Button, Card, CardContent, Grid, TextField, MenuItem, 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
   Paper, Typography, CircularProgress, Alert, ToggleButton, ToggleButtonGroup,
-  Tabs, Tab
+  Tabs, Tab, TablePagination
 } from '@mui/material';
 import { 
   GET_TEACHERS, 
@@ -23,6 +23,8 @@ import CustomDatePicker from '../components/CustomDatePicker';
 function StaffAttendance() {
   const dispatch = useDispatch();
   const [tabValue, setTabValue] = useState(0);
+  const [pageTeachers, setPageTeachers] = useState(0);
+  const [pageStaff, setPageStaff] = useState(0);
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
 
   // Attendance states
@@ -192,47 +194,60 @@ function StaffAttendance() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {teachersData?.getTeachers.map((teach) => (
-                      <TableRow key={teach.id} hover>
-                        <TableCell sx={{ fontWeight: 700 }}>
-                          {`Prof. ${teach.firstName} ${teach.lastName}`}
-                          <Typography variant="caption" display="block" color="text.secondary">
-                            {teach.designation || 'Faculty'}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>{teach.phone || '-'}</TableCell>
-                        <TableCell align="center">
-                          <ToggleButtonGroup
-                            value={teacherAttendance[teach.id] || 'PRESENT'}
-                            exclusive
-                            onChange={(_, val) => handleTeacherStatusChange(teach.id, val)}
-                            size="small"
-                          >
-                            <ToggleButton value="PRESENT" color="success" sx={{ px: 2, fontWeight: 700 }}>Present</ToggleButton>
-                            <ToggleButton value="HALF_DAY" color="warning" sx={{ px: 2, fontWeight: 700 }}>Half Day</ToggleButton>
-                            <ToggleButton value="LEAVE" color="info" sx={{ px: 2, fontWeight: 700 }}>Leave</ToggleButton>
-                            <ToggleButton value="ABSENT" color="error" sx={{ px: 2, fontWeight: 700 }}>Absent</ToggleButton>
-                          </ToggleButtonGroup>
-                        </TableCell>
-                        <TableCell>
-                          <TextField
-                            size="small"
-                            fullWidth
-                            placeholder="Add reason/note..."
-                            value={teacherRemarks[teach.id] || ''}
-                            onChange={(e) => handleTeacherRemarkChange(teach.id, e.target.value)}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {teachersData?.getTeachers.length === 0 && (
+                    {(teachersData?.getTeachers || [])
+                      .slice(pageTeachers * 10, (pageTeachers + 1) * 10)
+                      .map((teach) => (
+                        <TableRow key={teach.id} hover>
+                          <TableCell sx={{ fontWeight: 700 }}>
+                            {`Prof. ${teach.firstName} ${teach.lastName}`}
+                            <Typography variant="caption" display="block" color="text.secondary">
+                              {teach.designation || 'Faculty'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>{teach.phone || '-'}</TableCell>
+                          <TableCell align="center">
+                            <ToggleButtonGroup
+                              value={teacherAttendance[teach.id] || 'PRESENT'}
+                              exclusive
+                              onChange={(_, val) => handleTeacherStatusChange(teach.id, val)}
+                              size="small"
+                            >
+                              <ToggleButton value="PRESENT" color="success" sx={{ px: 2, fontWeight: 700 }}>Present</ToggleButton>
+                              <ToggleButton value="HALF_DAY" color="warning" sx={{ px: 2, fontWeight: 700 }}>Half Day</ToggleButton>
+                              <ToggleButton value="LEAVE" color="info" sx={{ px: 2, fontWeight: 700 }}>Leave</ToggleButton>
+                              <ToggleButton value="ABSENT" color="error" sx={{ px: 2, fontWeight: 700 }}>Absent</ToggleButton>
+                            </ToggleButtonGroup>
+                          </TableCell>
+                          <TableCell>
+                            <TextField
+                              size="small"
+                              fullWidth
+                              placeholder="Add reason/note..."
+                              value={teacherRemarks[teach.id] || ''}
+                              onChange={(e) => handleTeacherRemarkChange(teach.id, e.target.value)}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    {(!teachersData?.getTeachers || teachersData.getTeachers.length === 0) && (
                       <TableRow>
-                        <TableCell colSpan={4} align="center">No faculty members registered.</TableCell>
+                        <TableCell colSpan={4} align="center">No data</TableCell>
                       </TableRow>
                     )}
                   </TableBody>
                 </Table>
               </TableContainer>
+              {teachersData?.getTeachers?.length > 0 && (
+                <TablePagination
+                  rowsPerPageOptions={[10]}
+                  component="div"
+                  count={teachersData.getTeachers.length}
+                  rowsPerPage={10}
+                  page={pageTeachers}
+                  onPageChange={(e, newPage) => setPageTeachers(newPage)}
+                  sx={{ mb: 2 }}
+                />
+              )}
 
               <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <Button variant="contained" disabled={saveTeacherLoading} onClick={handleSaveTeacher} sx={{ background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)', color: '#FFFFFF', px: 4, width: { xs: '100%', sm: 'auto' } }}>
@@ -264,47 +279,60 @@ function StaffAttendance() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {staffData?.getStaff.map((st) => (
-                      <TableRow key={st.id} hover>
-                        <TableCell sx={{ fontWeight: 700 }}>
-                          {`${st.firstName} ${st.lastName}`}
-                          <Typography variant="caption" display="block" color="text.secondary">
-                            {st.designation || 'Staff'}
-                          </Typography>
-                        </TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>{st.department}</TableCell>
-                        <TableCell align="center">
-                          <ToggleButtonGroup
-                            value={staffAttendance[st.id] || 'PRESENT'}
-                            exclusive
-                            onChange={(_, val) => handleStaffStatusChange(st.id, val)}
-                            size="small"
-                          >
-                            <ToggleButton value="PRESENT" color="success" sx={{ px: 2, fontWeight: 700 }}>Present</ToggleButton>
-                            <ToggleButton value="HALF_DAY" color="warning" sx={{ px: 2, fontWeight: 700 }}>Half Day</ToggleButton>
-                            <ToggleButton value="LEAVE" color="info" sx={{ px: 2, fontWeight: 700 }}>Leave</ToggleButton>
-                            <ToggleButton value="ABSENT" color="error" sx={{ px: 2, fontWeight: 700 }}>Absent</ToggleButton>
-                          </ToggleButtonGroup>
-                        </TableCell>
-                        <TableCell>
-                          <TextField
-                            size="small"
-                            fullWidth
-                            placeholder="Add reason/note..."
-                            value={staffRemarks[st.id] || ''}
-                            onChange={(e) => handleStaffRemarkChange(st.id, e.target.value)}
-                          />
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                    {staffData?.getStaff.length === 0 && (
+                    {(staffData?.getStaff || [])
+                      .slice(pageStaff * 10, (pageStaff + 1) * 10)
+                      .map((st) => (
+                        <TableRow key={st.id} hover>
+                          <TableCell sx={{ fontWeight: 700 }}>
+                            {`${st.firstName} ${st.lastName}`}
+                            <Typography variant="caption" display="block" color="text.secondary">
+                              {st.designation || 'Staff'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>{st.department}</TableCell>
+                          <TableCell align="center">
+                            <ToggleButtonGroup
+                              value={staffAttendance[st.id] || 'PRESENT'}
+                              exclusive
+                              onChange={(_, val) => handleStaffStatusChange(st.id, val)}
+                              size="small"
+                            >
+                              <ToggleButton value="PRESENT" color="success" sx={{ px: 2, fontWeight: 700 }}>Present</ToggleButton>
+                              <ToggleButton value="HALF_DAY" color="warning" sx={{ px: 2, fontWeight: 700 }}>Half Day</ToggleButton>
+                              <ToggleButton value="LEAVE" color="info" sx={{ px: 2, fontWeight: 700 }}>Leave</ToggleButton>
+                              <ToggleButton value="ABSENT" color="error" sx={{ px: 2, fontWeight: 700 }}>Absent</ToggleButton>
+                            </ToggleButtonGroup>
+                          </TableCell>
+                          <TableCell>
+                            <TextField
+                              size="small"
+                              fullWidth
+                              placeholder="Add reason/note..."
+                              value={staffRemarks[st.id] || ''}
+                              onChange={(e) => handleStaffRemarkChange(st.id, e.target.value)}
+                            />
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    {(!staffData?.getStaff || staffData.getStaff.length === 0) && (
                       <TableRow>
-                        <TableCell colSpan={4} align="center">No staff members registered.</TableCell>
+                        <TableCell colSpan={4} align="center">No data</TableCell>
                       </TableRow>
                     )}
                   </TableBody>
                 </Table>
               </TableContainer>
+              {staffData?.getStaff?.length > 0 && (
+                <TablePagination
+                  rowsPerPageOptions={[10]}
+                  component="div"
+                  count={staffData.getStaff.length}
+                  rowsPerPage={10}
+                  page={pageStaff}
+                  onPageChange={(e, newPage) => setPageStaff(newPage)}
+                  sx={{ mb: 2 }}
+                />
+              )}
 
               <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
                 <Button variant="contained" disabled={saveStaffLoading} onClick={handleSaveStaff} sx={{ background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)', color: '#FFFFFF', px: 4, width: { xs: '100%', sm: 'auto' } }}>

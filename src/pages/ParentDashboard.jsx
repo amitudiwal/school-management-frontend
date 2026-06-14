@@ -5,7 +5,7 @@ import {
   Box, Grid, Card, CardContent, Typography, Avatar, Tab, Tabs,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, CircularProgress, Alert, Button, useTheme, LinearProgress, Chip,
-  Divider, List, ListItem, ListItemText, ListItemIcon, Stack
+  Divider, List, ListItem, ListItemText, ListItemIcon, Stack, TablePagination
 } from '@mui/material';
 import {
   School as SchoolIcon,
@@ -44,6 +44,9 @@ function ParentDashboard() {
   
   // Dashboard navigation tab state
   const [activeTab, setActiveTab] = useState(0);
+
+  const [pageMarks, setPageMarks] = useState(0);
+  const [pageFees, setPageFees] = useState(0);
 
   // Query: Get parent profile & children
   const { data: parentData, loading: parentLoading, error: parentError } = useQuery(GET_PARENT_PROFILE);
@@ -85,6 +88,8 @@ function ParentDashboard() {
   // Reset tab index on child switch
   useEffect(() => {
     setActiveTab(0);
+    setPageMarks(0);
+    setPageFees(0);
   }, [selectedChildIndex]);
 
   if (parentLoading) {
@@ -404,41 +409,60 @@ function ParentDashboard() {
                   ) : !marksData?.getStudentMarks || marksData.getStudentMarks.length === 0 ? (
                     <Alert severity="info">No grades or exam marks found for this student.</Alert>
                   ) : (
-                    <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
-                      <Table>
-                        <TableHead sx={{ bgcolor: theme.palette.grey[100] }}>
-                          <TableRow>
-                            <TableCell sx={{ fontWeight: 700 }}>Exam</TableCell>
-                            <TableCell sx={{ fontWeight: 700 }}>Subject</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 700 }}>Marks Obtained</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: 700 }}>Grade</TableCell>
-                            <TableCell sx={{ fontWeight: 700 }}>Remarks</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {marksData.getStudentMarks.map((mark) => (
-                            <TableRow key={mark.id} hover>
-                              <TableCell sx={{ fontWeight: 600 }}>
-                                {mark.examId?.name} ({mark.examId?.academicYear})
-                              </TableCell>
-                              <TableCell>{mark.subjectId?.name} ({mark.subjectId?.code})</TableCell>
-                              <TableCell align="right" sx={{ fontWeight: 700, color: theme.palette.primary.main }}>
-                                {mark.marksObtained}
-                              </TableCell>
-                              <TableCell align="center">
-                                <Chip
-                                  label={mark.grade || 'N/A'}
-                                  color={['A+', 'A', 'B+', 'B'].includes(mark.grade) ? 'success' : 'primary'}
-                                  size="small"
-                                  sx={{ fontWeight: 700 }}
-                                />
-                              </TableCell>
-                              <TableCell>{mark.remarks || '—'}</TableCell>
+                    <>
+                      <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
+                        <Table>
+                          <TableHead sx={{ bgcolor: theme.palette.grey[100] }}>
+                            <TableRow>
+                              <TableCell sx={{ fontWeight: 700 }}>Exam</TableCell>
+                              <TableCell sx={{ fontWeight: 700 }}>Subject</TableCell>
+                              <TableCell align="right" sx={{ fontWeight: 700 }}>Marks Obtained</TableCell>
+                              <TableCell align="center" sx={{ fontWeight: 700 }}>Grade</TableCell>
+                              <TableCell sx={{ fontWeight: 700 }}>Remarks</TableCell>
                             </TableRow>
-                          ))}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
+                          </TableHead>
+                          <TableBody>
+                            {(marksData.getStudentMarks || [])
+                              .slice(pageMarks * 10, (pageMarks + 1) * 10)
+                              .map((mark) => (
+                                <TableRow key={mark.id} hover>
+                                  <TableCell sx={{ fontWeight: 600 }}>
+                                    {mark.examId?.name} ({mark.examId?.academicYear})
+                                  </TableCell>
+                                  <TableCell>{mark.subjectId?.name} ({mark.subjectId?.code})</TableCell>
+                                  <TableCell align="right" sx={{ fontWeight: 700, color: theme.palette.primary.main }}>
+                                    {mark.marksObtained}
+                                  </TableCell>
+                                  <TableCell align="center">
+                                    <Chip
+                                      label={mark.grade || 'N/A'}
+                                      color={['A+', 'A', 'B+', 'B'].includes(mark.grade) ? 'success' : 'primary'}
+                                      size="small"
+                                      sx={{ fontWeight: 700 }}
+                                    />
+                                  </TableCell>
+                                  <TableCell>{mark.remarks || '—'}</TableCell>
+                                </TableRow>
+                              ))}
+                            {(!marksData.getStudentMarks || marksData.getStudentMarks.length === 0) && (
+                              <TableRow>
+                                <TableCell colSpan={5} align="center">No data</TableCell>
+                              </TableRow>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                      {marksData.getStudentMarks?.length > 0 && (
+                        <TablePagination
+                          rowsPerPageOptions={[10]}
+                          component="div"
+                          count={marksData.getStudentMarks.length}
+                          rowsPerPage={10}
+                          page={pageMarks}
+                          onPageChange={(e, newPage) => setPageMarks(newPage)}
+                        />
+                      )}
+                    </>
                   )}
                 </Box>
               )}
@@ -518,72 +542,91 @@ function ParentDashboard() {
                   ) : !feesData?.getStudentFeeStatus || feesData.getStudentFeeStatus.length === 0 ? (
                     <Alert severity="info">No fee records found for this student.</Alert>
                   ) : (
-                    <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
-                      <Table>
-                        <TableHead sx={{ bgcolor: theme.palette.grey[100] }}>
-                          <TableRow>
-                            <TableCell sx={{ fontWeight: 700 }}>Title / Category</TableCell>
-                            <TableCell sx={{ fontWeight: 700 }}>Due Date</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 700 }}>Fee Amount</TableCell>
-                            <TableCell align="right" sx={{ fontWeight: 700 }}>Paid Amount</TableCell>
-                            <TableCell align="center" sx={{ fontWeight: 700 }}>Payment Status</TableCell>
-                            <TableCell sx={{ fontWeight: 700 }}>Payment Info</TableCell>
-                          </TableRow>
-                        </TableHead>
-                        <TableBody>
-                          {feesData.getStudentFeeStatus.map((feePay) => {
-                            const isPaid = feePay.status === 'PAID';
-                            const isPartial = feePay.status === 'PARTIAL';
-                            return (
-                              <TableRow key={feePay.id} hover>
-                                <TableCell>
-                                  <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                                    {feePay.feeId?.title}
-                                  </Typography>
-                                  <Typography variant="caption" color="text.secondary">
-                                    Category: {feePay.feeId?.category || 'N/A'}
-                                  </Typography>
-                                </TableCell>
-                                <TableCell>
-                                  {feePay.feeId?.dueDate ? new Date(feePay.feeId.dueDate).toLocaleDateString() : '—'}
-                                </TableCell>
-                                <TableCell align="right" sx={{ fontWeight: 600 }}>
-                                  ${feePay.feeId?.amount?.toFixed(2) || '0.00'}
-                                </TableCell>
-                                <TableCell align="right" sx={{ fontWeight: 700, color: isPaid ? 'success.main' : 'inherit' }}>
-                                  ${feePay.amountPaid?.toFixed(2) || '0.00'}
-                                </TableCell>
-                                <TableCell align="center">
-                                  <Chip
-                                    label={feePay.status}
-                                    color={isPaid ? 'success' : isPartial ? 'warning' : 'error'}
-                                    size="small"
-                                    sx={{ fontWeight: 700 }}
-                                  />
-                                </TableCell>
-                                <TableCell>
-                                  {isPaid || isPartial ? (
-                                    <Box>
-                                      <Typography variant="caption" sx={{ display: 'block', fontWeight: 600 }}>
-                                        Receipt: {feePay.receiptNo}
-                                      </Typography>
-                                      <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
-                                        Method: {feePay.paymentMethod} | Ref: {feePay.referenceNo || '—'}
+                    <>
+                      <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
+                        <Table>
+                          <TableHead sx={{ bgcolor: theme.palette.grey[100] }}>
+                            <TableRow>
+                              <TableCell sx={{ fontWeight: 700 }}>Title / Category</TableCell>
+                              <TableCell sx={{ fontWeight: 700 }}>Due Date</TableCell>
+                              <TableCell align="right" sx={{ fontWeight: 700 }}>Fee Amount</TableCell>
+                              <TableCell align="right" sx={{ fontWeight: 700 }}>Paid Amount</TableCell>
+                              <TableCell align="center" sx={{ fontWeight: 700 }}>Payment Status</TableCell>
+                              <TableCell sx={{ fontWeight: 700 }}>Payment Info</TableCell>
+                            </TableRow>
+                          </TableHead>
+                          <TableBody>
+                            {(feesData.getStudentFeeStatus || [])
+                              .slice(pageFees * 10, (pageFees + 1) * 10)
+                              .map((feePay) => {
+                                const isPaid = feePay.status === 'PAID';
+                                const isPartial = feePay.status === 'PARTIAL';
+                                return (
+                                  <TableRow key={feePay.id} hover>
+                                    <TableCell>
+                                      <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                                        {feePay.feeId?.title}
                                       </Typography>
                                       <Typography variant="caption" color="text.secondary">
-                                        Date: {new Date(feePay.paymentDate).toLocaleDateString()}
+                                        Category: {feePay.feeId?.category || 'N/A'}
                                       </Typography>
-                                    </Box>
-                                  ) : (
-                                    <Typography variant="caption" color="text.secondary">No payment recorded</Typography>
-                                  )}
-                                </TableCell>
+                                    </TableCell>
+                                    <TableCell>
+                                      {feePay.feeId?.dueDate ? new Date(feePay.feeId.dueDate).toLocaleDateString() : '—'}
+                                    </TableCell>
+                                    <TableCell align="right" sx={{ fontWeight: 600 }}>
+                                      ${feePay.feeId?.amount?.toFixed(2) || '0.00'}
+                                    </TableCell>
+                                    <TableCell align="right" sx={{ fontWeight: 700, color: isPaid ? 'success.main' : 'inherit' }}>
+                                      ${feePay.amountPaid?.toFixed(2) || '0.00'}
+                                    </TableCell>
+                                    <TableCell align="center">
+                                      <Chip
+                                        label={feePay.status}
+                                        color={isPaid ? 'success' : isPartial ? 'warning' : 'error'}
+                                        size="small"
+                                        sx={{ fontWeight: 700 }}
+                                      />
+                                    </TableCell>
+                                    <TableCell>
+                                      {isPaid || isPartial ? (
+                                        <Box>
+                                          <Typography variant="caption" sx={{ display: 'block', fontWeight: 600 }}>
+                                            Receipt: {feePay.receiptNo}
+                                          </Typography>
+                                          <Typography variant="caption" color="text.secondary" sx={{ display: 'block' }}>
+                                            Method: {feePay.paymentMethod} | Ref: {feePay.referenceNo || '—'}
+                                          </Typography>
+                                          <Typography variant="caption" color="text.secondary">
+                                            Date: {new Date(feePay.paymentDate).toLocaleDateString()}
+                                          </Typography>
+                                        </Box>
+                                      ) : (
+                                        <Typography variant="caption" color="text.secondary">No payment recorded</Typography>
+                                      )}
+                                    </TableCell>
+                                  </TableRow>
+                                );
+                              })}
+                            {(!feesData.getStudentFeeStatus || feesData.getStudentFeeStatus.length === 0) && (
+                              <TableRow>
+                                <TableCell colSpan={6} align="center">No data</TableCell>
                               </TableRow>
-                            );
-                          })}
-                        </TableBody>
-                      </Table>
-                    </TableContainer>
+                            )}
+                          </TableBody>
+                        </Table>
+                      </TableContainer>
+                      {feesData.getStudentFeeStatus?.length > 0 && (
+                        <TablePagination
+                          rowsPerPageOptions={[10]}
+                          component="div"
+                          count={feesData.getStudentFeeStatus.length}
+                          rowsPerPage={10}
+                          page={pageFees}
+                          onPageChange={(e, newPage) => setPageFees(newPage)}
+                        />
+                      )}
+                    </>
                   )}
                 </Box>
               )}

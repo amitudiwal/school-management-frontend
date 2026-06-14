@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery } from '@apollo/client';
 import {
   Box, Button, Card, CardContent, Grid, TextField, MenuItem,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, Typography, CircularProgress, Alert, IconButton, Tooltip,
-  Stack, Chip, Divider, useTheme, Avatar, LinearProgress
+  Stack, Chip, Divider, useTheme, Avatar, LinearProgress, TablePagination
 } from '@mui/material';
 import {
   GetApp as DownloadIcon,
@@ -32,6 +32,11 @@ function ClassAnalytics() {
   const [classId, setClassId] = useState('');
   const [sectionId, setSectionId] = useState('');
   const [examId, setExamId] = useState('');
+  const [page, setPage] = useState(0);
+
+  useEffect(() => {
+    setPage(0);
+  }, [classId, sectionId, examId]);
 
   // Dropdown Queries
   const { data: classesData } = useQuery(GET_CLASSES);
@@ -405,70 +410,87 @@ function ClassAnalytics() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {analytics?.studentAnalytics.map((st) => (
-                      <TableRow 
-                        key={st.studentId} 
-                        hover
-                        sx={{ 
-                          bgcolor: st.isStruggling ? `${theme.palette.error.light}08` : 'inherit',
-                          '&:last-child td, &:last-child th': { border: 0 }
-                        }}
-                      >
-                        <TableCell>{st.rollNo || '-'}</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>
-                          {st.name}
-                          {st.isStruggling && (
+                    {(analytics?.studentAnalytics || [])
+                      .slice(page * 10, (page + 1) * 10)
+                      .map((st) => (
+                        <TableRow 
+                          key={st.studentId} 
+                          hover
+                          sx={{ 
+                            bgcolor: st.isStruggling ? `${theme.palette.error.light}08` : 'inherit',
+                            '&:last-child td, &:last-child th': { border: 0 }
+                          }}
+                        >
+                          <TableCell>{st.rollNo || '-'}</TableCell>
+                          <TableCell sx={{ fontWeight: 700 }}>
+                            {st.name}
+                            {st.isStruggling && (
+                              <Chip 
+                                size="small" 
+                                label="Struggling" 
+                                color="error" 
+                                sx={{ ml: 1, height: 18, fontSize: '0.65rem', fontWeight: 800 }} 
+                              />
+                            )}
+                          </TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 600 }}>
+                            {st.totalObtained} / {st.totalMax}
+                          </TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 700, color: st.isStruggling ? theme.palette.error.main : 'inherit' }}>
+                            {st.percentage.toFixed(1)}%
+                          </TableCell>
+                          <TableCell align="center">
                             <Chip 
-                              size="small" 
-                              label="Struggling" 
-                              color="error" 
-                              sx={{ ml: 1, height: 18, fontSize: '0.65rem', fontWeight: 800 }} 
+                                size="small" 
+                                label={st.grade} 
+                                sx={{ 
+                                  fontWeight: 800, 
+                                  bgcolor: `${gradeColors[st.grade]}15` || 'action.selected',
+                                  color: gradeColors[st.grade] || 'text.primary',
+                                  border: `1px solid ${gradeColors[st.grade]}40`
+                                }} 
                             />
-                          )}
-                        </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 600 }}>
-                          {st.totalObtained} / {st.totalMax}
-                        </TableCell>
-                        <TableCell align="right" sx={{ fontWeight: 700, color: st.isStruggling ? theme.palette.error.main : 'inherit' }}>
-                          {st.percentage.toFixed(1)}%
-                        </TableCell>
-                        <TableCell align="center">
-                          <Chip 
-                            size="small" 
-                            label={st.grade} 
-                            sx={{ 
-                              fontWeight: 800, 
-                              bgcolor: `${gradeColors[st.grade]}15` || 'action.selected',
-                              color: gradeColors[st.grade] || 'text.primary',
-                              border: `1px solid ${gradeColors[st.grade]}40`
-                            }} 
-                          />
-                        </TableCell>
-                        <TableCell align="center" sx={{ color: st.homeworkAverage === null ? 'text.secondary' : 'inherit' }}>
-                          {st.homeworkAverage !== null ? `${st.homeworkAverage.toFixed(1)} / 100` : 'N/A'}
-                          <Typography variant="caption" display="block" color="text.secondary">
-                            Completion: {st.homeworkCompletionRate.toFixed(0)}%
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="center">
-                          <Tooltip title="Download PDF Report Card">
-                            <IconButton 
-                              color="primary" 
-                              onClick={() => handleDownloadReportCard(st.studentId)}
-                              sx={{ 
-                                bgcolor: `${theme.palette.primary.main}08`,
-                                '&:hover': { bgcolor: `${theme.palette.primary.main}15` }
-                              }}
-                            >
-                              <DownloadIcon />
-                            </IconButton>
-                          </Tooltip>
-                        </TableCell>
+                          </TableCell>
+                          <TableCell align="center" sx={{ color: st.homeworkAverage === null ? 'text.secondary' : 'inherit' }}>
+                            {st.homeworkAverage !== null ? `${st.homeworkAverage.toFixed(1)} / 100` : 'N/A'}
+                            <Typography variant="caption" display="block" color="text.secondary">
+                              Completion: {st.homeworkCompletionRate.toFixed(0)}%
+                            </Typography>
+                          </TableCell>
+                          <TableCell align="center">
+                            <Tooltip title="Download PDF Report Card">
+                              <IconButton 
+                                color="primary" 
+                                onClick={() => handleDownloadReportCard(st.studentId)}
+                                sx={{ 
+                                  bgcolor: `${theme.palette.primary.main}08`,
+                                  '&:hover': { bgcolor: `${theme.palette.primary.main}15` }
+                                }}
+                              >
+                                <DownloadIcon />
+                              </IconButton>
+                            </Tooltip>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    {(!analytics?.studentAnalytics || analytics.studentAnalytics.length === 0) && (
+                      <TableRow>
+                        <TableCell colSpan={7} align="center">No data</TableCell>
                       </TableRow>
-                    ))}
+                    )}
                   </TableBody>
                 </Table>
               </TableContainer>
+              {analytics?.studentAnalytics?.length > 0 && (
+                <TablePagination
+                  rowsPerPageOptions={[10]}
+                  component="div"
+                  count={analytics.studentAnalytics.length}
+                  rowsPerPage={10}
+                  page={page}
+                  onPageChange={(e, newPage) => setPage(newPage)}
+                />
+              )}
             </CardContent>
           </Card>
         </Box>

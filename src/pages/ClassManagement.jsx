@@ -4,7 +4,7 @@ import {
   Alert, Box, Button, Card, CardContent, CircularProgress, Dialog,
   DialogActions, DialogContent, DialogTitle, Grid, MenuItem, Paper,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  TextField, Typography, Tab, Tabs, IconButton
+  TextField, Typography, Tab, Tabs, IconButton, TablePagination
 } from '@mui/material';
 import { Add as AddIcon, Class as ClassIcon, ViewList as SectionIcon, MenuBook as BookIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
@@ -28,6 +28,9 @@ import {
 function ClassManagement() {
   const dispatch = useDispatch();
   const [tabValue, setTabValue] = useState(0);
+  const [pageClasses, setPageClasses] = useState(0);
+  const [pageSections, setPageSections] = useState(0);
+  const [pageSubjects, setPageSubjects] = useState(0);
 
   // Class Form States
   const [openClassModal, setOpenClassModal] = useState(false);
@@ -393,36 +396,50 @@ function ClassManagement() {
           ) : classQueryError ? (
             <Alert severity="error">{classQueryError.message}</Alert>
           ) : (
-            <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
-              <Table sx={{ minWidth: 600 }}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Grade/Class Name</TableCell>
-                    <TableCell>Class Code</TableCell>
-                    <TableCell>Description</TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {classesData?.getClasses.map((cls) => (
-                    <TableRow key={cls.id} hover>
-                      <TableCell sx={{ fontWeight: 700 }}>{cls.name}</TableCell>
-                      <TableCell>{cls.code}</TableCell>
-                      <TableCell>{cls.description || '-'}</TableCell>
-                      <TableCell align="right">
-                        <IconButton color="primary" onClick={() => handleEditClass(cls)}><EditIcon /></IconButton>
-                        <IconButton color="error" onClick={() => setClassToDelete(cls)}><DeleteIcon /></IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {classesData?.getClasses.length === 0 && (
+            <>
+              <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+                <Table sx={{ minWidth: 600 }}>
+                  <TableHead>
                     <TableRow>
-                      <TableCell colSpan={4} align="center">No classes registered yet.</TableCell>
+                      <TableCell>Grade/Class Name</TableCell>
+                      <TableCell>Class Code</TableCell>
+                      <TableCell>Description</TableCell>
+                      <TableCell align="right">Actions</TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {(classesData?.getClasses || [])
+                      .slice(pageClasses * 10, (pageClasses + 1) * 10)
+                      .map((cls) => (
+                        <TableRow key={cls.id} hover>
+                          <TableCell sx={{ fontWeight: 700 }}>{cls.name}</TableCell>
+                          <TableCell>{cls.code}</TableCell>
+                          <TableCell>{cls.description || '-'}</TableCell>
+                          <TableCell align="right">
+                            <IconButton color="primary" onClick={() => handleEditClass(cls)}><EditIcon /></IconButton>
+                            <IconButton color="error" onClick={() => setClassToDelete(cls)}><DeleteIcon /></IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    {(!classesData?.getClasses || classesData.getClasses.length === 0) && (
+                      <TableRow>
+                        <TableCell colSpan={4} align="center">No data</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              {classesData?.getClasses?.length > 0 && (
+                <TablePagination
+                  rowsPerPageOptions={[10]}
+                  component="div"
+                  count={classesData.getClasses.length}
+                  rowsPerPage={10}
+                  page={pageClasses}
+                  onPageChange={(e, newPage) => setPageClasses(newPage)}
+                />
+              )}
+            </>
           )}
         </Box>
       )}
@@ -443,40 +460,54 @@ function ClassManagement() {
           ) : sectionQueryError ? (
             <Alert severity="error">{sectionQueryError.message}</Alert>
           ) : (
-            <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
-              <Table sx={{ minWidth: 760 }}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Section Name</TableCell>
-                    <TableCell>Associated Class</TableCell>
-                    <TableCell>Room Number</TableCell>
-                    <TableCell>Seat Capacity</TableCell>
-                    <TableCell>Class Teacher</TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {sectionsData?.getSections.map((sec) => (
-                    <TableRow key={sec.id} hover>
-                      <TableCell sx={{ fontWeight: 700 }}>{sec.name}</TableCell>
-                      <TableCell>{sec.classId?.name || '-'}</TableCell>
-                      <TableCell>{sec.roomNumber || '-'}</TableCell>
-                      <TableCell>{sec.capacity || '-'}</TableCell>
-                      <TableCell>{sec.classTeacherId ? `${sec.classTeacherId.firstName} ${sec.classTeacherId.lastName}` : 'Not Assigned'}</TableCell>
-                      <TableCell align="right">
-                        <IconButton color="primary" onClick={() => handleEditSection(sec)}><EditIcon /></IconButton>
-                        <IconButton color="error" onClick={() => setSectionToDelete(sec)}><DeleteIcon /></IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {sectionsData?.getSections.length === 0 && (
+            <>
+              <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+                <Table sx={{ minWidth: 760 }}>
+                  <TableHead>
                     <TableRow>
-                      <TableCell colSpan={6} align="center">No sections registered yet.</TableCell>
+                      <TableCell>Section Name</TableCell>
+                      <TableCell>Associated Class</TableCell>
+                      <TableCell>Room Number</TableCell>
+                      <TableCell>Seat Capacity</TableCell>
+                      <TableCell>Class Teacher</TableCell>
+                      <TableCell align="right">Actions</TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {(sectionsData?.getSections || [])
+                      .slice(pageSections * 10, (pageSections + 1) * 10)
+                      .map((sec) => (
+                        <TableRow key={sec.id} hover>
+                          <TableCell sx={{ fontWeight: 700 }}>{sec.name}</TableCell>
+                          <TableCell>{sec.classId?.name || '-'}</TableCell>
+                          <TableCell>{sec.roomNumber || '-'}</TableCell>
+                          <TableCell>{sec.capacity || '-'}</TableCell>
+                          <TableCell>{sec.classTeacherId ? `${sec.classTeacherId.firstName} ${sec.classTeacherId.lastName}` : 'Not Assigned'}</TableCell>
+                          <TableCell align="right">
+                            <IconButton color="primary" onClick={() => handleEditSection(sec)}><EditIcon /></IconButton>
+                            <IconButton color="error" onClick={() => setSectionToDelete(sec)}><DeleteIcon /></IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    {(!sectionsData?.getSections || sectionsData.getSections.length === 0) && (
+                      <TableRow>
+                        <TableCell colSpan={6} align="center">No data</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              {sectionsData?.getSections?.length > 0 && (
+                <TablePagination
+                  rowsPerPageOptions={[10]}
+                  component="div"
+                  count={sectionsData.getSections.length}
+                  rowsPerPage={10}
+                  page={pageSections}
+                  onPageChange={(e, newPage) => setPageSections(newPage)}
+                />
+              )}
+            </>
           )}
         </Box>
       )}
@@ -497,38 +528,52 @@ function ClassManagement() {
           ) : subjectQueryError ? (
             <Alert severity="error">{subjectQueryError.message}</Alert>
           ) : (
-            <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
-              <Table sx={{ minWidth: 760 }}>
-                <TableHead>
-                  <TableRow>
-                    <TableCell>Subject Name</TableCell>
-                    <TableCell>Subject Code</TableCell>
-                    <TableCell>Subject Type</TableCell>
-                    <TableCell>Target Class</TableCell>
-                    <TableCell align="right">Actions</TableCell>
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {subjectsData?.getSubjects.map((sub) => (
-                    <TableRow key={sub.id} hover>
-                      <TableCell sx={{ fontWeight: 700 }}>{sub.name}</TableCell>
-                      <TableCell>{sub.code}</TableCell>
-                      <TableCell>{sub.type}</TableCell>
-                      <TableCell>{sub.classId?.name || '-'}</TableCell>
-                      <TableCell align="right">
-                        <IconButton color="primary" onClick={() => handleEditSubject(sub)}><EditIcon /></IconButton>
-                        <IconButton color="error" onClick={() => setSubjectToDelete(sub)}><DeleteIcon /></IconButton>
-                      </TableCell>
-                    </TableRow>
-                  ))}
-                  {subjectsData?.getSubjects.length === 0 && (
+            <>
+              <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+                <Table sx={{ minWidth: 760 }}>
+                  <TableHead>
                     <TableRow>
-                      <TableCell colSpan={5} align="center">No subjects configured yet.</TableCell>
+                      <TableCell>Subject Name</TableCell>
+                      <TableCell>Subject Code</TableCell>
+                      <TableCell>Subject Type</TableCell>
+                      <TableCell>Target Class</TableCell>
+                      <TableCell align="right">Actions</TableCell>
                     </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
+                  </TableHead>
+                  <TableBody>
+                    {(subjectsData?.getSubjects || [])
+                      .slice(pageSubjects * 10, (pageSubjects + 1) * 10)
+                      .map((sub) => (
+                        <TableRow key={sub.id} hover>
+                          <TableCell sx={{ fontWeight: 700 }}>{sub.name}</TableCell>
+                          <TableCell>{sub.code}</TableCell>
+                          <TableCell>{sub.type}</TableCell>
+                          <TableCell>{sub.classId?.name || '-'}</TableCell>
+                          <TableCell align="right">
+                            <IconButton color="primary" onClick={() => handleEditSubject(sub)}><EditIcon /></IconButton>
+                            <IconButton color="error" onClick={() => setSubjectToDelete(sub)}><DeleteIcon /></IconButton>
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    {(!subjectsData?.getSubjects || subjectsData.getSubjects.length === 0) && (
+                      <TableRow>
+                        <TableCell colSpan={5} align="center">No data</TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              {subjectsData?.getSubjects?.length > 0 && (
+                <TablePagination
+                  rowsPerPageOptions={[10]}
+                  component="div"
+                  count={subjectsData.getSubjects.length}
+                  rowsPerPage={10}
+                  page={pageSubjects}
+                  onPageChange={(e, newPage) => setPageSubjects(newPage)}
+                />
+              )}
+            </>
           )}
         </Box>
       )}

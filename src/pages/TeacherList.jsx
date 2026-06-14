@@ -4,7 +4,8 @@ import {
   Alert, Box, Button, CircularProgress, Dialog, DialogActions,
   DialogContent, DialogTitle, Grid, MenuItem, Paper, Table,
   TableBody, TableCell, TableContainer, TableHead, TableRow,
-  TextField, Typography, IconButton, Tabs, Tab, Avatar, InputAdornment
+  TextField, Typography, IconButton, Tabs, Tab, Avatar, InputAdornment,
+  TablePagination
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Visibility, VisibilityOff } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
@@ -25,6 +26,8 @@ const getAvatarUrl = (avatarPath) => {
 function TeacherList() {
   const dispatch = useDispatch();
   const [activeTab, setActiveTab] = useState(0);
+  const [pageTeachers, setPageTeachers] = useState(0);
+  const [pageStaff, setPageStaff] = useState(0);
 
   // Teacher states
   const [openTeacherModal, setOpenTeacherModal] = useState(false);
@@ -352,46 +355,60 @@ function TeacherList() {
         ) : teachersError ? (
           <Alert severity="error">{teachersError.message}</Alert>
         ) : (
-          <TableContainer component={Paper} sx={{ overflowX: 'auto', borderRadius: 2 }}>
-            <Table sx={{ minWidth: 760 }}>
-              <TableHead sx={{ backgroundColor: 'action.hover' }}>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }} width="80px">Photo</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Teacher Name</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Email</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Phone</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Qualification</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Designation</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {teachersData?.getTeachers?.map((teacher) => (
-                  <TableRow key={teacher.id} hover>
-                    <TableCell>
-                      <Avatar src={getAvatarUrl(teacher.userId?.avatar)} sx={{ width: 44, height: 44, border: '1px solid', borderColor: 'divider' }}>
-                        {teacher.firstName?.charAt(0) || ''}
-                      </Avatar>
-                    </TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>{`${teacher.firstName} ${teacher.lastName}`}</TableCell>
-                    <TableCell>{teacher.email}</TableCell>
-                    <TableCell>{teacher.phone}</TableCell>
-                    <TableCell>{teacher.qualification}</TableCell>
-                    <TableCell>{teacher.designation || '-'}</TableCell>
-                    <TableCell align="right">
-                      <IconButton color="primary" onClick={() => handleTeacherEdit(teacher)}><EditIcon /></IconButton>
-                      <IconButton color="error" onClick={() => setTeacherToDelete(teacher)}><DeleteIcon /></IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {teachersData?.getTeachers.length === 0 && (
+          <>
+            <TableContainer component={Paper} sx={{ overflowX: 'auto', borderRadius: 2 }}>
+              <Table sx={{ minWidth: 760 }}>
+                <TableHead sx={{ backgroundColor: 'action.hover' }}>
                   <TableRow>
-                    <TableCell colSpan={7} align="center">No teachers registered yet.</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }} width="80px">Photo</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Teacher Name</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Email</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Phone</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Qualification</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Designation</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {(teachersData?.getTeachers || [])
+                    .slice(pageTeachers * 10, (pageTeachers + 1) * 10)
+                    .map((teacher) => (
+                      <TableRow key={teacher.id} hover>
+                        <TableCell>
+                          <Avatar src={getAvatarUrl(teacher.userId?.avatar)} sx={{ width: 44, height: 44, border: '1px solid', borderColor: 'divider' }}>
+                            {teacher.firstName?.charAt(0) || ''}
+                          </Avatar>
+                        </TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>{`${teacher.firstName} ${teacher.lastName}`}</TableCell>
+                        <TableCell>{teacher.email}</TableCell>
+                        <TableCell>{teacher.phone}</TableCell>
+                        <TableCell>{teacher.qualification}</TableCell>
+                        <TableCell>{teacher.designation || '-'}</TableCell>
+                        <TableCell align="right">
+                          <IconButton color="primary" onClick={() => handleTeacherEdit(teacher)}><EditIcon /></IconButton>
+                          <IconButton color="error" onClick={() => setTeacherToDelete(teacher)}><DeleteIcon /></IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  {(!teachersData?.getTeachers || teachersData.getTeachers.length === 0) && (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center">No data</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            {teachersData?.getTeachers?.length > 0 && (
+              <TablePagination
+                rowsPerPageOptions={[10]}
+                component="div"
+                count={teachersData.getTeachers.length}
+                rowsPerPage={10}
+                page={pageTeachers}
+                onPageChange={(e, newPage) => setPageTeachers(newPage)}
+              />
+            )}
+          </>
         )
       ) : (
         // --- GENERAL STAFF TABLE ---
@@ -400,40 +417,54 @@ function TeacherList() {
         ) : staffError ? (
           <Alert severity="error">{staffError.message}</Alert>
         ) : (
-          <TableContainer component={Paper} sx={{ overflowX: 'auto', borderRadius: 2 }}>
-            <Table sx={{ minWidth: 760 }}>
-              <TableHead sx={{ backgroundColor: 'action.hover' }}>
-                <TableRow>
-                  <TableCell sx={{ fontWeight: 700 }}>Staff Name</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Email</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Phone</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Department</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Designation</TableCell>
-                  <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {staffData?.getStaff?.map((staff) => (
-                  <TableRow key={staff.id} hover>
-                    <TableCell sx={{ fontWeight: 700 }}>{`${staff.firstName} ${staff.lastName}`}</TableCell>
-                    <TableCell>{staff.email}</TableCell>
-                    <TableCell>{staff.phone}</TableCell>
-                    <TableCell sx={{ textTransform: 'capitalize' }}>{staff.department.toLowerCase()}</TableCell>
-                    <TableCell>{staff.designation}</TableCell>
-                    <TableCell align="right">
-                      <IconButton color="primary" onClick={() => handleStaffEdit(staff)}><EditIcon /></IconButton>
-                      <IconButton color="error" onClick={() => setStaffToDelete(staff)}><DeleteIcon /></IconButton>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {staffData?.getStaff.length === 0 && (
+          <>
+            <TableContainer component={Paper} sx={{ overflowX: 'auto', borderRadius: 2 }}>
+              <Table sx={{ minWidth: 760 }}>
+                <TableHead sx={{ backgroundColor: 'action.hover' }}>
                   <TableRow>
-                    <TableCell colSpan={6} align="center">No general staff members registered yet.</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Staff Name</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Email</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Phone</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Department</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Designation</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {(staffData?.getStaff || [])
+                    .slice(pageStaff * 10, (pageStaff + 1) * 10)
+                    .map((staff) => (
+                      <TableRow key={staff.id} hover>
+                        <TableCell sx={{ fontWeight: 700 }}>{`${staff.firstName} ${staff.lastName}`}</TableCell>
+                        <TableCell>{staff.email}</TableCell>
+                        <TableCell>{staff.phone}</TableCell>
+                        <TableCell sx={{ textTransform: 'capitalize' }}>{staff.department.toLowerCase()}</TableCell>
+                        <TableCell>{staff.designation}</TableCell>
+                        <TableCell align="right">
+                          <IconButton color="primary" onClick={() => handleStaffEdit(staff)}><EditIcon /></IconButton>
+                          <IconButton color="error" onClick={() => setStaffToDelete(staff)}><DeleteIcon /></IconButton>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  {(!staffData?.getStaff || staffData.getStaff.length === 0) && (
+                    <TableRow>
+                      <TableCell colSpan={6} align="center">No data</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            {staffData?.getStaff?.length > 0 && (
+              <TablePagination
+                rowsPerPageOptions={[10]}
+                component="div"
+                count={staffData.getStaff.length}
+                rowsPerPage={10}
+                page={pageStaff}
+                onPageChange={(e, newPage) => setPageStaff(newPage)}
+              />
+            )}
+          </>
         )
       )}
 

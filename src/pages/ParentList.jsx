@@ -4,7 +4,7 @@ import {
   Alert, Box, Button, Card, CardContent, CircularProgress, Dialog,
   DialogActions, DialogContent, DialogTitle, Grid, MenuItem, Paper,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
-  TextField, Typography, IconButton, InputAdornment
+  TextField, Typography, IconButton, InputAdornment, TablePagination
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Visibility, VisibilityOff } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
@@ -25,6 +25,7 @@ function ParentList() {
   const [formError, setFormError] = useState('');
   const [selectedChildren, setSelectedChildren] = useState([]);
   const [showPassword, setShowPassword] = useState(false);
+  const [page, setPage] = useState(0);
 
   const { loading, error, data, refetch } = useQuery(GET_PARENTS);
   const { data: studentsData } = useQuery(GET_STUDENTS);
@@ -161,38 +162,52 @@ function ParentList() {
       ) : error ? (
         <Alert severity="error">{error.message}</Alert>
       ) : (
-        <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
-          <Table sx={{ minWidth: 760 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell>Parent Name</TableCell>
-                <TableCell>Relationship</TableCell>
-                <TableCell>Email</TableCell>
-                <TableCell>Phone</TableCell>
-                <TableCell align="right">Actions</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data?.getParents.map((parent) => (
-                <TableRow key={parent.id} hover>
-                  <TableCell sx={{ fontWeight: 700 }}>{`${parent.firstName} ${parent.lastName}`}</TableCell>
-                  <TableCell>{parent.relation}</TableCell>
-                  <TableCell>{parent.email || parent.userId?.email || '-'}</TableCell>
-                  <TableCell>{parent.phone}</TableCell>
-                  <TableCell align="right">
-                    <IconButton color="primary" onClick={() => handleEdit(parent)}><EditIcon /></IconButton>
-                    <IconButton color="error" onClick={() => setParentToDelete(parent)}><DeleteIcon /></IconButton>
-                  </TableCell>
-                </TableRow>
-              ))}
-              {data?.getParents.length === 0 && (
+        <>
+          <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+            <Table sx={{ minWidth: 760 }}>
+              <TableHead>
                 <TableRow>
-                  <TableCell colSpan={5} align="center">No parents registered yet.</TableCell>
+                  <TableCell>Parent Name</TableCell>
+                  <TableCell>Relationship</TableCell>
+                  <TableCell>Email</TableCell>
+                  <TableCell>Phone</TableCell>
+                  <TableCell align="right">Actions</TableCell>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {(data?.getParents || [])
+                  .slice(page * 10, (page + 1) * 10)
+                  .map((parent) => (
+                    <TableRow key={parent.id} hover>
+                      <TableCell sx={{ fontWeight: 700 }}>{`${parent.firstName} ${parent.lastName}`}</TableCell>
+                      <TableCell>{parent.relation}</TableCell>
+                      <TableCell>{parent.email || parent.userId?.email || '-'}</TableCell>
+                      <TableCell>{parent.phone}</TableCell>
+                      <TableCell align="right">
+                        <IconButton color="primary" onClick={() => handleEdit(parent)}><EditIcon /></IconButton>
+                        <IconButton color="error" onClick={() => setParentToDelete(parent)}><DeleteIcon /></IconButton>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                {(!data?.getParents || data.getParents.length === 0) && (
+                  <TableRow>
+                    <TableCell colSpan={5} align="center">No data</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          {data?.getParents?.length > 0 && (
+            <TablePagination
+              rowsPerPageOptions={[10]}
+              component="div"
+              count={data.getParents.length}
+              rowsPerPage={10}
+              page={page}
+              onPageChange={(e, newPage) => setPage(newPage)}
+            />
+          )}
+        </>
       )}
 
       <Dialog open={openModal} onClose={handleClose} maxWidth="sm" fullWidth>

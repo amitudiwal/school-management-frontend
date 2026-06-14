@@ -5,7 +5,7 @@ import {
   Box, Grid, Card, CardContent, Typography, Avatar, 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
   Paper, CircularProgress, Alert, Button, useTheme, LinearProgress, Chip,
-  Tabs, Tab, TextField
+  Tabs, Tab, TextField, TablePagination
 } from '@mui/material';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, 
@@ -24,6 +24,7 @@ function Dashboard() {
   const theme = useTheme();
   const [activeAttendanceTab, setActiveAttendanceTab] = useState(0);
   const [dashboardDate, setDashboardDate] = useState(new Date().toISOString().split('T')[0]);
+  const [page, setPage] = useState(0);
 
   // Load appropriate dashboard queries based on user role
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
@@ -174,26 +175,43 @@ function Dashboard() {
               </TableRow>
             </TableHead>
             <TableBody>
-              {logsData?.getGlobalAuditLogs?.map((log) => (
-                <TableRow key={log.id}>
-                  <TableCell>
-                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <Avatar size="small" sx={{ width: 24, height: 24, fontSize: '0.75rem' }}>
-                        {log.userId?.name?.charAt(0) || 'A'}
-                      </Avatar>
-                      <Typography variant="body2">{log.userId?.name || 'System / Suspended User'}</Typography>
-                    </Box>
-                  </TableCell>
-                  <TableCell>
-                    <Chip size="small" label={log.action} color={log.action.includes('FAIL') ? 'error' : 'secondary'} sx={{ fontWeight: 700 }} />
-                  </TableCell>
-                  <TableCell>{log.details}</TableCell>
-                  <TableCell>{new Date(log.createdAt).toLocaleString()}</TableCell>
+              {(logsData?.getGlobalAuditLogs || [])
+                .slice(page * 10, (page + 1) * 10)
+                .map((log) => (
+                  <TableRow key={log.id}>
+                    <TableCell>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <Avatar size="small" sx={{ width: 24, height: 24, fontSize: '0.75rem' }}>
+                          {log.userId?.name?.charAt(0) || 'A'}
+                        </Avatar>
+                        <Typography variant="body2">{log.userId?.name || 'System / Suspended User'}</Typography>
+                      </Box>
+                    </TableCell>
+                    <TableCell>
+                      <Chip size="small" label={log.action} color={log.action.includes('FAIL') ? 'error' : 'secondary'} sx={{ fontWeight: 700 }} />
+                    </TableCell>
+                    <TableCell>{log.details}</TableCell>
+                    <TableCell>{new Date(log.createdAt).toLocaleString()}</TableCell>
+                  </TableRow>
+                ))}
+              {(!logsData?.getGlobalAuditLogs || logsData.getGlobalAuditLogs.length === 0) && (
+                <TableRow>
+                  <TableCell colSpan={4} align="center">No data</TableCell>
                 </TableRow>
-              ))}
+              )}
             </TableBody>
           </Table>
         </TableContainer>
+        {logsData?.getGlobalAuditLogs?.length > 0 && (
+          <TablePagination
+            rowsPerPageOptions={[10]}
+            component="div"
+            count={logsData.getGlobalAuditLogs.length}
+            rowsPerPage={10}
+            page={page}
+            onPageChange={(e, newPage) => setPage(newPage)}
+          />
+        )}
       </Box>
     );
   }

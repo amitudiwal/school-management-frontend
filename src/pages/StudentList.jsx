@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
 import { useSelector } from 'react-redux';
 import {
   Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent,
   DialogTitle, Grid, TextField, MenuItem, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress,
-  Alert, IconButton, InputAdornment, Avatar
+  Alert, IconButton, InputAdornment, Avatar, TablePagination
 } from '@mui/material';
 import {
   Search as SearchIcon, Add as AddIcon, FileDownload as ExportIcon,
@@ -44,6 +44,13 @@ function StudentList() {
   const [openModal, setOpenModal] = useState(false);
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [studentToDelete, setStudentToDelete] = useState(null);
+
+  const [page, setPage] = useState(0);
+
+  // Reset page on filter changes
+  useEffect(() => {
+    setPage(0);
+  }, [search, classId, sectionId]);
 
   // Form States for Admission
   const [firstName, setFirstName] = useState('');
@@ -368,56 +375,70 @@ function StudentList() {
       ) : studentsError ? (
         <Alert severity="error">{studentsError.message}</Alert>
       ) : (
-        <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
-          <Table sx={{ minWidth: 820 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell width="80px">Photo</TableCell>
-                <TableCell>Admission No</TableCell>
-                <TableCell>Roll No</TableCell>
-                <TableCell>Student Name</TableCell>
-                <TableCell>Gender</TableCell>
-                <TableCell>Grade Level</TableCell>
-                <TableCell>Assigned Section</TableCell>
-                <TableCell>Parent / Guardian</TableCell>
-                {canManageStudent && <TableCell align="right">Actions</TableCell>}
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {studentsData?.getStudents?.map((st) => (
-                <TableRow key={st.id} hover>
-                  <TableCell>
-                    <Avatar src={getAvatarUrl(st.userId?.avatar)} sx={{ width: 44, height: 44, border: '1px solid', borderColor: 'divider' }}>
-                      {st.firstName?.charAt(0) || ''}
-                    </Avatar>
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>{st.admissionNo}</TableCell>
-                  <TableCell>{st.rollNo || '-'}</TableCell>
-                  <TableCell sx={{ fontWeight: 600 }}>{`${st.firstName} ${st.lastName}`}</TableCell>
-                  <TableCell>{st.gender}</TableCell>
-                  <TableCell>{st.classId?.name}</TableCell>
-                  <TableCell>{st.sectionId?.name}</TableCell>
-                  <TableCell>{st.parentId ? `${st.parentId.firstName} ${st.parentId.lastName}` : '-'}</TableCell>
-                  {canManageStudent && (
-                    <TableCell align="right">
-                      <IconButton aria-label="Edit student" color="primary" onClick={() => handleOpenEdit(st)}>
-                        <EditIcon />
-                      </IconButton>
-                      <IconButton aria-label="Delete student" color="error" onClick={() => setStudentToDelete(st)}>
-                        <DeleteIcon />
-                      </IconButton>
-                    </TableCell>
-                  )}
-                </TableRow>
-              ))}
-              {studentsData?.getStudents.length === 0 && (
+        <>
+          <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+            <Table sx={{ minWidth: 820 }}>
+              <TableHead>
                 <TableRow>
-                  <TableCell colSpan={canManageStudent ? 9 : 8} align="center">No students found matching filters.</TableCell>
+                  <TableCell width="80px">Photo</TableCell>
+                  <TableCell>Admission No</TableCell>
+                  <TableCell>Roll No</TableCell>
+                  <TableCell>Student Name</TableCell>
+                  <TableCell>Gender</TableCell>
+                  <TableCell>Grade Level</TableCell>
+                  <TableCell>Assigned Section</TableCell>
+                  <TableCell>Parent / Guardian</TableCell>
+                  {canManageStudent && <TableCell align="right">Actions</TableCell>}
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {(studentsData?.getStudents || [])
+                  .slice(page * 10, (page + 1) * 10)
+                  .map((st) => (
+                    <TableRow key={st.id} hover>
+                      <TableCell>
+                        <Avatar src={getAvatarUrl(st.userId?.avatar)} sx={{ width: 44, height: 44, border: '1px solid', borderColor: 'divider' }}>
+                          {st.firstName?.charAt(0) || ''}
+                        </Avatar>
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>{st.admissionNo}</TableCell>
+                      <TableCell>{st.rollNo || '-'}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{`${st.firstName} ${st.lastName}`}</TableCell>
+                      <TableCell>{st.gender}</TableCell>
+                      <TableCell>{st.classId?.name}</TableCell>
+                      <TableCell>{st.sectionId?.name}</TableCell>
+                      <TableCell>{st.parentId ? `${st.parentId.firstName} ${st.parentId.lastName}` : '-'}</TableCell>
+                      {canManageStudent && (
+                        <TableCell align="right">
+                          <IconButton aria-label="Edit student" color="primary" onClick={() => handleOpenEdit(st)}>
+                            <EditIcon />
+                          </IconButton>
+                          <IconButton aria-label="Delete student" color="error" onClick={() => setStudentToDelete(st)}>
+                            <DeleteIcon />
+                          </IconButton>
+                        </TableCell>
+                      )}
+                    </TableRow>
+                  ))}
+                {(!studentsData?.getStudents || studentsData.getStudents.length === 0) && (
+                  <TableRow>
+                    <TableCell colSpan={canManageStudent ? 9 : 8} align="center">No data</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          {studentsData?.getStudents?.length > 0 && (
+            <TablePagination
+              rowsPerPageOptions={[10]}
+              component="div"
+              count={studentsData.getStudents.length}
+              rowsPerPage={10}
+              page={page}
+              onPageChange={(e, newPage) => setPage(newPage)}
+            />
+          )}
+        </>
       )}
 
       {/* Admission Dialog Modal */}

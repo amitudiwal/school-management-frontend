@@ -3,7 +3,7 @@ import { useQuery, useMutation } from '@apollo/client';
 import { 
   Box, Button, Card, CardContent, Grid, TextField, MenuItem, 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
-  Paper, Typography, CircularProgress, Alert, IconButton
+  Paper, Typography, CircularProgress, Alert, IconButton, TablePagination
 } from '@mui/material';
 import { Save as SaveIcon, CheckCircle as SuccessIcon } from '@mui/icons-material';
 import { 
@@ -25,6 +25,7 @@ function GradesEntry() {
   
   const [rowStatus, setRowStatus] = useState({}); // { [studentId]: 'idle' | 'loading' | 'success' | 'error' }
   const [alertMsg, setAlertMsg] = useState('');
+  const [page, setPage] = useState(0);
 
   // Queries
   const { data: classesData } = useQuery(GET_CLASSES);
@@ -63,6 +64,7 @@ function GradesEntry() {
 
   // Reset student states when filters change
   React.useEffect(() => {
+    setPage(0);
     if (studentsData?.getStudents) {
       const initialMarks = {};
       const initialGrades = {};
@@ -238,99 +240,116 @@ function GradesEntry() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {studentsData?.getStudents.map((st) => {
-                  const status = rowStatus[st.id] || 'idle';
-                  return (
-                    <TableRow key={st.id} hover>
-                      <TableCell>{st.rollNo || '-'}</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>{`${st.firstName} ${st.lastName}`}</TableCell>
-                      <TableCell>
-                        <TextField
-                          size="small"
-                          type="number"
-                          placeholder="e.g. 85"
-                          value={marksData[st.id] ?? ''}
-                          error={status === 'error'}
-                          onChange={(e) => handleFieldChange(st.id, 'marks', e.target.value)}
-                          inputProps={{ min: 0, max: 100, step: "0.5" }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          size="small"
-                          select
-                          fullWidth
-                          value={gradesData[st.id] || 'A'}
-                          onChange={(e) => handleFieldChange(st.id, 'grade', e.target.value)}
-                        >
-                          {GRADE_OPTIONS.map((g) => (
-                            <MenuItem key={g} value={g}>{g}</MenuItem>
-                          ))}
-                        </TextField>
-                      </TableCell>
-                      <TableCell>
-                        <TextField
-                          size="small"
-                          fullWidth
-                          placeholder="Feedback..."
-                          value={remarksData[st.id] || ''}
-                          onChange={(e) => handleFieldChange(st.id, 'remarks', e.target.value)}
-                        />
-                      </TableCell>
-                      <TableCell align="center">
-                        {status === 'loading' ? (
-                          <Button
-                            variant="contained"
-                            disabled
+                {(studentsData?.getStudents || [])
+                  .slice(page * 10, (page + 1) * 10)
+                  .map((st) => {
+                    const status = rowStatus[st.id] || 'idle';
+                    return (
+                      <TableRow key={st.id} hover>
+                        <TableCell>{st.rollNo || '-'}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>{`${st.firstName} ${st.lastName}`}</TableCell>
+                        <TableCell>
+                          <TextField
                             size="small"
-                            sx={{ borderRadius: 2, textTransform: 'none', minWidth: 100 }}
-                          >
-                            <CircularProgress size={16} sx={{ mr: 1 }} /> Saving
-                          </Button>
-                        ) : status === 'success' ? (
-                          <Button
-                            variant="contained"
-                            color="success"
+                            type="number"
+                            placeholder="e.g. 85"
+                            value={marksData[st.id] ?? ''}
+                            error={status === 'error'}
+                            onChange={(e) => handleFieldChange(st.id, 'marks', e.target.value)}
+                            inputProps={{ min: 0, max: 100, step: "0.5" }}
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <TextField
                             size="small"
-                            startIcon={<SuccessIcon />}
-                            sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, minWidth: 100 }}
+                            select
+                            fullWidth
+                            value={gradesData[st.id] || 'A'}
+                            onChange={(e) => handleFieldChange(st.id, 'grade', e.target.value)}
                           >
-                            Saved
-                          </Button>
-                        ) : (
-                          <Button
-                            variant="contained"
+                            {GRADE_OPTIONS.map((g) => (
+                              <MenuItem key={g} value={g}>{g}</MenuItem>
+                            ))}
+                          </TextField>
+                        </TableCell>
+                        <TableCell>
+                          <TextField
                             size="small"
-                            startIcon={<SaveIcon />}
-                            onClick={() => handleSaveRow(st.id)}
-                            disabled={marksData[st.id] === ''}
-                            sx={{ 
-                              borderRadius: 2, 
-                              textTransform: 'none', 
-                              fontWeight: 700,
-                              minWidth: 100,
-                              background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)', 
-                              color: '#FFFFFF',
-                              '&:hover': {
-                                opacity: 0.9,
-                                background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)'
-                              },
-                              '&.Mui-disabled': {
-                                background: 'action.disabledBackground',
-                                color: 'action.disabled'
-                              }
-                            }}
-                          >
-                            Save
-                          </Button>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  );
-                })}
+                            fullWidth
+                            placeholder="Feedback..."
+                            value={remarksData[st.id] || ''}
+                            onChange={(e) => handleFieldChange(st.id, 'remarks', e.target.value)}
+                          />
+                        </TableCell>
+                        <TableCell align="center">
+                          {status === 'loading' ? (
+                            <Button
+                              variant="contained"
+                              disabled
+                              size="small"
+                              sx={{ borderRadius: 2, textTransform: 'none', minWidth: 100 }}
+                            >
+                              <CircularProgress size={16} sx={{ mr: 1 }} /> Saving
+                            </Button>
+                          ) : status === 'success' ? (
+                            <Button
+                              variant="contained"
+                              color="success"
+                              size="small"
+                              startIcon={<SuccessIcon />}
+                              sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700, minWidth: 100 }}
+                            >
+                              Saved
+                            </Button>
+                          ) : (
+                            <Button
+                              variant="contained"
+                              size="small"
+                              startIcon={<SaveIcon />}
+                              onClick={() => handleSaveRow(st.id)}
+                              disabled={marksData[st.id] === ''}
+                              sx={{ 
+                                borderRadius: 2, 
+                                textTransform: 'none', 
+                                fontWeight: 700,
+                                minWidth: 100,
+                                background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)', 
+                                color: '#FFFFFF',
+                                '&:hover': {
+                                  opacity: 0.9,
+                                  background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)'
+                                },
+                                '&.Mui-disabled': {
+                                  background: 'action.disabledBackground',
+                                  color: 'action.disabled'
+                                }
+                              }}
+                            >
+                              Save
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+                {(!studentsData?.getStudents || studentsData.getStudents.length === 0) && (
+                  <TableRow>
+                    <TableCell colSpan={6} align="center">No data</TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </TableContainer>
+          {studentsData?.getStudents?.length > 0 && (
+            <TablePagination
+              rowsPerPageOptions={[10]}
+              component="div"
+              count={studentsData.getStudents.length}
+              rowsPerPage={10}
+              page={page}
+              onPageChange={(e, newPage) => setPage(newPage)}
+            />
+          )}
         </Box>
       )}
     </Box>

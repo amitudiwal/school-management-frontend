@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
 import { 
   Box, Button, Card, CardContent, Grid, TextField, MenuItem, 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
-  Paper, Typography, CircularProgress, Alert, ToggleButton, ToggleButtonGroup 
+  Paper, Typography, CircularProgress, Alert, ToggleButton, ToggleButtonGroup,
+  TablePagination
 } from '@mui/material';
 import { GET_CLASSES, GET_SECTIONS, GET_STUDENTS, MARK_BULK_ATTENDANCE, GET_SCHOOL_ADMIN_DASHBOARD } from '../graphql/operations';
 import CustomDatePicker from '../components/CustomDatePicker';
@@ -15,6 +16,11 @@ function AttendanceMark() {
   const [attendanceRecords, setAttendanceRecords] = useState({});
   const [remarksRecords, setRemarksRecords] = useState({});
   const [saveStatus, setSaveStatus] = useState('');
+  const [page, setPage] = useState(0);
+
+  useEffect(() => {
+    setPage(0);
+  }, [classId, sectionId, date]);
 
   // Queries
   const { data: classesData } = useQuery(GET_CLASSES);
@@ -166,43 +172,60 @@ function AttendanceMark() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {studentsData?.getStudents.map((st) => (
-                  <TableRow key={st.id} hover>
-                    <TableCell>{st.rollNo || '-'}</TableCell>
-                    <TableCell sx={{ fontWeight: 600 }}>{`${st.firstName} ${st.lastName}`}</TableCell>
-                    <TableCell align="center">
-                      <ToggleButtonGroup
-                        value={attendanceRecords[st.id] || 'PRESENT'}
-                        exclusive
-                        onChange={(_, value) => handleStatusChange(st.id, value)}
-                        size="small"
-                        sx={{ flexWrap: 'nowrap' }}
-                      >
-                        <ToggleButton value="PRESENT" color="success" sx={{ px: 2, fontWeight: 700 }}>
-                          Present
-                        </ToggleButton>
-                        <ToggleButton value="LATE" color="warning" sx={{ px: 2, fontWeight: 700 }}>
-                          Late
-                        </ToggleButton>
-                        <ToggleButton value="ABSENT" color="error" sx={{ px: 2, fontWeight: 700 }}>
-                          Absent
-                        </ToggleButton>
-                      </ToggleButtonGroup>
-                    </TableCell>
-                    <TableCell>
-                      <TextField
-                        size="small"
-                        fullWidth
-                        placeholder="Add reason/note..."
-                        value={remarksRecords[st.id] || ''}
-                        onChange={(e) => handleRemarkChange(st.id, e.target.value)}
-                      />
-                    </TableCell>
+                {(studentsData?.getStudents || [])
+                  .slice(page * 10, (page + 1) * 10)
+                  .map((st) => (
+                    <TableRow key={st.id} hover>
+                      <TableCell>{st.rollNo || '-'}</TableCell>
+                      <TableCell sx={{ fontWeight: 600 }}>{`${st.firstName} ${st.lastName}`}</TableCell>
+                      <TableCell align="center">
+                        <ToggleButtonGroup
+                          value={attendanceRecords[st.id] || 'PRESENT'}
+                          exclusive
+                          onChange={(_, value) => handleStatusChange(st.id, value)}
+                          size="small"
+                          sx={{ flexWrap: 'nowrap' }}
+                        >
+                          <ToggleButton value="PRESENT" color="success" sx={{ px: 2, fontWeight: 700 }}>
+                            Present
+                          </ToggleButton>
+                          <ToggleButton value="LATE" color="warning" sx={{ px: 2, fontWeight: 700 }}>
+                            Late
+                          </ToggleButton>
+                          <ToggleButton value="ABSENT" color="error" sx={{ px: 2, fontWeight: 700 }}>
+                            Absent
+                          </ToggleButton>
+                        </ToggleButtonGroup>
+                      </TableCell>
+                      <TableCell>
+                        <TextField
+                          size="small"
+                          fullWidth
+                          placeholder="Add reason/note..."
+                          value={remarksRecords[st.id] || ''}
+                          onChange={(e) => handleRemarkChange(st.id, e.target.value)}
+                        />
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                {(!studentsData?.getStudents || studentsData.getStudents.length === 0) && (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center">No data</TableCell>
                   </TableRow>
-                ))}
+                )}
               </TableBody>
             </Table>
           </TableContainer>
+          {studentsData?.getStudents?.length > 0 && (
+            <TablePagination
+              rowsPerPageOptions={[10]}
+              component="div"
+              count={studentsData.getStudents.length}
+              rowsPerPage={10}
+              page={page}
+              onPageChange={(e, newPage) => setPage(newPage)}
+            />
+          )}
 
           <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
             <Button variant="contained" disabled={saveLoading} onClick={handleSave} sx={{ width: { xs: '100%', sm: 'auto' } }}>

@@ -4,7 +4,7 @@ import {
   Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent,
   DialogTitle, Grid, TextField, MenuItem, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress,
-  Alert, Chip, IconButton, Avatar, InputAdornment
+  Alert, Chip, IconButton, Avatar, InputAdornment, TablePagination
 } from '@mui/material';
 import { Add as AddIcon, CheckCircle as ApproveIcon, Cancel as RejectIcon, Block as SuspendIcon, Edit as EditIcon, Delete as DeleteIcon, Visibility, VisibilityOff } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
@@ -24,6 +24,7 @@ function SchoolsList() {
   const [openModal, setOpenModal] = useState(false);
   const [selectedSchool, setSelectedSchool] = useState(null);
   const [schoolToDelete, setSchoolToDelete] = useState(null);
+  const [page, setPage] = useState(0);
 
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
@@ -229,106 +230,125 @@ function SchoolsList() {
       ) : error ? (
         <Alert severity="error">{error.message}</Alert>
       ) : (
-        <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
-          <Table sx={{ minWidth: 900 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700 }} width="80px">Logo</TableCell>
-                <TableCell>School Name</TableCell>
-                <TableCell>Subdomain Slug</TableCell>
-                <TableCell>Subscription Plan</TableCell>
-                <TableCell>Account Status</TableCell>
-                <TableCell>Contact Email</TableCell>
-                <TableCell>Onboarding Date</TableCell>
-                <TableCell align="right">Actions / Control</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {data?.getSchools.map((sch) => (
-                <TableRow key={sch.id} hover>
-                  <TableCell>
-                    <Avatar 
-                      src={getSchoolLogoUrl(sch.schoolLogo || sch.logo)} 
-                      variant="rounded"
-                      sx={{ width: 40, height: 40, border: '1px solid', borderColor: 'divider', bgcolor: '#f8fafc' }}
-                    >
-                      {sch.name?.charAt(0) || ''}
-                    </Avatar>
-                  </TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>{sch.name}</TableCell>
-                  <TableCell>{sch.slug}</TableCell>
-                  <TableCell>
-                    <Chip size="small" label={sch.subscription?.plan} color="primary" variant="outlined" sx={{ fontWeight: 700 }} />
-                  </TableCell>
-                  <TableCell>
-                    <Chip
-                      size="small"
-                      label={sch.status}
-                      color={['ACTIVE', 'APPROVED'].includes(sch.status) ? 'success' : sch.status === 'PENDING' ? 'warning' : 'error'}
-                      sx={{ fontWeight: 700 }}
-                    />
-                  </TableCell>
-                  <TableCell>{sch.contact?.email}</TableCell>
-                  <TableCell>{new Date(sch.createdAt).toISOString().split('T')[0]}</TableCell>
-                  <TableCell align="right">
-                    <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', flexWrap: 'wrap', alignItems: 'center' }}>
-                      {sch.status === 'PENDING' && (
-                        <>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            color="success"
-                            startIcon={<ApproveIcon />}
-                            onClick={() => handleStatusChange(sch.id, 'APPROVED')}
-                          >
-                            Approve
-                          </Button>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            color="error"
-                            startIcon={<RejectIcon />}
-                            onClick={() => handleStatusChange(sch.id, 'REJECTED')}
-                          >
-                            Reject
-                          </Button>
-                        </>
-                      )}
-                      {['ACTIVE', 'APPROVED'].includes(sch.status) && (
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          color="error"
-                          startIcon={<SuspendIcon />}
-                          onClick={() => handleStatusChange(sch.id, 'SUSPENDED')}
-                        >
-                          Suspend
-                        </Button>
-                      )}
-                      {['REJECTED', 'SUSPENDED'].includes(sch.status) && (
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          color="success"
-                          startIcon={<ApproveIcon />}
-                          onClick={() => handleStatusChange(sch.id, 'APPROVED')}
-                        >
-                          Approve
-                        </Button>
-                      )}
-                      <IconButton color="primary" onClick={() => handleOpenEdit(sch)} aria-label="edit school">
-                        <EditIcon fontSize="small" />
-                      </IconButton>
-                      <IconButton color="error" onClick={() => setSchoolToDelete(sch)} aria-label="delete school">
-                        <DeleteIcon fontSize="small" />
-                      </IconButton>
-                    </Box>
-                  </TableCell>
+        <>
+          <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+            <Table sx={{ minWidth: 900 }}>
+              <TableHead>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 700 }} width="80px">Logo</TableCell>
+                  <TableCell>School Name</TableCell>
+                  <TableCell>Subdomain Slug</TableCell>
+                  <TableCell>Subscription Plan</TableCell>
+                  <TableCell>Account Status</TableCell>
+                  <TableCell>Contact Email</TableCell>
+                  <TableCell>Onboarding Date</TableCell>
+                  <TableCell align="right">Actions / Control</TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {(data?.getSchools || [])
+                  .slice(page * 10, (page + 1) * 10)
+                  .map((sch) => (
+                    <TableRow key={sch.id} hover>
+                      <TableCell>
+                        <Avatar 
+                          src={getSchoolLogoUrl(sch.schoolLogo || sch.logo)} 
+                          variant="rounded"
+                          sx={{ width: 40, height: 40, border: '1px solid', borderColor: 'divider', bgcolor: '#f8fafc' }}
+                        >
+                          {sch.name?.charAt(0) || ''}
+                        </Avatar>
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>{sch.name}</TableCell>
+                      <TableCell>{sch.slug}</TableCell>
+                      <TableCell>
+                        <Chip size="small" label={sch.subscription?.plan} color="primary" variant="outlined" sx={{ fontWeight: 700 }} />
+                      </TableCell>
+                      <TableCell>
+                        <Chip
+                          size="small"
+                          label={sch.status}
+                          color={['ACTIVE', 'APPROVED'].includes(sch.status) ? 'success' : sch.status === 'PENDING' ? 'warning' : 'error'}
+                          sx={{ fontWeight: 700 }}
+                        />
+                      </TableCell>
+                      <TableCell>{sch.contact?.email}</TableCell>
+                      <TableCell>{new Date(sch.createdAt).toISOString().split('T')[0]}</TableCell>
+                      <TableCell align="right">
+                        <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', flexWrap: 'wrap', alignItems: 'center' }}>
+                          {sch.status === 'PENDING' && (
+                            <>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="success"
+                                startIcon={<ApproveIcon />}
+                                onClick={() => handleStatusChange(sch.id, 'APPROVED')}
+                              >
+                                Approve
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="error"
+                                startIcon={<RejectIcon />}
+                                onClick={() => handleStatusChange(sch.id, 'REJECTED')}
+                              >
+                                Reject
+                              </Button>
+                            </>
+                          )}
+                          {['ACTIVE', 'APPROVED'].includes(sch.status) && (
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="error"
+                              startIcon={<SuspendIcon />}
+                              onClick={() => handleStatusChange(sch.id, 'SUSPENDED')}
+                            >
+                              Suspend
+                            </Button>
+                          )}
+                          {['REJECTED', 'SUSPENDED'].includes(sch.status) && (
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="success"
+                              startIcon={<ApproveIcon />}
+                              onClick={() => handleStatusChange(sch.id, 'APPROVED')}
+                            >
+                              Approve
+                            </Button>
+                          )}
+                          <IconButton color="primary" onClick={() => handleOpenEdit(sch)} aria-label="edit school">
+                            <EditIcon fontSize="small" />
+                          </IconButton>
+                          <IconButton color="error" onClick={() => setSchoolToDelete(sch)} aria-label="delete school">
+                            <DeleteIcon fontSize="small" />
+                          </IconButton>
+                        </Box>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                {(!data?.getSchools || data.getSchools.length === 0) && (
+                  <TableRow>
+                    <TableCell colSpan={8} align="center">No data</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          {data?.getSchools?.length > 0 && (
+            <TablePagination
+              rowsPerPageOptions={[10]}
+              component="div"
+              count={data.getSchools.length}
+              rowsPerPage={10}
+              page={page}
+              onPageChange={(e, newPage) => setPage(newPage)}
+            />
+          )}
+        </>
       )}
 
       {/* Provision/Edit School Dialog Modal */}
