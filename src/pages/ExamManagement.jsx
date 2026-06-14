@@ -32,11 +32,6 @@ function ExamManagement() {
   const [pageExams, setPageExams] = useState(0);
   const [pageSchedules, setPageSchedules] = useState(0);
 
-  // Reset pageSchedules when filters change
-  React.useEffect(() => {
-    setPageSchedules(0);
-  }, [filterExamId, filterClassId]);
-
   // Exam Term States
   const [openExamModal, setOpenExamModal] = useState(false);
   const [examName, setExamName] = useState('');
@@ -60,6 +55,11 @@ function ExamManagement() {
   const [schedRoomNo, setSchedRoomNo] = useState('');
   const [schedError, setSchedError] = useState('');
   const [schedToDelete, setSchedToDelete] = useState(null);
+
+  // Reset pageSchedules when filters change
+  React.useEffect(() => {
+    setPageSchedules(0);
+  }, [filterExamId, filterClassId]);
 
   // Dropdown Queries
   const { data: examsData, loading: examsLoading, refetch: refetchExams } = useQuery(GET_EXAMS);
