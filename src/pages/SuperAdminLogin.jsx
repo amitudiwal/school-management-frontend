@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
-import { useMutation } from '@apollo/client';
+import { useMutation, useApolloClient } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
 import vidyaflowLogo from '../assets/vidyaflowlogo.png';
 import {
@@ -24,9 +24,15 @@ function SuperAdminLogin() {
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const client = useApolloClient();
 
   const [loginMutation, { loading, error }] = useMutation(LOGIN_WITH_PASSWORD, {
-    onCompleted: (data) => {
+    onCompleted: async (data) => {
+      try {
+        await client.clearStore();
+      } catch (e) {
+        console.error('Error clearing apollo store on superadmin login:', e);
+      }
       dispatch(loginSuccess({
         token: data.loginWithPassword.token,
         refreshToken: data.loginWithPassword.refreshToken,

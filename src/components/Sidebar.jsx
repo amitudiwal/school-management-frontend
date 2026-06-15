@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { useQuery } from '@apollo/client';
+import { useQuery, useApolloClient } from '@apollo/client';
 import {
   Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText,
   Avatar, Box, Typography, Divider, IconButton, Chip, useTheme
@@ -34,6 +34,7 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
   const navigate = useNavigate();
   const location = useLocation();
   const theme = useTheme();
+  const client = useApolloClient();
 
   const { data: schoolData } = useQuery(GET_SCHOOL, {
     variables: { id: user?.schoolId },
@@ -43,9 +44,14 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
   const schoolLogo = schoolData?.getSchool?.schoolLogo || schoolData?.getSchool?.logo;
   const schoolName = schoolData?.getSchool?.schoolName || schoolData?.getSchool?.name;
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
     dispatch(logout());
     onMobileClose?.();
+    try {
+      await client.clearStore();
+    } catch (e) {
+      console.error('Error clearing apollo store on logout:', e);
+    }
     navigate('/login');
   };
 

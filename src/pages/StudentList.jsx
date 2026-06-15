@@ -23,12 +23,12 @@ import {
   DELETE_STUDENT,
   GET_PARENTS
 } from '../graphql/operations';
+import { BACKEND_URL } from '../graphql/client';
 
 const getAvatarUrl = (avatarPath) => {
   if (!avatarPath) return '';
   if (avatarPath.startsWith('http')) return avatarPath;
-  // return `http://localhost:5000${avatarPath}`;
-  return `https://school-management-backend-izxj.onrender.com${avatarPath}`;
+  return `${BACKEND_URL}${avatarPath}`;
 };
 
 function StudentList() {
@@ -78,8 +78,7 @@ function StudentList() {
     
     setUploading(true);
     try {
-      // const response = await fetch('http://localhost:5000/api/upload', {
-            const response = await fetch('https://school-management-backend-izxj.onrender.com/api/upload', {
+      const response = await fetch(`${BACKEND_URL}/api/upload`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`

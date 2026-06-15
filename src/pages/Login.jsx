@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
-import { useMutation, useLazyQuery } from '@apollo/client';
+import { useMutation, useLazyQuery, useApolloClient } from '@apollo/client';
 import {
   Box, Card, CardContent, TextField, Button, Typography,
   Alert, InputAdornment, IconButton, CircularProgress, Link, Chip, Grid,
@@ -23,6 +23,7 @@ import vidyaflowLogo from '../assets/vidyaflowlogo.png';
 function Login() {
   const globalTheme = useTheme();
   const dispatch = useDispatch();
+  const client = useApolloClient();
 
   // Multi-step steps: 'SCHOOL_CODE' | 'SELECT_ROLE' | 'ADMIN_LOGIN' | 'TEACHER_LOGIN' | 'PARENT_LOGIN' | 'OTP_VERIFICATION' | 'FORGOT_PASSWORD'
   const [step, setStep] = useState('SCHOOL_CODE');
@@ -67,11 +68,37 @@ function Login() {
 
   // Password login mutation
   const [loginWithPasswordMutation, { loading: pwLoading }] = useMutation(LOGIN_WITH_PASSWORD, {
-    onCompleted: (data) => {
+    onCompleted: async (data) => {
+      const user = data.loginWithPassword.user;
+
+      if (selectedRole === 'TEACHER' && !['TEACHER', 'CLASS_TEACHER'].includes(user.role)) {
+        dispatch(loginFailure('Access denied: You are not registered as a Faculty Teacher.'));
+        setValidationError('Access denied: You are not registered as a Faculty Teacher.');
+        dispatch(showToast({ message: 'Access denied: You are not registered as a Faculty Teacher.', severity: 'error' }));
+        return;
+      }
+      if (selectedRole === 'PARENT' && user.role !== 'PARENT') {
+        dispatch(loginFailure('Access denied: You are not registered as a Parent.'));
+        setValidationError('Access denied: You are not registered as a Parent.');
+        dispatch(showToast({ message: 'Access denied: You are not registered as a Parent.', severity: 'error' }));
+        return;
+      }
+      if (selectedRole === 'SCHOOL_ADMIN' && !['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user.role)) {
+        dispatch(loginFailure('Access denied: You do not have School Admin/Management permissions.'));
+        setValidationError('Access denied: You do not have School Admin/Management permissions.');
+        dispatch(showToast({ message: 'Access denied: You do not have School Admin/Management permissions.', severity: 'error' }));
+        return;
+      }
+
+      try {
+        await client.clearStore();
+      } catch (e) {
+        console.error('Error clearing apollo store on login:', e);
+      }
       dispatch(loginSuccess({
         token: data.loginWithPassword.token,
         refreshToken: data.loginWithPassword.refreshToken,
-        user: data.loginWithPassword.user
+        user
       }));
       dispatch(showToast({ message: 'Login successful!', severity: 'success' }));
     },
@@ -97,11 +124,37 @@ function Login() {
 
   // Verify OTP mutation
   const [verifyOTPMutation, { loading: verifyOTPLoading }] = useMutation(VERIFY_OTP, {
-    onCompleted: (data) => {
+    onCompleted: async (data) => {
+      const user = data.verifyOTP.user;
+
+      if (selectedRole === 'TEACHER' && !['TEACHER', 'CLASS_TEACHER'].includes(user.role)) {
+        dispatch(loginFailure('Access denied: You are not registered as a Faculty Teacher.'));
+        setValidationError('Access denied: You are not registered as a Faculty Teacher.');
+        dispatch(showToast({ message: 'Access denied: You are not registered as a Faculty Teacher.', severity: 'error' }));
+        return;
+      }
+      if (selectedRole === 'PARENT' && user.role !== 'PARENT') {
+        dispatch(loginFailure('Access denied: You are not registered as a Parent.'));
+        setValidationError('Access denied: You are not registered as a Parent.');
+        dispatch(showToast({ message: 'Access denied: You are not registered as a Parent.', severity: 'error' }));
+        return;
+      }
+      if (selectedRole === 'SCHOOL_ADMIN' && !['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user.role)) {
+        dispatch(loginFailure('Access denied: You do not have School Admin/Management permissions.'));
+        setValidationError('Access denied: You do not have School Admin/Management permissions.');
+        dispatch(showToast({ message: 'Access denied: You do not have School Admin/Management permissions.', severity: 'error' }));
+        return;
+      }
+
+      try {
+        await client.clearStore();
+      } catch (e) {
+        console.error('Error clearing apollo store on OTP login:', e);
+      }
       dispatch(loginSuccess({
         token: data.verifyOTP.token,
         refreshToken: data.verifyOTP.refreshToken,
-        user: data.verifyOTP.user
+        user
       }));
       dispatch(showToast({ message: 'Login successful via OTP!', severity: 'success' }));
     },
