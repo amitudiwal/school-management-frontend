@@ -153,6 +153,44 @@ const getDesignTokens = (mode) => ({
         },
       },
     },
+    MuiInputLabel: {
+      styleOverrides: {
+        root: {
+          color: mode === 'dark' ? '#94A3B8' : '#475569',
+          '&.Mui-focused': {
+            color: mode === 'dark' ? '#818CF8' : '#4F46E5',
+          },
+          '&.MuiInputLabel-shrink': {
+            color: mode === 'dark' ? '#94A3B8' : '#475569',
+            '&.Mui-focused': {
+              color: mode === 'dark' ? '#818CF8' : '#4F46E5',
+            },
+          },
+          '&.MuiInputLabel-outlined': {
+            color: mode === 'dark' ? '#94A3B8' : '#475569',
+            '&.Mui-focused': {
+              color: mode === 'dark' ? '#818CF8' : '#4F46E5',
+            },
+            '&.MuiInputLabel-shrink': {
+              color: mode === 'dark' ? '#94A3B8' : '#475569',
+            },
+          },
+        },
+      },
+    },
+    MuiFormLabel: {
+      styleOverrides: {
+        root: {
+          color: mode === 'dark' ? '#94A3B8' : '#475569',
+          '&.Mui-focused': {
+            color: mode === 'dark' ? '#818CF8' : '#4F46E5',
+          },
+          '&.MuiFormLabel-filled': {
+            color: mode === 'dark' ? '#94A3B8' : '#475569',
+          },
+        },
+      },
+    },
   },
 });
 

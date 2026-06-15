@@ -74,7 +74,7 @@ function Dashboard() {
       { title: 'Total Schools Onboarded', value: stats?.totalSchools, icon: <SchoolIcon />, color: '#6366F1' },
       { title: 'Total Students Globally', value: stats?.totalStudents, icon: <PeopleIcon />, color: '#D946EF' },
       { title: 'Total Active Teachers', value: stats?.totalTeachers, icon: <LibraryIcon />, color: '#10B981' },
-      { title: 'Monthly Revenue', value: `$${stats?.monthlyRevenue?.toLocaleString()}`, icon: <FeesIcon />, color: '#F59E0B' },
+      { title: 'Monthly Revenue', value: `₹${stats?.monthlyRevenue?.toLocaleString()}`, icon: <FeesIcon />, color: '#F59E0B' },
     ];
 
     console.log('Global Audit Logs:', logsData?.getGlobalAuditLogs);
@@ -383,7 +383,7 @@ function Dashboard() {
                   <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
                   <XAxis dataKey="name" stroke={theme.palette.text.secondary} />
                   <YAxis stroke={theme.palette.text.secondary} />
-                  <Tooltip formatter={(value) => `$${value.toLocaleString()}`} />
+                  <Tooltip formatter={(value) => `₹${value.toLocaleString()}`} />
                   <Bar dataKey="value" fill="#6366F1" radius={[8, 8, 0, 0]}>
                     <Cell fill="#10B981" />
                     <Cell fill="#EF4444" />
@@ -393,7 +393,7 @@ function Dashboard() {
             </Box>
             <Box sx={{ textAlign: 'center', mt: 1 }}>
               <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.secondary' }}>
-                Total School Term Expected Dues: ${stats?.feeCollectionSummary?.totalExpected?.toLocaleString()}
+                Total School Term Expected Dues: ₹${stats?.feeCollectionSummary?.totalExpected?.toLocaleString()}
               </Typography>
             </Box>
           </Card>

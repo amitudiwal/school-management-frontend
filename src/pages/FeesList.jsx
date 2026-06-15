@@ -5,11 +5,11 @@ import {
   Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, 
   DialogTitle, Grid, TextField, MenuItem, Table, TableBody, TableCell, 
   TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress, 
-  Alert, IconButton, TablePagination
+  Alert, IconButton, TablePagination, Tabs, Tab, Chip, Tooltip
 } from '@mui/material';
 import { useDispatch } from 'react-redux';
 import { Add as AddIcon, FileDownload as ExportIcon, Settings as SettingsIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { GET_FEES_LIST, GET_CLASSES, GET_STUDENTS, COLLECT_STUDENT_FEE, CREATE_FEE_STRUCTURE, UPDATE_FEE_STRUCTURE, DELETE_FEE_STRUCTURE } from '../graphql/operations';
+import { GET_FEES_LIST, GET_STUDENT_FEE_LEDGER, GET_CLASSES, GET_STUDENTS, COLLECT_STUDENT_FEE, CREATE_FEE_STRUCTURE, UPDATE_FEE_STRUCTURE, DELETE_FEE_STRUCTURE } from '../graphql/operations';
 import { showToast } from '../store/slices/uiSlice';
 import CustomDatePicker from '../components/CustomDatePicker';
 
@@ -31,7 +31,12 @@ function FeesList() {
   // Reset page when class filter changes
   React.useEffect(() => {
     setPage(0);
+    setPageLedger(0);
   }, [classId]);
+
+  // States
+  const [activeTab, setActiveTab] = useState(0);
+  const [pageLedger, setPageLedger] = useState(0);
 
   // Form States for fee payment collection
   const [selectedStudent, setSelectedStudent] = useState('');
@@ -57,6 +62,10 @@ function FeesList() {
     variables: { classId: classId || undefined }
   });
 
+  const { loading: ledgerLoading, error: ledgerError, data: ledgerData, refetch: refetchLedger } = useQuery(GET_STUDENT_FEE_LEDGER, {
+    variables: { classId: classId || undefined }
+  });
+
   const { data: classesData } = useQuery(GET_CLASSES);
   const { data: studentsData } = useQuery(GET_STUDENTS);
 
@@ -65,6 +74,7 @@ function FeesList() {
     onCompleted: () => {
       setOpenModal(false);
       refetch();
+      refetchLedger();
       // Reset forms
       setSelectedStudent('');
       setSelectedFee('');
@@ -84,6 +94,7 @@ function FeesList() {
       setOpenStructureModal(false);
       clearStructureForm();
       refetch();
+      refetchLedger();
       dispatch(showToast({ message: 'Fee structure created successfully!', severity: 'success' }));
     },
     onError: (err) => {
@@ -97,6 +108,7 @@ function FeesList() {
       setOpenStructureModal(false);
       clearStructureForm();
       refetch();
+      refetchLedger();
       dispatch(showToast({ message: 'Fee structure updated successfully!', severity: 'success' }));
     },
     onError: (err) => {
@@ -109,6 +121,7 @@ function FeesList() {
     onCompleted: () => {
       setFeeStructToDelete(null);
       refetch();
+      refetchLedger();
       dispatch(showToast({ message: 'Fee structure deleted successfully!', severity: 'success' }));
     },
     onError: (err) => {
@@ -272,64 +285,161 @@ function FeesList() {
         </CardContent>
       </Card>
 
+      {/* Tabs Selector */}
+      <Tabs 
+        value={activeTab} 
+        onChange={(e, newValue) => setActiveTab(newValue)} 
+        sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
+      >
+        <Tab label="Fee Structures & Invoices" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600 }} />
+        <Tab label="Student Payment Ledger" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600 }} />
+      </Tabs>
+
       {/* Data Table */}
-      {feesLoading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}><CircularProgress /></Box>
-      ) : feesError ? (
-        <Alert severity="error">{feesError.message}</Alert>
-      ) : (
-        <>
-          <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
-            <Table sx={{ minWidth: 760 }}>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Fee Invoice Title</TableCell>
-                  <TableCell>Category</TableCell>
-                  <TableCell>Billing Amount</TableCell>
-                  <TableCell>Target Class</TableCell>
-                  <TableCell>Due Date</TableCell>
-                  <TableCell>Academic Term</TableCell>
-                  {isAdmin && <TableCell align="right">Actions</TableCell>}
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {(feesData?.getFeesList || [])
-                  .slice(page * 10, (page + 1) * 10)
-                  .map((fee) => (
-                    <TableRow key={fee.id} hover>
-                      <TableCell sx={{ fontWeight: 700 }}>{fee.title}</TableCell>
-                      <TableCell>{fee.category}</TableCell>
-                      <TableCell sx={{ fontWeight: 600 }}>${fee.amount}</TableCell>
-                      <TableCell>{fee.classId?.name}</TableCell>
-                      <TableCell>{new Date(fee.dueDate).toISOString().split('T')[0]}</TableCell>
-                      <TableCell>{fee.academicYear}</TableCell>
-                      {isAdmin && (
-                        <TableCell align="right">
-                          <IconButton color="primary" onClick={() => handleEditStruct(fee)}><EditIcon /></IconButton>
-                          <IconButton color="error" onClick={() => setFeeStructToDelete(fee)}><DeleteIcon /></IconButton>
-                        </TableCell>
-                      )}
-                    </TableRow>
-                  ))}
-                {(!feesData?.getFeesList || feesData.getFeesList.length === 0) && (
+      {activeTab === 0 ? (
+        feesLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}><CircularProgress /></Box>
+        ) : feesError ? (
+          <Alert severity="error">{feesError.message}</Alert>
+        ) : (
+          <>
+            <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+              <Table sx={{ minWidth: 760 }}>
+                <TableHead>
                   <TableRow>
-                    <TableCell colSpan={isAdmin ? 7 : 6} align="center">No data</TableCell>
+                    <TableCell>Fee Invoice Title</TableCell>
+                    <TableCell>Category</TableCell>
+                    <TableCell>Billing Amount</TableCell>
+                    <TableCell>Target Class</TableCell>
+                    <TableCell>Due Date</TableCell>
+                    <TableCell>Academic Term</TableCell>
+                    {isAdmin && <TableCell align="right">Actions</TableCell>}
                   </TableRow>
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
-          {feesData?.getFeesList?.length > 0 && (
-            <TablePagination
-              rowsPerPageOptions={[10]}
-              component="div"
-              count={feesData.getFeesList.length}
-              rowsPerPage={10}
-              page={page}
-              onPageChange={(e, newPage) => setPage(newPage)}
-            />
-          )}
-        </>
+                </TableHead>
+                <TableBody>
+                  {(feesData?.getFeesList || [])
+                    .slice(page * 10, (page + 1) * 10)
+                    .map((fee) => (
+                      <TableRow key={fee.id} hover>
+                        <TableCell sx={{ fontWeight: 700 }}>{fee.title}</TableCell>
+                        <TableCell>{fee.category}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>₹{fee.amount}</TableCell>
+                        <TableCell>{fee.classId?.name}</TableCell>
+                        <TableCell>{new Date(fee.dueDate).toISOString().split('T')[0]}</TableCell>
+                        <TableCell>{fee.academicYear}</TableCell>
+                        {isAdmin && (
+                          <TableCell align="right">
+                            <IconButton color="primary" onClick={() => handleEditStruct(fee)}><EditIcon /></IconButton>
+                            <IconButton color="error" onClick={() => setFeeStructToDelete(fee)}><DeleteIcon /></IconButton>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    ))}
+                  {(!feesData?.getFeesList || feesData.getFeesList.length === 0) && (
+                    <TableRow>
+                      <TableCell colSpan={isAdmin ? 7 : 6} align="center">No data</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            {feesData?.getFeesList?.length > 0 && (
+              <TablePagination
+                rowsPerPageOptions={[10]}
+                component="div"
+                count={feesData.getFeesList.length}
+                rowsPerPage={10}
+                page={page}
+                onPageChange={(e, newPage) => setPage(newPage)}
+              />
+            )}
+          </>
+        )
+      ) : (
+        ledgerLoading ? (
+          <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}><CircularProgress /></Box>
+        ) : ledgerError ? (
+          <Alert severity="error">{ledgerError.message}</Alert>
+        ) : (
+          <>
+            <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+              <Table sx={{ minWidth: 760 }}>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Student Name</TableCell>
+                    <TableCell>Admission No.</TableCell>
+                    <TableCell>Class</TableCell>
+                    <TableCell>Total Payable</TableCell>
+                    <TableCell>Total Paid</TableCell>
+                    <TableCell>Outstanding Balance</TableCell>
+                    <TableCell>Status</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {(ledgerData?.getStudentFeeLedger || [])
+                    .slice(pageLedger * 10, (pageLedger + 1) * 10)
+                    .map((ledgerItem) => {
+                      const outstanding = ledgerItem.outstanding;
+                      const payable = ledgerItem.totalPayable;
+                      const paid = ledgerItem.totalPaid;
+                      
+                      let statusText = 'NO FEES';
+                      let statusColor = 'default';
+                      
+                      if (payable > 0) {
+                        if (outstanding === 0) {
+                          statusText = 'PAID';
+                          statusColor = 'success';
+                        } else if (paid > 0) {
+                          statusText = 'PARTIAL';
+                          statusColor = 'warning';
+                        } else {
+                          statusText = 'UNPAID';
+                          statusColor = 'error';
+                        }
+                      }
+                      
+                      return (
+                        <TableRow key={ledgerItem.studentId} hover>
+                          <TableCell sx={{ fontWeight: 700 }}>{ledgerItem.studentName}</TableCell>
+                          <TableCell>{ledgerItem.admissionNo}</TableCell>
+                          <TableCell>{ledgerItem.className}</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>₹{payable}</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>₹{paid}</TableCell>
+                          <TableCell sx={{ fontWeight: 700, color: outstanding > 0 ? '#EF4444' : '#10B981' }}>
+                            ₹{outstanding}
+                          </TableCell>
+                          <TableCell>
+                            <Chip 
+                              label={statusText} 
+                              color={statusColor} 
+                              size="small" 
+                              sx={{ fontWeight: 700, fontSize: '0.75rem' }} 
+                            />
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                  {(!ledgerData?.getStudentFeeLedger || ledgerData.getStudentFeeLedger.length === 0) && (
+                    <TableRow>
+                      <TableCell colSpan={7} align="center">No student ledger data found</TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+            {ledgerData?.getStudentFeeLedger?.length > 0 && (
+              <TablePagination
+                rowsPerPageOptions={[10]}
+                component="div"
+                count={ledgerData.getStudentFeeLedger.length}
+                rowsPerPage={10}
+                page={pageLedger}
+                onPageChange={(e, newPage) => setPageLedger(newPage)}
+              />
+            )}
+          </>
+        )
       )}
 
       {/* Collect Fee Payment Dialog Modal */}
@@ -361,7 +471,7 @@ function FeesList() {
                 >
                   {feesData?.getFeesList.map((fee) => (
                     <MenuItem key={fee.id} value={fee.id}>
-                      {`${fee.title} - $${fee.amount}`}
+                      {`${fee.title} - ₹${fee.amount}`}
                     </MenuItem>
                   ))}
                 </TextField>
@@ -369,7 +479,7 @@ function FeesList() {
 
               <Grid item xs={12} sm={6}>
                 <TextField 
-                  fullWidth required type="number" label="Amount Paid ($)" 
+                  fullWidth required type="number" label="Amount Paid (₹)" 
                   value={amountPaid} 
                   onChange={(e) => setAmountPaid(e.target.value)} 
                 />
@@ -448,7 +558,7 @@ function FeesList() {
 
               <Grid item xs={12} sm={6}>
                 <TextField 
-                  fullWidth required type="number" label="Billing Amount ($)" 
+                  fullWidth required type="number" label="Billing Amount (₹)" 
                   value={structAmount} 
                   onChange={(e) => setStructAmount(e.target.value)} 
                 />

@@ -465,6 +465,20 @@ export const GET_FEES_LIST = gql`
   }
 `;
 
+export const GET_STUDENT_FEE_LEDGER = gql`
+  query GetStudentFeeLedger($classId: ID) {
+    getStudentFeeLedger(classId: $classId) {
+      studentId
+      studentName
+      admissionNo
+      className
+      totalPayable
+      totalPaid
+      outstanding
+    }
+  }
+`;
+
 export const CREATE_FEE_STRUCTURE = gql`
   mutation CreateFeeStructure(
     $title: String!
@@ -1402,6 +1416,167 @@ export const DELETE_EXAM_SCHEDULE = gql`
     deleteExamSchedule(id: $id)
   }
 `;
+
+export const GET_LEAVE_REQUESTS = gql`
+  query GetLeaveRequests {
+    getLeaveRequests {
+      id
+      leaveType
+      startDate
+      endDate
+      reason
+      status
+      approvalRemarks
+      approvedAt
+      userId {
+        id
+        name
+        role
+        email
+      }
+      approvedBy {
+        id
+        name
+      }
+    }
+  }
+`;
+
+export const REQUEST_LEAVE = gql`
+  mutation RequestLeave($leaveType: String!, $startDate: Date!, $endDate: Date!, $reason: String!) {
+    requestLeave(leaveType: $leaveType, startDate: $startDate, endDate: $endDate, reason: $reason) {
+      id
+      leaveType
+      startDate
+      endDate
+      reason
+      status
+    }
+  }
+`;
+
+export const UPDATE_LEAVE_STATUS = gql`
+  mutation UpdateLeaveStatus($leaveId: ID!, $status: String!, $remarks: String) {
+    updateLeaveStatus(leaveId: $leaveId, status: $status, remarks: $remarks) {
+      id
+      status
+      approvalRemarks
+      approvedAt
+      approvedBy {
+        id
+        name
+      }
+    }
+  }
+`;
+
+export const GET_TEACHER_LEAVE_BALANCE = gql`
+  query GetTeacherLeaveBalance($userId: ID!) {
+    getTeacherLeaveBalance(userId: $userId) {
+      leaveType
+      allowed
+      used
+      remaining
+    }
+  }
+`;
+
+export const GET_PAYROLL_LIST = gql`
+  query GetPayrollList {
+    getPayrollList {
+      id
+      basicSalary
+      netSalary
+      month
+      year
+      status
+      payslipNo
+      paymentDate
+      paymentMethod
+      allowances {
+        name
+        amount
+      }
+      deductions {
+        name
+        amount
+      }
+      userId {
+        id
+        name
+        email
+        role
+      }
+    }
+  }
+`;
+
+export const GENERATE_PAYSLIP = gql`
+  mutation GeneratePayslip(
+    $userId: ID!
+    $basicSalary: Float!
+    $month: Int!
+    $year: Int!
+    $allowances: [PayrollItemInput!]
+    $deductions: [PayrollItemInput!]
+    $paymentMethod: String
+  ) {
+    generatePayslip(
+      userId: $userId
+      basicSalary: $basicSalary
+      month: $month
+      year: $year
+      allowances: $allowances
+      deductions: $deductions
+      paymentMethod: $paymentMethod
+    ) {
+      id
+      payslipNo
+      netSalary
+      month
+      year
+    }
+  }
+`;
+
+export const GET_TEACHER_ATTENDANCE_STATS = gql`
+  query GetTeacherAttendanceStats($teacherId: ID!, $month: Int!, $year: Int!) {
+    getTeacherAttendanceStats(teacherId: $teacherId, month: $month, year: $year) {
+      presentCount
+      absentCount
+      halfDayCount
+      leaveCount
+      totalCount
+    }
+  }
+`;
+
+export const GET_LEAVE_LIMIT = gql`
+  query GetLeaveLimit {
+    getLeaveLimit {
+      id
+      casual
+      medical
+      maternity
+      paternity
+      sabbatical
+    }
+  }
+`;
+
+export const UPDATE_LEAVE_LIMIT = gql`
+  mutation UpdateLeaveLimit($casual: Int!, $medical: Int!, $maternity: Int!, $paternity: Int!, $sabbatical: Int!) {
+    updateLeaveLimit(casual: $casual, medical: $medical, maternity: $maternity, paternity: $paternity, sabbatical: $sabbatical) {
+      id
+      casual
+      medical
+      maternity
+      paternity
+      sabbatical
+    }
+  }
+`;
+
 
 
 

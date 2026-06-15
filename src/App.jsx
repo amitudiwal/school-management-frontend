@@ -24,6 +24,8 @@ import GradesEntry from './pages/GradesEntry';
 import ClassAnalytics from './pages/ClassAnalytics';
 import TimetableManagement from './pages/TimetableManagement';
 import ExamManagement from './pages/ExamManagement';
+import LeaveManagement from './pages/LeaveManagement';
+import PayrollManagement from './pages/PayrollManagement';
 
 import ToastAlert from './components/ToastAlert';
 
@@ -176,6 +178,16 @@ function App() {
             <Route 
               path="/exams" 
               element={isAuthenticated && ['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) ? <ExamManagement /> : <Navigate to="/" />} 
+            />
+
+            <Route 
+              path="/leaves" 
+              element={isAuthenticated && ['TEACHER', 'CLASS_TEACHER', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'HR_STAFF'].includes(user?.role) ? <LeaveManagement /> : <Navigate to="/" />} 
+            />
+
+            <Route 
+              path="/payroll" 
+              element={isAuthenticated && ['TEACHER', 'CLASS_TEACHER', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'HR_STAFF', 'ACCOUNTANT'].includes(user?.role) ? <PayrollManagement /> : <Navigate to="/" />} 
             />
 
             <Route 

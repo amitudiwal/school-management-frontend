@@ -575,10 +575,10 @@ function ParentDashboard() {
                                       {feePay.feeId?.dueDate ? new Date(feePay.feeId.dueDate).toLocaleDateString() : '—'}
                                     </TableCell>
                                     <TableCell align="right" sx={{ fontWeight: 600 }}>
-                                      ${feePay.feeId?.amount?.toFixed(2) || '0.00'}
+                                      ₹{feePay.feeId?.amount?.toFixed(2) || '0.00'}
                                     </TableCell>
                                     <TableCell align="right" sx={{ fontWeight: 700, color: isPaid ? 'success.main' : 'inherit' }}>
-                                      ${feePay.amountPaid?.toFixed(2) || '0.00'}
+                                      ₹{feePay.amountPaid?.toFixed(2) || '0.00'}
                                     </TableCell>
                                     <TableCell align="center">
                                       <Chip
@@ -659,7 +659,7 @@ function ParentDashboard() {
                                   </Typography>
                                 </Box>
                                 <Chip
-                                  label={`Fee: $${route.routeFee}`}
+                                  label={`Fee: ₹${route.routeFee}`}
                                   color="secondary"
                                   sx={{ fontWeight: 700 }}
                                 />

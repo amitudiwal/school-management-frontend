@@ -17,7 +17,9 @@ import {
   ExitToApp as LogoutIcon,
   Brightness4 as DarkIcon,
   Brightness7 as LightIcon,
-  Assignment as GradesIcon
+  Assignment as GradesIcon,
+  DateRange as LeaveIcon,
+  Receipt as PayrollIcon
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
 import { toggleTheme } from '../store/slices/uiSlice';
@@ -97,7 +99,9 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
         { text: 'Parent Portal', icon: <DashboardIcon />, path: '/parent-portal' }
       ] : []),
       ...(!['PARENT', 'SUPER_ADMIN'].includes(user?.role) ? [
-        { text: 'Fees Accounting', icon: <FeesIcon />, path: '/fees' }
+        { text: 'Fees Accounting', icon: <FeesIcon />, path: '/fees' },
+        { text: 'Leave Management', icon: <LeaveIcon />, path: '/leaves' },
+        { text: 'Payroll & Payslips', icon: <PayrollIcon />, path: '/payroll' }
       ] : [])
     ] : [])
   ];
