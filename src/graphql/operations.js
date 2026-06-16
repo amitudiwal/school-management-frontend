@@ -466,8 +466,8 @@ export const GET_FEES_LIST = gql`
 `;
 
 export const GET_STUDENT_FEE_LEDGER = gql`
-  query GetStudentFeeLedger($classId: ID) {
-    getStudentFeeLedger(classId: $classId) {
+  query GetStudentFeeLedger($classId: ID, $studentId: ID) {
+    getStudentFeeLedger(classId: $classId, studentId: $studentId) {
       studentId
       studentName
       admissionNo
@@ -475,6 +475,14 @@ export const GET_STUDENT_FEE_LEDGER = gql`
       totalPayable
       totalPaid
       outstanding
+      componentsBreakdown {
+        componentId
+        name
+        category
+        totalDue
+        totalPaid
+        remaining
+      }
     }
   }
 `;

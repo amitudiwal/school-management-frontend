@@ -5,7 +5,7 @@ import {
   Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, 
   DialogTitle, Grid, TextField, MenuItem, Table, TableBody, TableCell, 
   TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress, 
-  Alert, IconButton, TablePagination, Tabs, Tab, Chip, Tooltip
+  Alert, IconButton, TablePagination, Tabs, Tab, Chip, Tooltip, Checkbox
 } from '@mui/material';
 import { useDispatch } from 'react-redux';
 import { Add as AddIcon, FileDownload as ExportIcon, Settings as SettingsIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
@@ -45,12 +45,13 @@ function FeesList() {
 
   // Form States for fee payment collection
   const [selectedStudent, setSelectedStudent] = useState('');
-  const [selectedFee, setSelectedFee] = useState('');
-  const [amountPaid, setAmountPaid] = useState('');
   const [paymentMethod, setPaymentMethod] = useState('ONLINE');
   const [referenceNo, setReferenceNo] = useState('');
   const [remarks, setRemarks] = useState('');
   const [formError, setFormError] = useState('');
+  const [paymentStudentComponents, setPaymentStudentComponents] = useState([]);
+  const [feePaymentsState, setFeePaymentsState] = useState({});
+  const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
 
   // Form States for fee structure creation
   const [structTitle, setStructTitle] = useState('');
@@ -75,24 +76,7 @@ function FeesList() {
   const { data: studentsData } = useQuery(GET_STUDENTS);
 
   // Mutations
-  const [collectFeeMutation, { loading: payLoading }] = useMutation(COLLECT_STUDENT_FEE, {
-    onCompleted: () => {
-      setOpenModal(false);
-      refetch();
-      refetchLedger();
-      // Reset forms
-      setSelectedStudent('');
-      setSelectedFee('');
-      setAmountPaid('');
-      setReferenceNo('');
-      setRemarks('');
-      dispatch(showToast({ message: 'Fee payment recorded successfully!', severity: 'success' }));
-    },
-    onError: (err) => {
-      setFormError(err.message);
-      dispatch(showToast({ message: err.message, severity: 'error' }));
-    }
-  });
+  const [collectFeeMutation] = useMutation(COLLECT_STUDENT_FEE);
 
   const [createFeeStructureMutation, { loading: structLoading }] = useMutation(CREATE_FEE_STRUCTURE, {
     onCompleted: () => {
@@ -154,6 +138,45 @@ function FeesList() {
     }
   });
 
+  const [getStudentFeeLedgerForPayment, { loading: ledgerLoadingForPayment }] = useLazyQuery(GET_STUDENT_FEE_LEDGER, {
+    fetchPolicy: 'network-only',
+    onCompleted: (data) => {
+      if (data?.getStudentFeeLedger && data.getStudentFeeLedger.length > 0) {
+        const ledgerItem = data.getStudentFeeLedger[0];
+        setPaymentStudentComponents(ledgerItem.componentsBreakdown || []);
+        
+        // Initialize checked components and payment amounts
+        const initialPayments = {};
+        (ledgerItem.componentsBreakdown || []).forEach(c => {
+          initialPayments[c.componentId] = {
+            checked: false,
+            amountPaid: c.remaining.toString()
+          };
+        });
+        setFeePaymentsState(initialPayments);
+      } else {
+        setPaymentStudentComponents([]);
+        setFeePaymentsState({});
+      }
+    },
+    onError: (err) => {
+      dispatch(showToast({ message: err.message, severity: 'error' }));
+    }
+  });
+
+  React.useEffect(() => {
+    if (selectedStudent) {
+      getStudentFeeLedgerForPayment({
+        variables: {
+          studentId: selectedStudent
+        }
+      });
+    } else {
+      setPaymentStudentComponents([]);
+      setFeePaymentsState({});
+    }
+  }, [selectedStudent, getStudentFeeLedgerForPayment]);
+
   const [saveStudentFeeStructureMutation, { loading: saveStructureLoading }] = useMutation(SAVE_STUDENT_FEE_STRUCTURE, {
     onCompleted: () => {
       setOpenCustomizeModal(false);
@@ -177,25 +200,57 @@ function FeesList() {
     setSelectedFeeStruct(null);
   };
 
-  const handlePaySubmit = (e) => {
+  const handlePaySubmit = async (e) => {
     e.preventDefault();
     setFormError('');
 
-    if (!selectedStudent || !selectedFee || !amountPaid) {
-      setFormError('Please select a student, a fee structure, and enter an amount.');
+    if (!selectedStudent) {
+      setFormError('Please select a student.');
       return;
     }
 
-    collectFeeMutation({
-      variables: {
-        studentId: selectedStudent,
-        feeId: selectedFee,
-        amountPaid: parseFloat(amountPaid),
-        paymentMethod,
-        referenceNo,
-        remarks
+    const selectedComponents = Object.entries(feePaymentsState)
+      .filter(([_, comp]) => comp.checked && parseFloat(comp.amountPaid) > 0)
+      .map(([id, comp]) => ({
+        componentId: id,
+        amountPaid: parseFloat(comp.amountPaid)
+      }));
+
+    if (selectedComponents.length === 0) {
+      setFormError('Please select at least one fee component and enter a valid amount.');
+      return;
+    }
+
+    setIsSubmittingPayment(true);
+    try {
+      for (const comp of selectedComponents) {
+        await collectFeeMutation({
+          variables: {
+            studentId: selectedStudent,
+            feeId: comp.componentId,
+            amountPaid: comp.amountPaid,
+            paymentMethod,
+            referenceNo,
+            remarks
+          }
+        });
       }
-    });
+
+      setOpenModal(false);
+      refetch();
+      refetchLedger();
+      // Reset forms
+      setSelectedStudent('');
+      setReferenceNo('');
+      setRemarks('');
+      setFeePaymentsState({});
+      dispatch(showToast({ message: 'Fee payments recorded successfully!', severity: 'success' }));
+    } catch (err) {
+      setFormError(err.message);
+      dispatch(showToast({ message: err.message, severity: 'error' }));
+    } finally {
+      setIsSubmittingPayment(false);
+    }
   };
 
   const handleStructSubmit = (e) => {
@@ -526,14 +581,28 @@ function FeesList() {
                           </TableCell>
                           {isAdmin && (
                             <TableCell align="right">
-                              <Tooltip title="Customize Student Fees">
-                                <IconButton 
-                                  color="secondary" 
-                                  onClick={() => handleOpenCustomizeModal(ledgerItem)}
-                                >
-                                  <SettingsIcon />
-                                </IconButton>
-                              </Tooltip>
+                              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                                <Tooltip title="Record Payment">
+                                  <IconButton 
+                                    color="success" 
+                                    onClick={() => {
+                                      setSelectedStudent(ledgerItem.studentId);
+                                      setOpenModal(true);
+                                    }}
+                                    disabled={outstanding === 0}
+                                  >
+                                    <AddIcon />
+                                  </IconButton>
+                                </Tooltip>
+                                <Tooltip title="Customize Student Fees">
+                                  <IconButton 
+                                    color="secondary" 
+                                    onClick={() => handleOpenCustomizeModal(ledgerItem)}
+                                  >
+                                    <SettingsIcon />
+                                  </IconButton>
+                                </Tooltip>
+                              </Box>
                             </TableCell>
                           )}
                         </TableRow>
@@ -583,26 +652,100 @@ function FeesList() {
               </Grid>
 
               <Grid item xs={12}>
-                <TextField 
-                  fullWidth required select label="Select Fee Invoice" 
-                  value={selectedFee} 
-                  onChange={(e) => setSelectedFee(e.target.value)}
-                >
-                  {feesData?.getFeesList.map((fee) => (
-                    <MenuItem key={fee.id} value={fee.id}>
-                      {`${fee.title} - ₹${fee.amount}`}
-                    </MenuItem>
-                  ))}
-                </TextField>
+                <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 700, fontFamily: "'Outfit', sans-serif" }}>
+                  Select Fee Components to Collect *
+                </Typography>
+                {ledgerLoadingForPayment ? (
+                  <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+                    <CircularProgress size={30} />
+                  </Box>
+                ) : paymentStudentComponents.length === 0 ? (
+                  <Typography variant="body2" color="text.secondary" sx={{ py: 1, fontStyle: 'italic' }}>
+                    {selectedStudent ? 'No unpaid fee components found for this student.' : 'Please select a student first.'}
+                  </Typography>
+                ) : (
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                    {paymentStudentComponents.map((comp) => {
+                      const compState = feePaymentsState[comp.componentId] || { checked: false, amountPaid: '0' };
+                      const isUnpaid = comp.remaining > 0;
+                      
+                      return (
+                        <Box 
+                          key={comp.componentId}
+                          sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            justifyContent: 'space-between',
+                            p: 2,
+                            border: '1px solid',
+                            borderColor: compState.checked ? 'primary.main' : 'divider',
+                            borderRadius: 2,
+                            bgcolor: compState.checked ? 'action.hover' : 'transparent',
+                            transition: 'all 0.2s ease',
+                            opacity: isUnpaid ? 1 : 0.6
+                          }}
+                        >
+                          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                            <Checkbox 
+                              checked={compState.checked}
+                              disabled={!isUnpaid}
+                              onChange={(e) => {
+                                setFeePaymentsState({
+                                  ...feePaymentsState,
+                                  [comp.componentId]: {
+                                    ...compState,
+                                    checked: e.target.checked
+                                  }
+                                });
+                              }}
+                            />
+                            <Box>
+                              <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: "'Outfit', sans-serif" }}>
+                                {comp.name}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5 }}>
+                                Total: ₹{comp.totalDue} | Remaining: ₹{comp.remaining} {!isUnpaid && '(PAID)'}
+                              </Typography>
+                            </Box>
+                          </Box>
+                          {compState.checked && isUnpaid && (
+                            <TextField
+                              size="small"
+                              type="number"
+                              label="Amount to Pay (₹)"
+                              value={compState.amountPaid}
+                              onChange={(e) => {
+                                setFeePaymentsState({
+                                  ...feePaymentsState,
+                                  [comp.componentId]: {
+                                    ...compState,
+                                    amountPaid: e.target.value
+                                  }
+                                });
+                              }}
+                              sx={{ width: '160px' }}
+                              inputProps={{ min: 0, max: comp.remaining }}
+                            />
+                          )}
+                        </Box>
+                      );
+                    })}
+                  </Box>
+                )}
               </Grid>
 
-              <Grid item xs={12} sm={6}>
-                <TextField 
-                  fullWidth required type="number" label="Amount Paid (₹)" 
-                  value={amountPaid} 
-                  onChange={(e) => setAmountPaid(e.target.value)} 
-                />
-              </Grid>
+              {Object.values(feePaymentsState).filter(c => c.checked).reduce((sum, c) => sum + (parseFloat(c.amountPaid) || 0), 0) > 0 && (
+                <Grid item xs={12}>
+                  <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'primary.contrastText' }}>
+                      Total Amount to Collect
+                    </Typography>
+                    <Typography variant="h6" sx={{ fontWeight: 800, color: 'primary.contrastText' }}>
+                      ₹{Object.values(feePaymentsState).filter(c => c.checked).reduce((sum, c) => sum + (parseFloat(c.amountPaid) || 0), 0)}
+                    </Typography>
+                  </Box>
+                </Grid>
+              )}
 
               <Grid item xs={12} sm={6}>
                 <TextField 
@@ -636,8 +779,8 @@ function FeesList() {
           </DialogContent>
           <DialogActions sx={{ p: { xs: 2, sm: 3 }, flexDirection: { xs: 'column-reverse', sm: 'row' }, alignItems: { xs: 'stretch', sm: 'center' } }}>
             <Button onClick={() => setOpenModal(false)} variant="outlined">Cancel</Button>
-            <Button type="submit" variant="contained" disabled={payLoading}>
-              {payLoading ? 'Saving...' : 'Record Payment'}
+            <Button type="submit" variant="contained" disabled={isSubmittingPayment}>
+              {isSubmittingPayment ? 'Saving...' : 'Record Payment'}
             </Button>
           </DialogActions>
         </form>
