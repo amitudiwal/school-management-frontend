@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { TextField, Popover, Box, IconButton, Typography, Grid, useTheme } from '@mui/material';
+import { TextField, Popover, Box, IconButton, Typography, Grid, useTheme, Select, MenuItem } from '@mui/material';
 import { 
   ChevronLeft as LeftIcon, 
   ChevronRight as RightIcon, 
@@ -31,6 +31,15 @@ function CustomDatePicker({
   const selectedDate = parseDate(value);
   const [currentYear, setCurrentYear] = useState(selectedDate.getFullYear());
   const [currentMonth, setCurrentMonth] = useState(selectedDate.getMonth()); // 0-11
+
+  // Generate a dynamic list of years, accommodating a range suitable for dates of birth
+  const currentYearNum = new Date().getFullYear();
+  const minYear = Math.min(currentYearNum - 100, currentYear - 5);
+  const maxYear = Math.max(currentYearNum + 10, currentYear + 5);
+  const years = [];
+  for (let y = maxYear; y >= minYear; y--) {
+    years.push(y);
+  }
 
   const handleOpen = (event) => {
     if (disabled) return;
@@ -189,9 +198,129 @@ function CustomDatePicker({
           <IconButton size="small" onClick={handlePrevMonth}>
             <LeftIcon />
           </IconButton>
-          <Typography sx={{ fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
-            {months[currentMonth]} {currentYear}
-          </Typography>
+          
+          <Box sx={{ display: 'flex', gap: 0.5, alignItems: 'center' }}>
+            <Select
+              value={currentMonth}
+              onChange={(e) => setCurrentMonth(Number(e.target.value))}
+              variant="standard"
+              disableUnderline
+              sx={{
+                fontWeight: 800,
+                fontFamily: "'Outfit', sans-serif",
+                fontSize: '0.95rem',
+                cursor: 'pointer',
+                color: 'text.primary',
+                '& .MuiSelect-select': {
+                  py: 0.5,
+                  px: 0.5,
+                  '&:focus': {
+                    backgroundColor: 'transparent',
+                  }
+                },
+                '& .MuiSvgIcon-root': {
+                  fontSize: '1.1rem',
+                  ml: -0.5,
+                  color: 'text.secondary',
+                }
+              }}
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    maxHeight: 250,
+                    borderRadius: 2,
+                    boxShadow: theme.palette.mode === 'dark' 
+                      ? '0 10px 30px rgba(0,0,0,0.5), 0 0 0 1px #1F2937'
+                      : '0 10px 30px rgba(99, 102, 241, 0.08), 0 0 0 1px #E2E8F0',
+                    '&::-webkit-scrollbar': {
+                      width: '6px',
+                    },
+                    '&::-webkit-scrollbar-track': {
+                      backgroundColor: 'transparent',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      backgroundColor: theme.palette.mode === 'dark' 
+                        ? 'rgba(255, 255, 255, 0.15)' 
+                        : 'rgba(0, 0, 0, 0.15)',
+                      borderRadius: '10px',
+                    },
+                    '&::-webkit-scrollbar-thumb:hover': {
+                      backgroundColor: theme.palette.mode === 'dark' 
+                        ? 'rgba(255, 255, 255, 0.3)' 
+                        : 'rgba(0, 0, 0, 0.25)',
+                    }
+                  }
+                }
+              }}
+            >
+              {months.map((m, idx) => (
+                <MenuItem key={idx} value={idx} sx={{ fontFamily: "'Outfit', sans-serif", fontSize: '0.9rem' }}>
+                  {m}
+                </MenuItem>
+              ))}
+            </Select>
+
+            <Select
+              value={currentYear}
+              onChange={(e) => setCurrentYear(Number(e.target.value))}
+              variant="standard"
+              disableUnderline
+              sx={{
+                fontWeight: 800,
+                fontFamily: "'Outfit', sans-serif",
+                fontSize: '0.95rem',
+                cursor: 'pointer',
+                color: 'text.primary',
+                '& .MuiSelect-select': {
+                  py: 0.5,
+                  px: 0.5,
+                  '&:focus': {
+                    backgroundColor: 'transparent',
+                  }
+                },
+                '& .MuiSvgIcon-root': {
+                  fontSize: '1.1rem',
+                  ml: -0.5,
+                  color: 'text.secondary',
+                }
+              }}
+              MenuProps={{
+                PaperProps: {
+                  sx: {
+                    maxHeight: 250,
+                    borderRadius: 2,
+                    boxShadow: theme.palette.mode === 'dark' 
+                      ? '0 10px 30px rgba(0,0,0,0.5), 0 0 0 1px #1F2937'
+                      : '0 10px 30px rgba(99, 102, 241, 0.08), 0 0 0 1px #E2E8F0',
+                    '&::-webkit-scrollbar': {
+                      width: '6px',
+                    },
+                    '&::-webkit-scrollbar-track': {
+                      backgroundColor: 'transparent',
+                    },
+                    '&::-webkit-scrollbar-thumb': {
+                      backgroundColor: theme.palette.mode === 'dark' 
+                        ? 'rgba(255, 255, 255, 0.15)' 
+                        : 'rgba(0, 0, 0, 0.15)',
+                      borderRadius: '10px',
+                    },
+                    '&::-webkit-scrollbar-thumb:hover': {
+                      backgroundColor: theme.palette.mode === 'dark' 
+                        ? 'rgba(255, 255, 255, 0.3)' 
+                        : 'rgba(0, 0, 0, 0.25)',
+                    }
+                  }
+                }
+              }}
+            >
+              {years.map((y) => (
+                <MenuItem key={y} value={y} sx={{ fontFamily: "'Outfit', sans-serif", fontSize: '0.9rem' }}>
+                  {y}
+                </MenuItem>
+              ))}
+            </Select>
+          </Box>
+
           <IconButton size="small" onClick={handleNextMonth}>
             <RightIcon />
           </IconButton>
