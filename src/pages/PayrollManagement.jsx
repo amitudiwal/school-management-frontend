@@ -774,7 +774,7 @@ function PayrollManagement() {
                     <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1, color: 'success.main' }}>
                       EARNINGS / ALLOWANCES
                     </Typography>
-                    <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2, boxShadow: 'none' }}>
+                    <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2, boxShadow: 'none', overflowX: 'auto' }}>
                       <Table size="small">
                         <TableHead>
                           <TableRow sx={{ bgcolor: 'action.hover' }}>
@@ -809,7 +809,7 @@ function PayrollManagement() {
                     <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1, color: 'error.main' }}>
                       DEDUCTIONS & TAXES
                     </Typography>
-                    <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2, boxShadow: 'none' }}>
+                    <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2, boxShadow: 'none', overflowX: 'auto' }}>
                       <Table size="small">
                         <TableHead>
                           <TableRow sx={{ bgcolor: 'action.hover' }}>

@@ -396,7 +396,7 @@ function ClassAnalytics() {
 
               <Divider />
 
-              <TableContainer>
+              <TableContainer sx={{ overflowX: 'auto' }}>
                 <Table sx={{ minWidth: 800 }}>
                   <TableHead>
                     <TableRow>
