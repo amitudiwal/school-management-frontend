@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { useQuery, useMutation } from '@apollo/client';
+import { useQuery, useMutation, useLazyQuery } from '@apollo/client';
 import { useSelector } from 'react-redux';
 import { 
   Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, 
@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import { useDispatch } from 'react-redux';
 import { Add as AddIcon, FileDownload as ExportIcon, Settings as SettingsIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
-import { GET_FEES_LIST, GET_STUDENT_FEE_LEDGER, GET_CLASSES, GET_STUDENTS, COLLECT_STUDENT_FEE, CREATE_FEE_STRUCTURE, UPDATE_FEE_STRUCTURE, DELETE_FEE_STRUCTURE } from '../graphql/operations';
+import { GET_FEES_LIST, GET_STUDENT_FEE_LEDGER, GET_CLASSES, GET_STUDENTS, COLLECT_STUDENT_FEE, CREATE_FEE_STRUCTURE, UPDATE_FEE_STRUCTURE, DELETE_FEE_STRUCTURE, GET_STUDENT_FEE_STRUCTURE, SAVE_STUDENT_FEE_STRUCTURE } from '../graphql/operations';
 import { showToast } from '../store/slices/uiSlice';
 import CustomDatePicker from '../components/CustomDatePicker';
 
@@ -27,6 +27,11 @@ function FeesList() {
   const [selectedFeeStruct, setSelectedFeeStruct] = useState(null);
   const [feeStructToDelete, setFeeStructToDelete] = useState(null);
   const [page, setPage] = useState(0);
+
+  // Customize States
+  const [openCustomizeModal, setOpenCustomizeModal] = useState(false);
+  const [selectedStudentForCustomize, setSelectedStudentForCustomize] = useState(null);
+  const [customizeComponents, setCustomizeComponents] = useState([]);
 
   // Reset page when class filter changes
   React.useEffect(() => {
@@ -129,6 +134,37 @@ function FeesList() {
     }
   });
 
+  const [getStudentFeeStructure, { loading: structureLoading }] = useLazyQuery(GET_STUDENT_FEE_STRUCTURE, {
+    fetchPolicy: 'network-only',
+    onCompleted: (data) => {
+      if (data?.getStudentFeeStructure) {
+        const comps = data.getStudentFeeStructure.components.map(c => ({
+          id: c.id,
+          name: c.name,
+          category: c.category,
+          amount: c.amount,
+          dueDate: c.dueDate ? c.dueDate.split('T')[0] : '',
+          description: c.description || ''
+        }));
+        setCustomizeComponents(comps);
+      }
+    },
+    onError: (err) => {
+      dispatch(showToast({ message: err.message, severity: 'error' }));
+    }
+  });
+
+  const [saveStudentFeeStructureMutation, { loading: saveStructureLoading }] = useMutation(SAVE_STUDENT_FEE_STRUCTURE, {
+    onCompleted: () => {
+      setOpenCustomizeModal(false);
+      refetchLedger();
+      dispatch(showToast({ message: 'Student fee structure customized successfully!', severity: 'success' }));
+    },
+    onError: (err) => {
+      dispatch(showToast({ message: err.message, severity: 'error' }));
+    }
+  });
+
   const clearStructureForm = () => {
     setStructTitle('');
     setStructCategory('TUITION');
@@ -208,6 +244,76 @@ function FeesList() {
   const handleConfirmDelete = () => {
     if (!feeStructToDelete) return;
     deleteFeeStructureMutation({ variables: { id: feeStructToDelete.id } });
+  };
+
+  const handleOpenCustomizeModal = (ledgerItem) => {
+    setSelectedStudentForCustomize(ledgerItem);
+    setCustomizeComponents([]);
+    setOpenCustomizeModal(true);
+    getStudentFeeStructure({
+      variables: {
+        studentId: ledgerItem.studentId,
+        academicYear: '2026-2027'
+      }
+    });
+  };
+
+  const handleUpdateComponent = (index, field, value) => {
+    const updated = [...customizeComponents];
+    updated[index] = { ...updated[index], [field]: value };
+    setCustomizeComponents(updated);
+  };
+
+  const handleAddComponent = () => {
+    setCustomizeComponents([
+      ...customizeComponents,
+      {
+        id: 'new-' + Date.now(),
+        name: '',
+        category: 'TUITION',
+        amount: 0,
+        dueDate: new Date().toISOString().split('T')[0],
+        description: ''
+      }
+    ]);
+  };
+
+  const handleDeleteComponent = (index) => {
+    const updated = customizeComponents.filter((_, i) => i !== index);
+    setCustomizeComponents(updated);
+  };
+
+  const handleSaveCustomize = () => {
+    for (const comp of customizeComponents) {
+      if (!comp.name.trim()) {
+        dispatch(showToast({ message: 'Component name is required.', severity: 'warning' }));
+        return;
+      }
+      if (comp.amount === '' || isNaN(parseFloat(comp.amount))) {
+        dispatch(showToast({ message: 'Component amount must be a valid number.', severity: 'warning' }));
+        return;
+      }
+      if (!comp.dueDate) {
+        dispatch(showToast({ message: 'Component due date is required.', severity: 'warning' }));
+        return;
+      }
+    }
+
+    const cleanedComponents = customizeComponents.map(c => ({
+      name: c.name,
+      category: c.category,
+      amount: parseFloat(c.amount),
+      dueDate: c.dueDate,
+      description: c.description
+    }));
+
+    saveStudentFeeStructureMutation({
+      variables: {
+        studentId: selectedStudentForCustomize.studentId,
+        academicYear: '2026-2027',
+        components: cleanedComponents
+      }
+    });
   };
 
   const handleExport = async (format) => {
@@ -373,6 +479,7 @@ function FeesList() {
                     <TableCell>Total Paid</TableCell>
                     <TableCell>Outstanding Balance</TableCell>
                     <TableCell>Status</TableCell>
+                    {isAdmin && <TableCell align="right">Actions</TableCell>}
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -417,12 +524,24 @@ function FeesList() {
                               sx={{ fontWeight: 700, fontSize: '0.75rem' }} 
                             />
                           </TableCell>
+                          {isAdmin && (
+                            <TableCell align="right">
+                              <Tooltip title="Customize Student Fees">
+                                <IconButton 
+                                  color="secondary" 
+                                  onClick={() => handleOpenCustomizeModal(ledgerItem)}
+                                >
+                                  <SettingsIcon />
+                                </IconButton>
+                              </Tooltip>
+                            </TableCell>
+                          )}
                         </TableRow>
                       );
                     })}
                   {(!ledgerData?.getStudentFeeLedger || ledgerData.getStudentFeeLedger.length === 0) && (
                     <TableRow>
-                      <TableCell colSpan={7} align="center">No student ledger data found</TableCell>
+                      <TableCell colSpan={isAdmin ? 8 : 7} align="center">No student ledger data found</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
@@ -622,6 +741,166 @@ function FeesList() {
           <Button onClick={() => setFeeStructToDelete(null)} variant="outlined">Cancel</Button>
           <Button onClick={handleConfirmDelete} variant="contained" color="error" disabled={deleteLoading}>
             {deleteLoading ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Customize Student Fee Structure Dialog */}
+      <Dialog 
+        open={openCustomizeModal} 
+        onClose={() => setOpenCustomizeModal(false)} 
+        maxWidth="md" 
+        fullWidth
+      >
+        <DialogTitle sx={{ pb: 1 }}>
+          <Typography variant="h5" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800 }}>
+            Customize Fee Structure
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+            Student: <strong>{selectedStudentForCustomize?.studentName}</strong> | Class: <strong>{selectedStudentForCustomize?.className}</strong> | Admission No: <strong>{selectedStudentForCustomize?.admissionNo}</strong>
+          </Typography>
+        </DialogTitle>
+        <DialogContent dividers sx={{ minHeight: '300px' }}>
+          {structureLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', py: 8 }}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <Box>
+              {customizeComponents.length === 0 ? (
+                <Box sx={{ py: 4, textAlign: 'center' }}>
+                  <Typography color="text.secondary" sx={{ mb: 2 }}>
+                    No fee components found for this student.
+                  </Typography>
+                  <Button 
+                    variant="outlined" 
+                    startIcon={<AddIcon />} 
+                    onClick={handleAddComponent}
+                  >
+                    Add First Fee Component
+                  </Button>
+                </Box>
+              ) : (
+                <Box>
+                  <Typography variant="subtitle2" sx={{ mb: 2, fontWeight: 700 }}>
+                    Fee Components Breakup
+                  </Typography>
+                  {customizeComponents.map((comp, idx) => (
+                    <Box 
+                      key={comp.id || idx} 
+                      sx={{ 
+                        p: 2, 
+                        mb: 2, 
+                        border: '1px solid', 
+                        borderColor: 'divider', 
+                        borderRadius: 2, 
+                        position: 'relative', 
+                        bgcolor: 'background.neutral' 
+                      }}
+                    >
+                      <Grid container spacing={2} alignItems="center">
+                        <Grid item xs={12} sm={4}>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            label="Component Name"
+                            required
+                            value={comp.name}
+                            onChange={(e) => handleUpdateComponent(idx, 'name', e.target.value)}
+                            placeholder="e.g. Scholarship Tuition Fee"
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={3}>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            select
+                            label="Category"
+                            value={comp.category}
+                            onChange={(e) => handleUpdateComponent(idx, 'category', e.target.value)}
+                          >
+                            <MenuItem value="TUITION">Tuition Fee</MenuItem>
+                            <MenuItem value="TRANSPORT">Transport Fee</MenuItem>
+                            <MenuItem value="EXAMINATION">Examination Fee</MenuItem>
+                            <MenuItem value="LIBRARY">Library Fee</MenuItem>
+                            <MenuItem value="ADMISSION">Admission Fee</MenuItem>
+                            <MenuItem value="SPORTS">Sports Fee</MenuItem>
+                            <MenuItem value="UNIFORM">Uniform Fee</MenuItem>
+                            <MenuItem value="BOOKS">Books Fee</MenuItem>
+                            <MenuItem value="DISCOUNT">Discount</MenuItem>
+                            <MenuItem value="FINE">Fine</MenuItem>
+                            <MenuItem value="OTHER">Other Fee</MenuItem>
+                          </TextField>
+                        </Grid>
+                        <Grid item xs={12} sm={2.5}>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            type="number"
+                            label="Amount (₹)"
+                            required
+                            value={comp.amount}
+                            onChange={(e) => handleUpdateComponent(idx, 'amount', e.target.value)}
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={2}>
+                          <CustomDatePicker
+                            fullWidth
+                            size="small"
+                            label="Due Date"
+                            required
+                            value={comp.dueDate}
+                            onChange={(e) => handleUpdateComponent(idx, 'dueDate', e.target.value)}
+                          />
+                        </Grid>
+                        <Grid item xs={12} sm={0.5} sx={{ textAlign: 'right' }}>
+                          <Tooltip title="Remove Component">
+                            <IconButton 
+                              color="error" 
+                              size="small" 
+                              onClick={() => handleDeleteComponent(idx)}
+                            >
+                              <DeleteIcon />
+                            </IconButton>
+                          </Tooltip>
+                        </Grid>
+                        <Grid item xs={12}>
+                          <TextField
+                            fullWidth
+                            size="small"
+                            label="Description"
+                            value={comp.description}
+                            onChange={(e) => handleUpdateComponent(idx, 'description', e.target.value)}
+                            placeholder="Optional details, e.g. Special scholarship rate"
+                          />
+                        </Grid>
+                      </Grid>
+                    </Box>
+                  ))}
+                  <Button 
+                    variant="outlined" 
+                    startIcon={<AddIcon />} 
+                    onClick={handleAddComponent}
+                    sx={{ mt: 1 }}
+                  >
+                    Add Component
+                  </Button>
+                </Box>
+              )}
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: { xs: 2, sm: 3 } }}>
+          <Button onClick={() => setOpenCustomizeModal(false)} variant="outlined">
+            Cancel
+          </Button>
+          <Button 
+            onClick={handleSaveCustomize} 
+            variant="contained" 
+            disabled={saveStructureLoading || structureLoading}
+            sx={{ background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)', color: '#FFFFFF' }}
+          >
+            {saveStructureLoading ? 'Saving Changes...' : 'Save Structure'}
           </Button>
         </DialogActions>
       </Dialog>

@@ -1577,6 +1577,43 @@ export const UPDATE_LEAVE_LIMIT = gql`
   }
 `;
 
+export const GET_STUDENT_FEE_STRUCTURE = gql`
+  query GetStudentFeeStructure($studentId: ID!, $academicYear: String!) {
+    getStudentFeeStructure(studentId: $studentId, academicYear: $academicYear) {
+      id
+      academicYear
+      status
+      components {
+        id
+        name
+        category
+        amount
+        dueDate
+        description
+      }
+    }
+  }
+`;
+
+export const SAVE_STUDENT_FEE_STRUCTURE = gql`
+  mutation SaveStudentFeeStructure($studentId: ID!, $academicYear: String!, $components: [FeeComponentInput!]!) {
+    saveStudentFeeStructure(studentId: $studentId, academicYear: $academicYear, components: $components) {
+      id
+      academicYear
+      status
+      components {
+        id
+        name
+        category
+        amount
+        dueDate
+        description
+      }
+    }
+  }
+`;
+
+
 
 
 
