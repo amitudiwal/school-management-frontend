@@ -34,8 +34,8 @@ const getAvatarUrl = (avatarPath) => {
 function StudentList() {
   const dispatch = useDispatch();
   const { token, user } = useSelector((state) => state.auth);
-  const canAddStudent = ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'TEACHER', 'CLASS_TEACHER'].includes(user?.role);
-  const canManageStudent = ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'TEACHER', 'CLASS_TEACHER'].includes(user?.role);
+  const canAddStudent = ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'TEACHER', 'CLASS_TEACHER', 'ACCOUNTANT'].includes(user?.role);
+  const canManageStudent = ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'TEACHER', 'CLASS_TEACHER', 'ACCOUNTANT'].includes(user?.role);
 
   // States
   const [search, setSearch] = useState('');

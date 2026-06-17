@@ -33,7 +33,7 @@ function TeacherList() {
   const [openTeacherModal, setOpenTeacherModal] = useState(false);
   const [selectedTeacher, setSelectedTeacher] = useState(null);
   const [teacherToDelete, setTeacherToDelete] = useState(null);
-  
+
   // Staff states
   const [openStaffModal, setOpenStaffModal] = useState(false);
   const [selectedStaff, setSelectedStaff] = useState(null);
@@ -51,7 +51,7 @@ function TeacherList() {
   const [password, setPassword] = useState('');
   const [department, setDepartment] = useState('HR');
   const [formError, setFormError] = useState('');
-  
+
   // Image Upload States
   const { token } = useSelector((state) => state.auth);
   const [avatar, setAvatar] = useState('');
@@ -61,10 +61,10 @@ function TeacherList() {
   const handleImageUpload = async (e) => {
     const file = e.target.files[0];
     if (!file) return;
-    
+
     const formData = new FormData();
     formData.append('file', file);
-    
+
     setUploading(true);
     try {
       const response = await fetch(`${BACKEND_URL}/api/upload`, {
@@ -92,6 +92,8 @@ function TeacherList() {
   // Queries
   const { loading: teachersLoading, error: teachersError, data: teachersData, refetch: refetchTeachers } = useQuery(GET_TEACHERS);
   const { loading: staffLoading, error: staffError, data: staffData, refetch: refetchStaff } = useQuery(GET_STAFF);
+
+  const filteredTeachers = (teachersData?.getTeachers || []).filter(t => t.userId?.role !== 'SUPER_TEACHER');
 
   // Teacher Mutations
   const [registerTeacher, { loading: addTeacherLoading }] = useMutation(REGISTER_TEACHER, {
@@ -313,18 +315,18 @@ function TeacherList() {
           Directory Management
         </Typography>
         {activeTab === 0 ? (
-          <Button 
-            variant="contained" 
-            startIcon={<AddIcon />} 
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
             onClick={() => { clearTeacherForm(); setOpenTeacherModal(true); }}
             sx={{ width: { xs: '100%', sm: 'auto' }, background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)', color: '#FFFFFF' }}
           >
             Register Faculty
           </Button>
         ) : (
-          <Button 
-            variant="contained" 
-            startIcon={<AddIcon />} 
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
             onClick={() => { clearStaffForm(); setOpenStaffModal(true); }}
             sx={{ width: { xs: '100%', sm: 'auto' }, background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: '#FFFFFF' }}
           >
@@ -334,8 +336,8 @@ function TeacherList() {
       </Box>
 
       <Paper sx={{ mb: 3, borderRadius: 2 }}>
-        <Tabs 
-          value={activeTab} 
+        <Tabs
+          value={activeTab}
           onChange={(e, newVal) => setActiveTab(newVal)}
           indicatorColor="primary"
           textColor="primary"
@@ -369,7 +371,7 @@ function TeacherList() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {(teachersData?.getTeachers || [])
+                  {filteredTeachers
                     .slice(pageTeachers * 10, (pageTeachers + 1) * 10)
                     .map((teacher) => (
                       <TableRow key={teacher.id} hover>
@@ -389,7 +391,7 @@ function TeacherList() {
                         </TableCell>
                       </TableRow>
                     ))}
-                  {(!teachersData?.getTeachers || teachersData.getTeachers.length === 0) && (
+                  {filteredTeachers.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={7} align="center">No data</TableCell>
                     </TableRow>
@@ -397,11 +399,11 @@ function TeacherList() {
                 </TableBody>
               </Table>
             </TableContainer>
-            {teachersData?.getTeachers?.length > 0 && (
+            {filteredTeachers.length > 0 && (
               <TablePagination
                 rowsPerPageOptions={[10]}
                 component="div"
-                count={teachersData.getTeachers.length}
+                count={filteredTeachers.length}
                 rowsPerPage={10}
                 page={pageTeachers}
                 onPageChange={(e, newPage) => setPageTeachers(newPage)}
@@ -513,13 +515,13 @@ function TeacherList() {
               </Grid>
               {!selectedTeacher && (
                 <Grid item xs={12} sm={6}>
-                  <TextField 
-                    fullWidth 
-                    required={!selectedTeacher} 
-                    type={showPassword ? 'text' : 'password'} 
-                    label="Teacher Login Password" 
-                    value={password} 
-                    onChange={(e) => setPassword(e.target.value)} 
+                  <TextField
+                    fullWidth
+                    required={!selectedTeacher}
+                    type={showPassword ? 'text' : 'password'}
+                    label="Teacher Login Password"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position="end">
@@ -573,7 +575,7 @@ function TeacherList() {
                 <TextField fullWidth required select label="Department" value={department} onChange={(e) => setDepartment(e.target.value)}>
                   <MenuItem value="LIBRARY">Library</MenuItem>
                   <MenuItem value="HR">HR Staff</MenuItem>
-                  <MenuItem value="FINANCE">Finance</MenuItem>
+                  {/* <MenuItem value="FINANCE">Finance</MenuItem> */}
                   <MenuItem value="TRANSPORT">Transport</MenuItem>
                   <MenuItem value="RECEPTION">Reception</MenuItem>
                   <MenuItem value="MAINTENANCE">Maintenance</MenuItem>

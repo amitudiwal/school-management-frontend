@@ -347,6 +347,7 @@ export const GET_TEACHERS = gql`
         id
         email
         avatar
+        role
       }
     }
   }
@@ -363,6 +364,11 @@ export const GET_STAFF = gql`
       email
       department
       designation
+      userId {
+        id
+        email
+        role
+      }
     }
   }
 `;
@@ -379,6 +385,7 @@ export const REGISTER_TEACHER = gql`
     $designation: String
     $password: String!
     $avatar: String
+    $role: String
   ) {
     registerTeacher(
       email: $email
@@ -391,6 +398,7 @@ export const REGISTER_TEACHER = gql`
       designation: $designation
       password: $password
       avatar: $avatar
+      role: $role
     ) {
       id
       firstName
@@ -1067,6 +1075,7 @@ export const REGISTER_STAFF = gql`
     $phone: String!
     $department: String!
     $designation: String!
+    $password: String
   ) {
     registerStaff(
       email: $email
@@ -1076,6 +1085,7 @@ export const REGISTER_STAFF = gql`
       phone: $phone
       department: $department
       designation: $designation
+      password: $password
     ) {
       id
       firstName

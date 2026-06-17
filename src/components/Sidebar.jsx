@@ -66,43 +66,50 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
   const isActive = (path) => location.pathname === path;
 
   // Render navigation links based on user role permissions
-  const canViewDashboard = ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role);
-
   const menuItems = [
-    ...(canViewDashboard ? [
-      { text: 'Dashboard', icon: <DashboardIcon />, path: '/' }
-    ] : []),
+    // SUPER_ADMIN
     ...(user?.role === 'SUPER_ADMIN' ? [
       { text: 'Manage Schools', icon: <SchoolIcon />, path: '/schools' }
     ] : []),
-    ...(user?.role !== 'SUPER_ADMIN' ? [
-      ...(['TEACHER', 'CLASS_TEACHER'].includes(user?.role) ? [
-        { text: 'Students Register', icon: <PeopleIcon />, path: '/students' },
-        { text: 'Parents Register', icon: <PeopleIcon />, path: '/parents' }
-      ] : []),
-      ...(['TEACHER', 'CLASS_TEACHER', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) ? [
-        { text: 'Weekly Timetable', icon: <GradesIcon />, path: '/timetable' }
-      ] : []),
-      ...(['TEACHER', 'CLASS_TEACHER'].includes(user?.role) ? [
-        { text: 'Daily Attendance', icon: <AttendanceIcon />, path: '/attendance' },
-        { text: 'Homework Board', icon: <HomeworkIcon />, path: '/homework' },
-        { text: 'Grades Entry', icon: <GradesIcon />, path: '/grades' },
-        { text: 'Performance Analytics', icon: <DashboardIcon />, path: '/analytics' }
-      ] : []),
-      ...(['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) ? [
-        { text: 'Teachers', icon: <TeacherIcon />, path: '/teachers' },
-        { text: 'Class Management', icon: <SchoolIcon />, path: '/classes' },
-        { text: 'Exam Schedules', icon: <GradesIcon />, path: '/exams' },
-        { text: 'Staff Attendance', icon: <AttendanceIcon />, path: '/staff-attendance' }
-      ] : []),
-      ...(['PARENT'].includes(user?.role) ? [
-        { text: 'Parent Portal', icon: <DashboardIcon />, path: '/parent-portal' }
-      ] : []),
-      ...(!['PARENT', 'SUPER_ADMIN'].includes(user?.role) ? [
-        { text: 'Fees Accounting', icon: <FeesIcon />, path: '/fees' },
-        { text: 'Leave Management', icon: <LeaveIcon />, path: '/leaves' },
-        { text: 'Payroll & Payslips', icon: <PayrollIcon />, path: '/payroll' }
-      ] : [])
+
+    // SCHOOL_ADMIN / PRINCIPAL / VICE_PRINCIPAL
+    ...((['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role)) ? [
+      { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
+      { text: 'Super Teacher Register', icon: <PeopleIcon />, path: '/super-teachers' },
+      { text: 'Accountant Register', icon: <PeopleIcon />, path: '/accountants' },
+      { text: 'Leave Management', icon: <LeaveIcon />, path: '/leaves' },
+      { text: 'Weekly Timetable', icon: <GradesIcon />, path: '/timetable' }
+    ] : []),
+
+    // SUPER_TEACHER
+    ...(user?.role === 'SUPER_TEACHER' ? [
+      { text: 'Teacher Registration', icon: <TeacherIcon />, path: '/teachers' },
+      { text: 'Class Management', icon: <SchoolIcon />, path: '/classes' },
+      { text: 'Weekly Timetable', icon: <GradesIcon />, path: '/timetable' },
+      { text: 'Exam Schedule', icon: <GradesIcon />, path: '/exams' },
+      { text: 'Staff Attendance', icon: <AttendanceIcon />, path: '/staff-attendance' }
+    ] : []),
+
+    // ACCOUNTANT
+    ...(user?.role === 'ACCOUNTANT' ? [
+      { text: 'Student Registration', icon: <PeopleIcon />, path: '/students' },
+      { text: 'Fees Accounting', icon: <FeesIcon />, path: '/fees' },
+      { text: 'Payroll & Payslips', icon: <PayrollIcon />, path: '/payroll' }
+    ] : []),
+
+    // TEACHER / CLASS_TEACHER
+    ...((['TEACHER', 'CLASS_TEACHER'].includes(user?.role)) ? [
+      { text: 'Weekly Timetable', icon: <GradesIcon />, path: '/timetable' },
+      { text: 'Daily Attendance', icon: <AttendanceIcon />, path: '/attendance' },
+      { text: 'Homework Board', icon: <HomeworkIcon />, path: '/homework' },
+      { text: 'Grades Entry', icon: <GradesIcon />, path: '/grades' },
+      { text: 'Performance Analytics', icon: <DashboardIcon />, path: '/analytics' },
+      { text: 'Payroll & Payslips', icon: <PayrollIcon />, path: '/payroll' }
+    ] : []),
+
+    // PARENT
+    ...(user?.role === 'PARENT' ? [
+      { text: 'Parent Portal', icon: <DashboardIcon />, path: '/parent-portal' }
     ] : [])
   ];
 

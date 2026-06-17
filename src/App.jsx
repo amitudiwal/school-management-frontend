@@ -26,6 +26,8 @@ import TimetableManagement from './pages/TimetableManagement';
 import ExamManagement from './pages/ExamManagement';
 import LeaveManagement from './pages/LeaveManagement';
 import PayrollManagement from './pages/PayrollManagement';
+import SuperTeacherRegister from './pages/SuperTeacherRegister';
+import AccountantRegister from './pages/AccountantRegister';
 
 import ToastAlert from './components/ToastAlert';
 
@@ -102,12 +104,16 @@ function App() {
                 isAuthenticated ? (
                   canViewDashboard ? (
                     <Dashboard />
-                  ) : ['TEACHER', 'CLASS_TEACHER'].includes(user?.role) ? (
+                  ) : user?.role === 'SUPER_TEACHER' ? (
+                    <Navigate to="/teachers" />
+                  ) : user?.role === 'ACCOUNTANT' ? (
                     <Navigate to="/students" />
+                  ) : ['TEACHER', 'CLASS_TEACHER'].includes(user?.role) ? (
+                    <Navigate to="/timetable" />
                   ) : user?.role === 'PARENT' ? (
                     <Navigate to="/parent-portal" />
                   ) : (
-                    <Navigate to="/attendance" />
+                    <Navigate to="/login" />
                   )
                 ) : (
                   <Navigate to="/login" />
@@ -117,12 +123,12 @@ function App() {
             
             <Route 
               path="/students" 
-              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'TEACHER', 'CLASS_TEACHER'].includes(user?.role) ? <StudentList /> : <Navigate to="/" />} 
+              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'ACCOUNTANT'].includes(user?.role) ? <StudentList /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/parents" 
-              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'TEACHER', 'CLASS_TEACHER'].includes(user?.role) ? <ParentList /> : <Navigate to="/" />} 
+              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'ACCOUNTANT'].includes(user?.role) ? <ParentList /> : <Navigate to="/" />} 
             />
 
             <Route 
@@ -132,22 +138,32 @@ function App() {
 
             <Route
               path="/teachers"
-              element={isAuthenticated && ['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) ? <TeacherList /> : <Navigate to="/" />}
+              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'SUPER_TEACHER'].includes(user?.role) ? <TeacherList /> : <Navigate to="/" />}
+            />
+
+            <Route
+              path="/super-teachers"
+              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) ? <SuperTeacherRegister /> : <Navigate to="/" />}
+            />
+
+            <Route
+              path="/accountants"
+              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) ? <AccountantRegister /> : <Navigate to="/" />}
             />
 
             <Route
               path="/classes"
-              element={isAuthenticated && ['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) ? <ClassManagement /> : <Navigate to="/" />}
+              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'SUPER_TEACHER'].includes(user?.role) ? <ClassManagement /> : <Navigate to="/" />}
             />
 
             <Route 
               path="/timetable" 
-              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'TEACHER', 'CLASS_TEACHER'].includes(user?.role) ? <TimetableManagement /> : <Navigate to="/" />} 
+              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'SUPER_TEACHER', 'TEACHER', 'CLASS_TEACHER'].includes(user?.role) ? <TimetableManagement /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/fees" 
-              element={isAuthenticated ? <FeesList /> : <Navigate to="/login" />} 
+              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'ACCOUNTANT'].includes(user?.role) ? <FeesList /> : <Navigate to="/" />} 
             />
 
             <Route 
@@ -157,7 +173,7 @@ function App() {
 
             <Route 
               path="/staff-attendance" 
-              element={isAuthenticated && ['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) ? <StaffAttendance /> : <Navigate to="/" />} 
+              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'SUPER_TEACHER'].includes(user?.role) ? <StaffAttendance /> : <Navigate to="/" />} 
             />
 
             <Route 
@@ -177,17 +193,17 @@ function App() {
 
             <Route 
               path="/exams" 
-              element={isAuthenticated && ['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) ? <ExamManagement /> : <Navigate to="/" />} 
+              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'SUPER_TEACHER'].includes(user?.role) ? <ExamManagement /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/leaves" 
-              element={isAuthenticated && ['TEACHER', 'CLASS_TEACHER', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'HR_STAFF'].includes(user?.role) ? <LeaveManagement /> : <Navigate to="/" />} 
+              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'HR_STAFF'].includes(user?.role) ? <LeaveManagement /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/payroll" 
-              element={isAuthenticated && ['TEACHER', 'CLASS_TEACHER', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'HR_STAFF', 'ACCOUNTANT'].includes(user?.role) ? <PayrollManagement /> : <Navigate to="/" />} 
+              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'HR_STAFF', 'ACCOUNTANT', 'TEACHER', 'CLASS_TEACHER'].includes(user?.role) ? <PayrollManagement /> : <Navigate to="/" />} 
             />
 
             <Route 

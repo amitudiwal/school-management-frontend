@@ -11,7 +11,7 @@ import { useTheme } from '@mui/material/styles';
 import {
   Visibility, VisibilityOff, Email, Lock, ArrowBack,
   School as SchoolIcon, Smartphone, VpnKey, Business,
-  AdminPanelSettings, Person, SupervisorAccount
+  AdminPanelSettings, Person, SupervisorAccount, AttachMoney as AccountantIcon
 } from '@mui/icons-material';
 import { GET_SCHOOL_BY_CODE, LOGIN_WITH_PASSWORD, SEND_OTP, VERIFY_OTP, FORGOT_PASSWORD } from '../graphql/operations';
 import { loginStart, loginSuccess, loginFailure } from '../store/slices/authSlice';
@@ -83,6 +83,18 @@ function Login() {
         dispatch(showToast({ message: 'Access denied: You are not registered as a Parent.', severity: 'error' }));
         return;
       }
+      if (selectedRole === 'SUPER_TEACHER' && user.role !== 'SUPER_TEACHER') {
+        dispatch(loginFailure('Access denied: You are not registered as a Super Teacher.'));
+        setValidationError('Access denied: You are not registered as a Super Teacher.');
+        dispatch(showToast({ message: 'Access denied: You are not registered as a Super Teacher.', severity: 'error' }));
+        return;
+      }
+      if (selectedRole === 'ACCOUNTANT' && user.role !== 'ACCOUNTANT') {
+        dispatch(loginFailure('Access denied: You are not registered as a School Accountant.'));
+        setValidationError('Access denied: You are not registered as a School Accountant.');
+        dispatch(showToast({ message: 'Access denied: You are not registered as a School Accountant.', severity: 'error' }));
+        return;
+      }
       if (selectedRole === 'SCHOOL_ADMIN' && !['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user.role)) {
         dispatch(loginFailure('Access denied: You do not have School Admin/Management permissions.'));
         setValidationError('Access denied: You do not have School Admin/Management permissions.');
@@ -137,6 +149,18 @@ function Login() {
         dispatch(loginFailure('Access denied: You are not registered as a Parent.'));
         setValidationError('Access denied: You are not registered as a Parent.');
         dispatch(showToast({ message: 'Access denied: You are not registered as a Parent.', severity: 'error' }));
+        return;
+      }
+      if (selectedRole === 'SUPER_TEACHER' && user.role !== 'SUPER_TEACHER') {
+        dispatch(loginFailure('Access denied: You are not registered as a Super Teacher.'));
+        setValidationError('Access denied: You are not registered as a Super Teacher.');
+        dispatch(showToast({ message: 'Access denied: You are not registered as a Super Teacher.', severity: 'error' }));
+        return;
+      }
+      if (selectedRole === 'ACCOUNTANT' && user.role !== 'ACCOUNTANT') {
+        dispatch(loginFailure('Access denied: You are not registered as a School Accountant.'));
+        setValidationError('Access denied: You are not registered as a School Accountant.');
+        dispatch(showToast({ message: 'Access denied: You are not registered as a School Accountant.', severity: 'error' }));
         return;
       }
       if (selectedRole === 'SCHOOL_ADMIN' && !['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user.role)) {
@@ -270,6 +294,10 @@ function Login() {
     setValidationError('');
     if (selectedRole === 'SCHOOL_ADMIN') {
       setStep('ADMIN_LOGIN');
+    } else if (selectedRole === 'SUPER_TEACHER') {
+      setStep('SUPER_TEACHER_LOGIN');
+    } else if (selectedRole === 'ACCOUNTANT') {
+      setStep('ACCOUNTANT_LOGIN');
     } else if (selectedRole === 'TEACHER') {
       setStep('TEACHER_LOGIN');
     } else if (selectedRole === 'PARENT') {
@@ -344,6 +372,12 @@ function Login() {
     if (roleType === 'ADMIN') {
       setEmail(school?.schoolCode === 'SUNRISE001' ? 'admin@sunrise.com' : 'admin@greenwood.com');
       setPassword('admin_password');
+    } else if (roleType === 'SUPER_TEACHER') {
+      setEmail('superteacher@greenwood.com');
+      setPassword('superteacher_password');
+    } else if (roleType === 'ACCOUNTANT') {
+      setEmail('accountant@greenwood.com');
+      setPassword('accountant_password');
     } else if (roleType === 'TEACHER') {
       if (methodType === 'OTP') {
         setMobile(school?.schoolCode === 'SUNRISE001' ? '1234567890' : '1122334455');
@@ -599,6 +633,8 @@ function Login() {
                   >
                     {[
                       { value: 'SCHOOL_ADMIN', label: 'School Admin', icon: <AdminPanelSettings /> },
+                      { value: 'SUPER_TEACHER', label: 'Super Teacher', icon: <SupervisorAccount /> },
+                      { value: 'ACCOUNTANT', label: 'School Accountant', icon: <AccountantIcon /> },
                       { value: 'TEACHER', label: 'Faculty Teacher', icon: <Person /> },
                       { value: 'PARENT', label: 'Parent / Guardian', icon: <SupervisorAccount /> }
                     ].map((opt) => (
@@ -800,6 +836,150 @@ function Login() {
                     <Chip
                       label="Autofill Demo Teacher Password"
                       onClick={() => handleQuickFillUser('TEACHER', 'PW')}
+                      sx={{ cursor: 'pointer', backgroundColor: `${activeColor}15`, color: activeColor, border: `1px solid ${activeColor}30` }}
+                    />
+                  </Box>
+                </form>
+              </Box>
+            )}
+
+            {/* STEP 3D: SUPER TEACHER LOGIN */}
+            {step === 'SUPER_TEACHER_LOGIN' && (
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, textAlign: 'center' }}>
+                  Super Teacher Sign In
+                </Typography>
+                <form onSubmit={handleLoginSubmit}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textAlign: 'center' }}>
+                    Enter your Super Teacher credentials to log in.
+                  </Typography>
+
+                  <TextField
+                    fullWidth
+                    label="Email Address"
+                    variant="outlined"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    sx={textFieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Email sx={{ color: activeColor }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+
+                  <TextField
+                    fullWidth
+                    label="Password"
+                    type={showPassword ? 'text' : 'password'}
+                    variant="outlined"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    sx={textFieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Lock sx={{ color: activeColor }} />
+                        </InputAdornment>
+                      ),
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: 'text.secondary' }}>
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+
+                  <Button
+                    type="submit"
+                    fullWidth
+                    variant="contained"
+                    disabled={pwLoading}
+                    sx={{ py: 1.5, fontWeight: 700 }}
+                  >
+                    {pwLoading ? <CircularProgress size={24} color="inherit" /> : 'Log In'}
+                  </Button>
+
+                  <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid', borderColor: 'divider', textAlign: 'center' }}>
+                    <Chip
+                      label="Autofill Demo Super Teacher"
+                      onClick={() => handleQuickFillUser('SUPER_TEACHER')}
+                      sx={{ cursor: 'pointer', backgroundColor: `${activeColor}15`, color: activeColor, border: `1px solid ${activeColor}30` }}
+                    />
+                  </Box>
+                </form>
+              </Box>
+            )}
+
+            {/* STEP 3E: ACCOUNTANT LOGIN */}
+            {step === 'ACCOUNTANT_LOGIN' && (
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, textAlign: 'center' }}>
+                  School Accountant Sign In
+                </Typography>
+                <form onSubmit={handleLoginSubmit}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textAlign: 'center' }}>
+                    Enter your Accountant credentials to log in.
+                  </Typography>
+
+                  <TextField
+                    fullWidth
+                    label="Email Address"
+                    variant="outlined"
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    sx={textFieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Email sx={{ color: activeColor }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+
+                  <TextField
+                    fullWidth
+                    label="Password"
+                    type={showPassword ? 'text' : 'password'}
+                    variant="outlined"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    sx={textFieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Lock sx={{ color: activeColor }} />
+                        </InputAdornment>
+                      ),
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: 'text.secondary' }}>
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+
+                  <Button
+                    type="submit"
+                    fullWidth
+                    variant="contained"
+                    disabled={pwLoading}
+                    sx={{ py: 1.5, fontWeight: 700 }}
+                  >
+                    {pwLoading ? <CircularProgress size={24} color="inherit" /> : 'Log In'}
+                  </Button>
+
+                  <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid', borderColor: 'divider', textAlign: 'center' }}>
+                    <Chip
+                      label="Autofill Demo Accountant"
+                      onClick={() => handleQuickFillUser('ACCOUNTANT')}
                       sx={{ cursor: 'pointer', backgroundColor: `${activeColor}15`, color: activeColor, border: `1px solid ${activeColor}30` }}
                     />
                   </Box>
