@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { motion } from 'framer-motion';
 import { useSelector } from 'react-redux';
 import { useQuery } from '@apollo/client';
 import { 
@@ -18,6 +19,25 @@ import {
 } from '@mui/icons-material';
 import { GET_SUPER_ADMIN_DASHBOARD, GET_SCHOOL_ADMIN_DASHBOARD, GET_AUDIT_LOGS } from '../graphql/operations';
 import CustomDatePicker from '../components/CustomDatePicker';
+
+const containerVariants = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.08
+    }
+  }
+};
+
+const itemVariants = {
+  hidden: { opacity: 0, y: 15 },
+  show: { 
+    opacity: 1, 
+    y: 0,
+    transition: { type: 'spring', stiffness: 100, damping: 15 }
+  }
+};
 
 function Dashboard() {
   const { user } = useSelector((state) => state.auth);
@@ -86,9 +106,9 @@ function Dashboard() {
         </Typography>
 
         {/* Stats Grid */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
           {cards.map((card, idx) => (
-            <Grid item xs={12} sm={6} md={3} key={idx}>
+            <Grid item xs={12} sm={6} md={3} key={idx} component={motion.div} variants={itemVariants}>
               <Card>
                 <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Avatar sx={{ bgcolor: `${card.color}20`, color: card.color, width: 56, height: 56 }}>
@@ -109,8 +129,8 @@ function Dashboard() {
         </Grid>
 
         {/* Revenue Analytics Graph */}
-        <Grid container spacing={3} sx={{ mb: 4 }}>
-          <Grid item xs={12} md={8}>
+        <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
+          <Grid item xs={12} md={8} component={motion.div} variants={itemVariants}>
             <Card sx={{ p: 2 }}>
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
                 SaaS Monthly Subscription Revenue
@@ -136,7 +156,7 @@ function Dashboard() {
           </Grid>
 
           {/* Subscriptions breakdown */}
-          <Grid item xs={12} md={4}>
+          <Grid item xs={12} md={4} component={motion.div} variants={itemVariants}>
             <Card sx={{ height: '100%', p: 2 }}>
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>
                 Subscription Health
@@ -164,7 +184,8 @@ function Dashboard() {
         <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
           Security Log & Audit Trail
         </Typography>
-        <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+        <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
+          <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
           <Table sx={{ minWidth: 760 }}>
             <TableHead>
               <TableRow>
@@ -212,6 +233,7 @@ function Dashboard() {
             onPageChange={(e, newPage) => setPage(newPage)}
           />
         )}
+        </motion.div>
       </Box>
     );
   }
@@ -292,9 +314,9 @@ function Dashboard() {
       </Box>
 
       {/* Stats Grid */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
         {cards.map((card, idx) => (
-          <Grid item xs={12} sm={6} md={3} key={idx}>
+          <Grid item xs={12} sm={6} md={3} key={idx} component={motion.div} variants={itemVariants}>
             <Card>
               <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Avatar sx={{ bgcolor: `${card.color}20`, color: card.color, width: 56, height: 56 }}>
@@ -315,9 +337,9 @@ function Dashboard() {
       </Grid>
 
       {/* Analytics charts for School Admins */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
         {/* Attendance Pie Chart with Tabs */}
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
           <Card sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 420 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 1 }}>
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
@@ -372,7 +394,7 @@ function Dashboard() {
         </Grid>
 
         {/* Fees Collection chart */}
-        <Grid item xs={12} md={6}>
+        <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
           <Card sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 420 }}>
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
               Fee Collection Status
@@ -401,10 +423,10 @@ function Dashboard() {
       </Grid>
 
       {/* Demographic & Performance Distribution */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
+      <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
         {/* Class-wise Enrollment Distribution */}
         {classEnrollmentData.length > 0 && (
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
             <Card sx={{ p: 2, height: 380, display: 'flex', flexDirection: 'column' }}>
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
                 Class-wise Student Enrollment
@@ -430,7 +452,7 @@ function Dashboard() {
 
         {/* Academic Grade Distribution */}
         {gradeDistributionData.length > 0 && (
-          <Grid item xs={12} md={6}>
+          <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
             <Card sx={{ p: 2, height: 380, display: 'flex', flexDirection: 'column' }}>
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
                 Academic Grade Distribution

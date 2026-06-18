@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery } from '@apollo/client';
 import { useSelector } from 'react-redux';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Box, Grid, Card, CardContent, Typography, Avatar, Tab, Tabs,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -199,16 +200,15 @@ function ParentDashboard() {
               return (
                 <Grid item xs={12} sm={6} md={4} key={child.id}>
                   <Card
+                    component={motion.div}
+                    whileHover={{ scale: 1.02, y: -4 }}
+                    whileTap={{ scale: 0.98 }}
                     onClick={() => setSelectedChildIndex(idx)}
                     sx={{
                       cursor: 'pointer',
                       border: isSelected ? `2px solid ${theme.palette.primary.main}` : '2px solid transparent',
                       boxShadow: isSelected ? 4 : 1,
-                      transition: 'all 0.3s ease',
-                      '&:hover': {
-                        transform: 'translateY(-4px)',
-                        boxShadow: 3
-                      }
+                      transition: 'border 0.3s ease, box-shadow 0.3s ease'
                     }}
                   >
                     <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
@@ -271,8 +271,16 @@ function ParentDashboard() {
 
             {/* Tab Contents */}
             <Box sx={{ p: 3 }}>
-              {/* Tab 0: Overview & Attendance */}
-              {activeTab === 0 && (
+              <AnimatePresence mode="wait">
+                <motion.div
+                  key={activeTab}
+                  initial={{ opacity: 0, y: 15 }}
+                  animate={{ opacity: 1, y: 0 }}
+                  exit={{ opacity: 0, y: -15 }}
+                  transition={{ duration: 0.2 }}
+                >
+                  {/* Tab 0: Overview & Attendance */}
+                  {activeTab === 0 && (
                 <Box>
                   <Grid container spacing={3}>
                     {/* Basic Profile Details */}
@@ -701,6 +709,8 @@ function ParentDashboard() {
                   )}
                 </Box>
               )}
+                </motion.div>
+              </AnimatePresence>
             </Box>
           </Paper>
         </Box>

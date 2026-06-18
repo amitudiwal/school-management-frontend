@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Box, Button, Card, CardContent, Grid, TextField, MenuItem,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
@@ -228,8 +229,16 @@ function ExamManagement() {
       </Tabs>
 
       {/* EXAM TERMS TAB */}
-      {tabValue === 0 && (
-        <Box>
+      <AnimatePresence mode="wait">
+        {tabValue === 0 ? (
+          <motion.div
+            key="exam-terms"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Box>
           <Card sx={{ mb: 3 }}>
             <CardContent>
               <Typography variant="body2" color="text.secondary">
@@ -289,12 +298,17 @@ function ExamManagement() {
               )}
             </>
           )}
-        </Box>
-      )}
-
-      {/* EXAM SCHEDULING TAB */}
-      {tabValue === 1 && (
-        <Box>
+            </Box>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="exam-scheduling"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Box>
           <Card sx={{ mb: 3 }}>
             <CardContent>
               <Grid container spacing={2}>
@@ -385,8 +399,10 @@ function ExamManagement() {
               )}
             </>
           )}
-        </Box>
-      )}
+            </Box>
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       {/* CREATE EXAM TERM DIALOG */}
       <Dialog open={openExamModal} onClose={() => setOpenExamModal(false)} maxWidth="xs" fullWidth>

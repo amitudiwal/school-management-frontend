@@ -1,8 +1,9 @@
 import React, { useMemo, useState } from 'react';
-import { Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { AppBar, Box, CssBaseline, IconButton, ThemeProvider, Toolbar, Typography, useMediaQuery } from '@mui/material';
 import { Menu as MenuIcon } from '@mui/icons-material';
+import { motion, AnimatePresence } from 'framer-motion';
 import createMuiTheme from './theme/themeConfig';
 
 // Layout & Pages
@@ -35,6 +36,7 @@ function App() {
   const { themeMode } = useSelector((state) => state.ui);
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const [mobileOpen, setMobileOpen] = useState(false);
+  const location = useLocation();
   const canViewDashboard = ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role);
 
   // Generate MUI Theme dynamically based on dark/light setting
@@ -87,7 +89,16 @@ function App() {
             pt: isAuthenticated && isMobile ? 10 : isAuthenticated ? 3 : 0
           }}
         >
-          <Routes>
+          <AnimatePresence mode="wait">
+            <motion.div
+              key={location.pathname}
+              initial={{ opacity: 0, y: 15 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -15 }}
+              transition={{ duration: 0.25, ease: 'easeInOut' }}
+              style={{ width: '100%' }}
+            >
+              <Routes location={location}>
             <Route 
               path="/login" 
               element={!isAuthenticated ? <Login /> : <Navigate to="/" />} 
@@ -213,7 +224,9 @@ function App() {
 
             <Route path="*" element={<Navigate to="/" />} />
           </Routes>
-        </Box>
+        </motion.div>
+      </AnimatePresence>
+    </Box>
       </Box>
       <ToastAlert />
     </ThemeProvider>

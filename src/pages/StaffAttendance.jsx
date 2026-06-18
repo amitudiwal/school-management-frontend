@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
+import { motion, AnimatePresence } from 'framer-motion';
 import { 
   Box, Button, Card, CardContent, Grid, TextField, MenuItem, 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
@@ -175,8 +176,16 @@ function StaffAttendance() {
       </Tabs>
 
       {/* TEACHERS TAB */}
-      {tabValue === 0 && (
-        <Box>
+      <AnimatePresence mode="wait">
+        {tabValue === 0 ? (
+          <motion.div
+            key="teachers-tab"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Box>
           {teachersLoading || teacherAttLoading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}><CircularProgress /></Box>
           ) : teachersError ? (
@@ -256,12 +265,17 @@ function StaffAttendance() {
               </Box>
             </Box>
           )}
-        </Box>
-      )}
-
-      {/* GENERAL STAFF TAB */}
-      {tabValue === 1 && (
-        <Box>
+            </Box>
+          </motion.div>
+        ) : (
+          <motion.div
+            key="staff-tab"
+            initial={{ opacity: 0, y: 15 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -15 }}
+            transition={{ duration: 0.2 }}
+          >
+            <Box>
           {staffLoading || staffAttLoading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}><CircularProgress /></Box>
           ) : staffError ? (
@@ -341,8 +355,10 @@ function StaffAttendance() {
               </Box>
             </Box>
           )}
-        </Box>
-      )}
+            </Box>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </Box>
   );
 }

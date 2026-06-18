@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useDispatch } from 'react-redux';
 import { useMutation, useLazyQuery, useApolloClient } from '@apollo/client';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
   Box, Card, CardContent, TextField, Button, Typography,
   Alert, InputAdornment, IconButton, CircularProgress, Link, Chip, Grid,
@@ -539,7 +540,16 @@ function Login() {
             )}
 
             {/* STEP 1: ENTER SCHOOL CODE */}
-            {step === 'SCHOOL_CODE' && (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={step}
+                initial={{ opacity: 0, x: 15 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -15 }}
+                transition={{ duration: 0.2 }}
+                style={{ width: '100%' }}
+              >
+                {step === 'SCHOOL_CODE' && (
               <form onSubmit={handleSchoolCodeSubmit}>
                 <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, textAlign: 'center' }}>
                   Identify Your School
@@ -588,6 +598,9 @@ function Login() {
                     {['GREENVALLEY', 'SUNRISE001', 'VIDYAPUBLIC', 'SCHOLARACADEMY'].map((code) => (
                       <Grid item xs={6} key={code}>
                         <Chip
+                          component={motion.div}
+                          whileHover={{ scale: 1.04, translateY: -2 }}
+                          whileTap={{ scale: 0.96 }}
                           label={code}
                           onClick={() => handleQuickFillCode(code)}
                           sx={{
@@ -639,6 +652,9 @@ function Login() {
                       { value: 'PARENT', label: 'Parent / Guardian', icon: <SupervisorAccount /> }
                     ].map((opt) => (
                       <Box
+                        component={motion.div}
+                        whileHover={{ scale: 1.02, translateY: -2 }}
+                        whileTap={{ scale: 0.98 }}
                         key={opt.value}
                         onClick={() => setSelectedRole(opt.value)}
                         sx={{
@@ -1164,6 +1180,8 @@ function Login() {
                 </Button>
               </form>
             )}
+              </motion.div>
+            </AnimatePresence>
 
           </CardContent>
         </Card>

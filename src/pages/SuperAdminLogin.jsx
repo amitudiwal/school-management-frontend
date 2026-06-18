@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useDispatch } from 'react-redux';
 import { useMutation, useApolloClient } from '@apollo/client';
 import { useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import vidyaflowLogo from '../assets/vidyaflowlogo.png';
 import {
   Box, Card, CardContent, TextField, Button, Typography,
@@ -162,7 +163,16 @@ function SuperAdminLogin() {
           )}
 
           <form onSubmit={handleSubmit}>
-            {step === 'CREDENTIALS' && (
+            <AnimatePresence mode="wait">
+              <motion.div
+                key={step}
+                initial={{ opacity: 0, x: 15 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: -15 }}
+                transition={{ duration: 0.2 }}
+                style={{ width: '100%' }}
+              >
+                {step === 'CREDENTIALS' && (
               <>
                 <TextField
                   fullWidth
@@ -309,6 +319,8 @@ function SuperAdminLogin() {
                 </Button>
               </Box>
             )}
+              </motion.div>
+            </AnimatePresence>
           </form>
 
           {/* Tester Helper */}
@@ -318,6 +330,9 @@ function SuperAdminLogin() {
                 💡 QUICK DEMO ACCOUNTS (Click to autofill):
               </Typography>
               <Chip
+                component={motion.div}
+                whileHover={{ scale: 1.05, translateY: -2 }}
+                whileTap={{ scale: 0.95 }}
                 label="Super Admin: superadmin@erp.com"
                 onClick={handleQuickFill}
                 sx={{ cursor: 'pointer', backgroundColor: 'rgba(99, 102, 241, 0.15)', color: '#818CF8', border: '1px solid rgba(99, 102, 241, 0.3)' }}

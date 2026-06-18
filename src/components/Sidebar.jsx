@@ -1,5 +1,6 @@
 import React from 'react';
 import { useNavigate, useLocation } from 'react-router-dom';
+import { motion } from 'framer-motion';
 import { useSelector, useDispatch } from 'react-redux';
 import { useQuery, useApolloClient } from '@apollo/client';
 import {
@@ -205,11 +206,15 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
           {menuItems.map((item) => (
             <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
               <ListItemButton
+                component={motion.div}
+                whileHover={{ scale: 1.02, x: 6 }}
+                whileTap={{ scale: 0.98 }}
                 onClick={() => handleNavigate(item.path)}
                 sx={{
                   borderRadius: 2,
                   backgroundColor: isActive(item.path) ? 'action.selected' : 'transparent',
                   color: isActive(item.path) ? theme.palette.primary.main : 'text.secondary',
+                  cursor: 'pointer',
                   '&:hover': {
                     backgroundColor: 'action.hover',
                     color: theme.palette.text.primary,
@@ -236,15 +241,25 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
           <Typography variant="body2" color="text.secondary">
             {themeMode === 'dark' ? 'Dark Mode' : 'Light Mode'}
           </Typography>
-          <IconButton onClick={() => dispatch(toggleTheme())} color="inherit">
+          <IconButton
+            component={motion.button}
+            whileHover={{ scale: 1.1, rotate: themeMode === 'dark' ? 15 : -15 }}
+            whileTap={{ scale: 0.9 }}
+            onClick={() => dispatch(toggleTheme())}
+            color="inherit"
+          >
             {themeMode === 'dark' ? <LightIcon /> : <DarkIcon />}
           </IconButton>
         </Box>
         <ListItemButton
+          component={motion.div}
+          whileHover={{ scale: 1.02, x: 6 }}
+          whileTap={{ scale: 0.98 }}
           onClick={handleLogout}
           sx={{
             borderRadius: 2,
             color: 'error.main',
+            cursor: 'pointer',
             '&:hover': {
               backgroundColor: 'error.lighter',
             },
