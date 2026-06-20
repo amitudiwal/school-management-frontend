@@ -1631,7 +1631,116 @@ export const SAVE_STUDENT_FEE_STRUCTURE = gql`
   }
 `;
 
+export const GET_PENDING_JOBS = gql`
+  query GetPendingJobs {
+    getPendingJobs {
+      id
+      jobType
+      subjectName
+      chapterId {
+        id
+        name
+      }
+      topicName
+      status
+      remarks
+      createdAt
+      teacherId {
+        id
+        firstName
+        lastName
+        userId {
+          id
+          avatar
+        }
+      }
+    }
+  }
+`;
 
+export const CREATE_PENDING_JOB = gql`
+  mutation CreatePendingJob(
+    $jobType: String!
+    $subjectName: String
+    $chapterId: ID
+    $topicName: String
+    $status: String
+    $remarks: String
+  ) {
+    createPendingJob(
+      jobType: $jobType
+      subjectName: $subjectName
+      chapterId: $chapterId
+      topicName: $topicName
+      status: $status
+      remarks: $remarks
+    ) {
+      id
+      jobType
+      subjectName
+      chapterId {
+        id
+        name
+      }
+      topicName
+      status
+      remarks
+      createdAt
+      teacherId {
+        id
+        firstName
+        lastName
+      }
+    }
+  }
+`;
 
+export const UPDATE_PENDING_JOB_STATUS = gql`
+  mutation UpdatePendingJobStatus($id: ID!, $status: String!) {
+    updatePendingJobStatus(id: $id, status: $status) {
+      id
+      status
+    }
+  }
+`;
 
+export const GET_CHAPTERS = gql`
+  query GetChapters($subjectId: ID) {
+    getChapters(subjectId: $subjectId) {
+      id
+      name
+      subjectId {
+        id
+        name
+      }
+      classId {
+        id
+        name
+      }
+    }
+  }
+`;
+
+export const CREATE_CHAPTER = gql`
+  mutation CreateChapter($name: String!, $subjectId: ID!, $classId: ID!) {
+    createChapter(name: $name, subjectId: $subjectId, classId: $classId) {
+      id
+      name
+      subjectId {
+        id
+        name
+      }
+      classId {
+        id
+        name
+      }
+    }
+  }
+`;
+
+export const DELETE_CHAPTER = gql`
+  mutation DeleteChapter($id: ID!) {
+    deleteChapter(id: $id)
+  }
+`;
 

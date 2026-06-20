@@ -29,6 +29,7 @@ import LeaveManagement from './pages/LeaveManagement';
 import PayrollManagement from './pages/PayrollManagement';
 import SuperTeacherRegister from './pages/SuperTeacherRegister';
 import AccountantRegister from './pages/AccountantRegister';
+import PendingJobs from './pages/PendingJobs';
 
 import ToastAlert from './components/ToastAlert';
 
@@ -200,6 +201,11 @@ function App() {
             <Route 
               path="/analytics" 
               element={isAuthenticated && ['TEACHER', 'CLASS_TEACHER'].includes(user?.role) ? <ClassAnalytics /> : <Navigate to="/" />} 
+            />
+
+            <Route 
+              path="/pending-jobs" 
+              element={isAuthenticated && ['TEACHER', 'CLASS_TEACHER'].includes(user?.role) ? <PendingJobs /> : <Navigate to="/" />} 
             />
 
             <Route 

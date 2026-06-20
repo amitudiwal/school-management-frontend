@@ -20,7 +20,8 @@ import {
   Brightness7 as LightIcon,
   Assignment as GradesIcon,
   DateRange as LeaveIcon,
-  Receipt as PayrollIcon
+  Receipt as PayrollIcon,
+  PendingActions as PendingJobsIcon
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
 import { toggleTheme } from '../store/slices/uiSlice';
@@ -100,6 +101,7 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
 
     // TEACHER / CLASS_TEACHER
     ...((['TEACHER', 'CLASS_TEACHER'].includes(user?.role)) ? [
+      { text: 'Pending jobs', icon: <PendingJobsIcon />, path: '/pending-jobs' },
       { text: 'Weekly Timetable', icon: <GradesIcon />, path: '/timetable' },
       { text: 'Daily Attendance', icon: <AttendanceIcon />, path: '/attendance' },
       { text: 'Homework Board', icon: <HomeworkIcon />, path: '/homework' },
