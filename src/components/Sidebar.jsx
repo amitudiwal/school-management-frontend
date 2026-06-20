@@ -21,7 +21,8 @@ import {
   Assignment as GradesIcon,
   DateRange as LeaveIcon,
   Receipt as PayrollIcon,
-  PendingActions as PendingJobsIcon
+  PendingActions as PendingJobsIcon,
+  DirectionsBus as BusIcon
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
 import { toggleTheme } from '../store/slices/uiSlice';
@@ -79,6 +80,7 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
       { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
       { text: 'Super Teacher Register', icon: <PeopleIcon />, path: '/super-teachers' },
       { text: 'Accountant Register', icon: <PeopleIcon />, path: '/accountants' },
+      { text: 'Bus Tracker', icon: <BusIcon />, path: '/bus-tracker' },
       { text: 'Leave Management', icon: <LeaveIcon />, path: '/leaves' },
       { text: 'Weekly Timetable', icon: <GradesIcon />, path: '/timetable' }
     ] : []),
@@ -103,6 +105,7 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
     ...((['TEACHER', 'CLASS_TEACHER'].includes(user?.role)) ? [
       { text: 'Pending jobs', icon: <PendingJobsIcon />, path: '/pending-jobs' },
       { text: 'Weekly Timetable', icon: <GradesIcon />, path: '/timetable' },
+      { text: 'Bus Tracker', icon: <BusIcon />, path: '/bus-tracker' },
       { text: 'Daily Attendance', icon: <AttendanceIcon />, path: '/attendance' },
       { text: 'Homework Board', icon: <HomeworkIcon />, path: '/homework' },
       { text: 'Grades Entry', icon: <GradesIcon />, path: '/grades' },
@@ -112,7 +115,8 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
 
     // PARENT
     ...(user?.role === 'PARENT' ? [
-      { text: 'Parent Portal', icon: <DashboardIcon />, path: '/parent-portal' }
+      { text: 'Parent Portal', icon: <DashboardIcon />, path: '/parent-portal' },
+      { text: 'Bus Tracker', icon: <BusIcon />, path: '/bus-tracker' }
     ] : [])
   ];
 

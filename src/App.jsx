@@ -30,6 +30,7 @@ import PayrollManagement from './pages/PayrollManagement';
 import SuperTeacherRegister from './pages/SuperTeacherRegister';
 import AccountantRegister from './pages/AccountantRegister';
 import PendingJobs from './pages/PendingJobs';
+import BusTracker from './pages/BusTracker';
 
 import ToastAlert from './components/ToastAlert';
 
@@ -206,6 +207,11 @@ function App() {
             <Route 
               path="/pending-jobs" 
               element={isAuthenticated && ['TEACHER', 'CLASS_TEACHER'].includes(user?.role) ? <PendingJobs /> : <Navigate to="/" />} 
+            />
+
+            <Route 
+              path="/bus-tracker" 
+              element={isAuthenticated && ['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'TEACHER', 'CLASS_TEACHER', 'PARENT'].includes(user?.role) ? <BusTracker /> : <Navigate to="/" />} 
             />
 
             <Route 

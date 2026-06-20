@@ -1744,3 +1744,64 @@ export const DELETE_CHAPTER = gql`
   }
 `;
 
+export const GET_VEHICLES_TRACKING = gql`
+  query GetVehiclesTracking {
+    getVehicles {
+      id
+      vehicleNo
+      model
+      capacity
+      driverName
+      driverPhone
+      status
+      currentLatitude
+      currentLongitude
+      lastUpdated
+      routeId {
+        id
+        routeName
+        startLocation
+        endLocation
+        routeFee
+        status
+        stops {
+          stopName
+          arrivalTime
+        }
+      }
+    }
+  }
+`;
+
+export const UPDATE_VEHICLE_LOCATION = gql`
+  mutation UpdateVehicleLocation($id: ID!, $latitude: Float!, $longitude: Float!, $status: String!) {
+    updateVehicleLocation(id: $id, latitude: $latitude, longitude: $longitude, status: $status) {
+      id
+      vehicleNo
+      status
+      currentLatitude
+      currentLongitude
+      lastUpdated
+    }
+  }
+`;
+
+export const CREATE_TRANSPORT_ROUTE = gql`
+  mutation CreateTransportRoute($routeName: String!, $startLocation: String!, $endLocation: String!, $stops: [StopInput!], $routeFee: Float!) {
+    createTransportRoute(routeName: $routeName, startLocation: $startLocation, endLocation: $endLocation, stops: $stops, routeFee: $routeFee) {
+      id
+      routeName
+    }
+  }
+`;
+
+export const CREATE_VEHICLE = gql`
+  mutation CreateVehicle($vehicleNo: String!, $model: String, $capacity: Int!, $driverName: String!, $driverPhone: String!, $routeId: ID) {
+    createVehicle(vehicleNo: $vehicleNo, model: $model, capacity: $capacity, driverName: $driverName, driverPhone: $driverPhone, routeId: $routeId) {
+      id
+      vehicleNo
+    }
+  }
+`;
+
+
