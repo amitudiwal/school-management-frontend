@@ -248,6 +248,12 @@ export const REGISTER_STUDENT = gql`
     $address: AddressInput
     $medicalInfo: MedicalInfoInput
     $avatar: String
+    $parentEmail: String
+    $parentFirstName: String
+    $parentLastName: String
+    $parentRelation: String
+    $parentPhone: String
+    $parentPassword: String
   ) {
     registerStudent(
       email: $email
@@ -263,6 +269,12 @@ export const REGISTER_STUDENT = gql`
       address: $address
       medicalInfo: $medicalInfo
       avatar: $avatar
+      parentEmail: $parentEmail
+      parentFirstName: $parentFirstName
+      parentLastName: $parentLastName
+      parentRelation: $parentRelation
+      parentPhone: $parentPhone
+      parentPassword: $parentPassword
     ) {
       id
       admissionNo
@@ -572,6 +584,13 @@ export const GET_SCHOOL = gql`
       schoolName
       logo
       schoolLogo
+      address {
+        street
+        city
+        state
+        zipCode
+        country
+      }
     }
   }
 `;
@@ -585,6 +604,13 @@ export const GET_SCHOOLS = gql`
       status
       logo
       schoolLogo
+      address {
+        street
+        city
+        state
+        zipCode
+        country
+      }
       subscription {
         plan
         status

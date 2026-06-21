@@ -254,21 +254,21 @@ function Dashboard() {
 
   // Attendance Data Formats
   const studentAttendanceData = [
-    { name: 'Present', value: stats?.attendanceSummary?.presentPercent ?? 95.0, color: '#10B981' },
-    { name: 'Late', value: stats?.attendanceSummary?.latePercent ?? 2.0, color: '#F59E0B' },
-    { name: 'Absent', value: stats?.attendanceSummary?.absentPercent ?? 3.0, color: '#EF4444' },
+    { name: 'Present', value: stats?.attendanceSummary?.presentPercent ?? 0.0, color: '#10B981' },
+    { name: 'Late', value: stats?.attendanceSummary?.latePercent ?? 0.0, color: '#F59E0B' },
+    { name: 'Absent', value: stats?.attendanceSummary?.absentPercent ?? 0.0, color: '#EF4444' },
   ];
 
   const teacherAttendanceData = [
-    { name: 'Present', value: stats?.teacherAttendanceSummary?.presentPercent ?? 98.0, color: '#10B981' },
-    { name: 'Late', value: stats?.teacherAttendanceSummary?.latePercent ?? 1.0, color: '#F59E0B' },
-    { name: 'Absent', value: stats?.teacherAttendanceSummary?.absentPercent ?? 1.0, color: '#EF4444' },
+    { name: 'Present', value: stats?.teacherAttendanceSummary?.presentPercent ?? 0.0, color: '#10B981' },
+    { name: 'Late', value: stats?.teacherAttendanceSummary?.latePercent ?? 0.0, color: '#F59E0B' },
+    { name: 'Absent', value: stats?.teacherAttendanceSummary?.absentPercent ?? 0.0, color: '#EF4444' },
   ];
 
   const staffAttendanceData = [
-    { name: 'Present', value: stats?.staffAttendanceSummary?.presentPercent ?? 96.0, color: '#10B981' },
-    { name: 'Late', value: stats?.staffAttendanceSummary?.latePercent ?? 2.0, color: '#F59E0B' },
-    { name: 'Absent', value: stats?.staffAttendanceSummary?.absentPercent ?? 2.0, color: '#EF4444' },
+    { name: 'Present', value: stats?.staffAttendanceSummary?.presentPercent ?? 0.0, color: '#10B981' },
+    { name: 'Late', value: stats?.staffAttendanceSummary?.latePercent ?? 0.0, color: '#F59E0B' },
+    { name: 'Absent', value: stats?.staffAttendanceSummary?.absentPercent ?? 0.0, color: '#EF4444' },
   ];
 
   const getActiveAttendanceData = () => {

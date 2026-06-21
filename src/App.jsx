@@ -221,7 +221,7 @@ function App() {
 
             <Route 
               path="/leaves" 
-              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'HR_STAFF'].includes(user?.role) ? <LeaveManagement /> : <Navigate to="/" />} 
+              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'HR_STAFF', 'SUPER_TEACHER', 'TEACHER', 'CLASS_TEACHER'].includes(user?.role) ? <LeaveManagement /> : <Navigate to="/" />} 
             />
 
             <Route 

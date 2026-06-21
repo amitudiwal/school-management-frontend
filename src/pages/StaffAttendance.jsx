@@ -16,13 +16,15 @@ import {
   MARK_BULK_STAFF_ATTENDANCE,
   GET_SCHOOL_ADMIN_DASHBOARD
 } from '../graphql/operations';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import { showToast } from '../store/slices/uiSlice';
 import { People as StaffIcon, PersonAdd as TeacherIcon } from '@mui/icons-material';
 import CustomDatePicker from '../components/CustomDatePicker';
 
 function StaffAttendance() {
   const dispatch = useDispatch();
+  const { user } = useSelector((state) => state.auth);
+  const isAdminOrPrincipal = ['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role);
   const [tabValue, setTabValue] = useState(0);
   const [pageTeachers, setPageTeachers] = useState(0);
   const [pageStaff, setPageStaff] = useState(0);
@@ -86,7 +88,7 @@ function StaffAttendance() {
 
   // Mutations
   const [markTeacherAttendanceMutation, { loading: saveTeacherLoading }] = useMutation(MARK_BULK_TEACHER_ATTENDANCE, {
-    refetchQueries: ['GetSchoolAdminDashboard'],
+    refetchQueries: isAdminOrPrincipal ? ['GetSchoolAdminDashboard'] : [],
     awaitRefetchQueries: true,
     onCompleted: () => {
       dispatch(showToast({ message: 'Teacher attendance saved successfully!', severity: 'success' }));
@@ -97,7 +99,7 @@ function StaffAttendance() {
   });
 
   const [markStaffAttendanceMutation, { loading: saveStaffLoading }] = useMutation(MARK_BULK_STAFF_ATTENDANCE, {
-    refetchQueries: ['GetSchoolAdminDashboard'],
+    refetchQueries: isAdminOrPrincipal ? ['GetSchoolAdminDashboard'] : [],
     awaitRefetchQueries: true,
     onCompleted: () => {
       dispatch(showToast({ message: 'Staff attendance saved successfully!', severity: 'success' }));

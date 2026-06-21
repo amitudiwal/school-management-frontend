@@ -9,7 +9,7 @@ import {
 } from '@mui/material';
 import {
   Search as SearchIcon, Add as AddIcon, FileDownload as ExportIcon,
-  Edit as EditIcon, Delete as DeleteIcon
+  Edit as EditIcon, Delete as DeleteIcon, Visibility, VisibilityOff
 } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { showToast } from '../store/slices/uiSlice';
@@ -64,6 +64,16 @@ function StudentList() {
   const [formSectionId, setFormSectionId] = useState('');
   const [formParentId, setFormParentId] = useState('');
   const [formError, setFormError] = useState('');
+
+  // Parent simultaneous registration states
+  const [parentMode, setParentMode] = useState('EXISTING'); // 'EXISTING' or 'NEW'
+  const [parentFirstName, setParentFirstName] = useState('');
+  const [parentLastName, setParentLastName] = useState('');
+  const [parentRelation, setParentRelation] = useState('FATHER');
+  const [parentPhone, setParentPhone] = useState('');
+  const [parentEmail, setParentEmail] = useState('');
+  const [parentPassword, setParentPassword] = useState('');
+  const [showParentPassword, setShowParentPassword] = useState(false);
 
   // Image Upload States
   const [avatar, setAvatar] = useState('');
@@ -166,6 +176,14 @@ function StudentList() {
     setFormError('');
     setSelectedStudent(null);
     setAvatar('');
+    setParentMode('EXISTING');
+    setParentFirstName('');
+    setParentLastName('');
+    setParentRelation('FATHER');
+    setParentPhone('');
+    setParentEmail('');
+    setParentPassword('');
+    setShowParentPassword(false);
   };
 
   const handleOpenAdmission = () => {
@@ -223,9 +241,30 @@ function StudentList() {
       gender,
       dateOfBirth: new Date(dob),
       classId: formClassId,
-      sectionId: formSectionId,
-      parentId: formParentId || null
+      sectionId: formSectionId
     };
+
+    if (!selectedStudent && parentMode === 'NEW') {
+      if (!parentFirstName || !parentLastName || !parentEmail || !parentPhone || !parentRelation) {
+        setFormError('Please fill in all required parent details (First Name, Last Name, Relationship, Phone, Email).');
+        return;
+      }
+      variables.parentId = null;
+      variables.parentFirstName = parentFirstName;
+      variables.parentLastName = parentLastName;
+      variables.parentEmail = parentEmail;
+      variables.parentPhone = parentPhone;
+      variables.parentRelation = parentRelation;
+      variables.parentPassword = parentPassword || null;
+    } else {
+      variables.parentId = formParentId || null;
+      variables.parentFirstName = null;
+      variables.parentLastName = null;
+      variables.parentEmail = null;
+      variables.parentPhone = null;
+      variables.parentRelation = null;
+      variables.parentPassword = null;
+    }
 
     if (selectedStudent) {
       updateStudentMutation({
@@ -465,7 +504,15 @@ function StudentList() {
                 <TextField fullWidth required label="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth required type="email" label="Parent/Contact Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <TextField 
+                  fullWidth 
+                  required 
+                  type="email" 
+                  label="Student Login Email" 
+                  helperText="Unique login email for the student (e.g. st1212@school.com)"
+                  value={email} 
+                  onChange={(e) => setEmail(e.target.value)} 
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField fullWidth required label="Admission Number" value={admissionNo} onChange={(e) => setAdmissionNo(e.target.value)} />
@@ -519,20 +566,106 @@ function StudentList() {
                   )}
                 </TextField>
               </Grid>
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  fullWidth select label="Assign Parent (Optional)"
-                  value={formParentId}
-                  onChange={(e) => setFormParentId(e.target.value)}
-                >
-                  <MenuItem value="">None / No Parent Profile</MenuItem>
-                  {parentsData?.getParents?.map((parent) => (
-                    <MenuItem key={parent.id} value={parent.id}>
-                      {parent.firstName} {parent.lastName} ({parent.relation})
-                    </MenuItem>
-                  ))}
-                </TextField>
-              </Grid>
+              {!selectedStudent ? (
+                <>
+                  <Grid item xs={12}>
+                    <Typography variant="subtitle1" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, mt: 1, mb: 0.5 }}>
+                      Parent / Guardian Configuration
+                    </Typography>
+                    <TextField
+                      fullWidth
+                      select
+                      label="Parent Information Mode"
+                      value={parentMode}
+                      onChange={(e) => setParentMode(e.target.value)}
+                    >
+                      <MenuItem value="EXISTING">Assign Existing Parent Profile</MenuItem>
+                      <MenuItem value="NEW">Create & Link New Parent Credentials</MenuItem>
+                    </TextField>
+                  </Grid>
+
+                  {parentMode === 'EXISTING' ? (
+                    <Grid item xs={12}>
+                      <TextField
+                        fullWidth select label="Assign Existing Parent (Optional)"
+                        value={formParentId}
+                        onChange={(e) => setFormParentId(e.target.value)}
+                      >
+                        <MenuItem value="">None / No Parent Profile</MenuItem>
+                        {parentsData?.getParents?.map((parent) => (
+                          <MenuItem key={parent.id} value={parent.id}>
+                            {parent.firstName} {parent.lastName} ({parent.relation})
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    </Grid>
+                  ) : (
+                    <>
+                      <Grid item xs={12} sm={6}>
+                        <TextField fullWidth required label="Parent First Name" value={parentFirstName} onChange={(e) => setParentFirstName(e.target.value)} />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField fullWidth required label="Parent Last Name" value={parentLastName} onChange={(e) => setParentLastName(e.target.value)} />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField fullWidth required select label="Relationship to Student" value={parentRelation} onChange={(e) => setParentRelation(e.target.value)}>
+                          <MenuItem value="FATHER">Father</MenuItem>
+                          <MenuItem value="MOTHER">Mother</MenuItem>
+                          <MenuItem value="GUARDIAN">Guardian</MenuItem>
+                        </TextField>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField fullWidth required label="Parent Phone Number" value={parentPhone} onChange={(e) => setParentPhone(e.target.value)} />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField 
+                          fullWidth 
+                          required 
+                          type="email" 
+                          label="Parent Login Email" 
+                          helperText="Unique login email for the parent (e.g. parent@gmail.com)"
+                          value={parentEmail} 
+                          onChange={(e) => setParentEmail(e.target.value)} 
+                        />
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField
+                          fullWidth
+                          type={showParentPassword ? 'text' : 'password'}
+                          label="Parent Login Password (Optional)"
+                          helperText="Defaults to standard password or phone number if blank"
+                          value={parentPassword}
+                          onChange={(e) => setParentPassword(e.target.value)}
+                          InputProps={{
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton onClick={() => setShowParentPassword(!showParentPassword)} edge="end">
+                                  {showParentPassword ? <VisibilityOff /> : <Visibility />}
+                                </IconButton>
+                              </InputAdornment>
+                            )
+                          }}
+                        />
+                      </Grid>
+                    </>
+                  )}
+                </>
+              ) : (
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth select label="Assign Parent (Optional)"
+                    value={formParentId}
+                    onChange={(e) => setFormParentId(e.target.value)}
+                  >
+                    <MenuItem value="">None / No Parent Profile</MenuItem>
+                    {parentsData?.getParents?.map((parent) => (
+                      <MenuItem key={parent.id} value={parent.id}>
+                        {parent.firstName} {parent.lastName} ({parent.relation})
+                      </MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+              )}
             </Grid>
           </DialogContent>
           <DialogActions sx={{ p: { xs: 2, sm: 3 }, flexDirection: { xs: 'column-reverse', sm: 'row' }, alignItems: { xs: 'stretch', sm: 'center' } }}>

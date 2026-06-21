@@ -24,89 +24,30 @@ import {
   GET_TEACHERS
 } from '../graphql/operations';
 
-// Predefined premium color palettes for common school subjects
-const SUBJECT_PALETTES = {
-  mathematics: {
-    light: { bg: '#EEF2FF', border: '#6366F1', text: '#312E81' },
-    dark: { bg: 'rgba(99, 102, 241, 0.15)', border: '#818CF8', text: '#E0E7FF' }
-  },
-  science: {
-    light: { bg: '#ECFDF5', border: '#10B981', text: '#064E3B' },
-    dark: { bg: 'rgba(16, 185, 129, 0.15)', border: '#34D399', text: '#D1FAE5' }
-  },
-  physics: {
-    light: { bg: '#F0F9FF', border: '#0EA5E9', text: '#0C4A6E' },
-    dark: { bg: 'rgba(14, 165, 233, 0.15)', border: '#38BDF8', text: '#E0F2FE' }
-  },
-  chemistry: {
-    light: { bg: '#FEF3C7', border: '#D97706', text: '#78350F' },
-    dark: { bg: 'rgba(217, 119, 6, 0.15)', border: '#FBBF24', text: '#FEF3C7' }
-  },
-  biology: {
-    light: { bg: '#F7FEE7', border: '#84CC16', text: '#3F6212' },
-    dark: { bg: 'rgba(132, 204, 22, 0.15)', border: '#A3E635', text: '#ECFCCB' }
-  },
-  english: {
-    light: { bg: '#FFF7ED', border: '#F97316', text: '#7C2D12' },
-    dark: { bg: 'rgba(249, 115, 22, 0.15)', border: '#FB923C', text: '#FFEDD5' }
-  },
-  history: {
-    light: { bg: '#FAF5FF', border: '#A855F7', text: '#581C87' },
-    dark: { bg: 'rgba(168, 85, 247, 0.15)', border: '#C084FC', text: '#F3E8FF' }
-  },
-  geography: {
-    light: { bg: '#F0FDFA', border: '#14B8A6', text: '#115E59' },
-    dark: { bg: 'rgba(20, 184, 166, 0.15)', border: '#2DD4BF', text: '#CCFBF1' }
-  },
-  art: {
-    light: { bg: '#FDF2F8', border: '#EC4899', text: '#701A75' },
-    dark: { bg: 'rgba(236, 72, 153, 0.15)', border: '#F472B6', text: '#FCE7F3' }
-  },
-  music: {
-    light: { bg: '#FFF1F2', border: '#F43F5E', text: '#9F1239' },
-    dark: { bg: 'rgba(244, 63, 94, 0.15)', border: '#FB7185', text: '#FFE4E6' }
-  },
-  computer: {
-    light: { bg: '#F5F3FF', border: '#8B5CF6', text: '#4C1D95' },
-    dark: { bg: 'rgba(139, 92, 246, 0.15)', border: '#A78BFA', text: '#EDE9FE' }
-  },
-  default: {
-    light: { bg: '#F1F5F9', border: '#64748B', text: '#0F172A' },
-    dark: { bg: 'rgba(100, 116, 139, 0.15)', border: '#94A3B8', text: '#F8FAFC' }
-  }
-};
-
-const getSubjectPalette = (subjectName, isDark) => {
-  if (!subjectName) return SUBJECT_PALETTES.default[isDark ? 'dark' : 'light'];
+// Dynamic subject color classifier based on project palette (Indigo/Fuchsia)
+const getSubjectPalette = (subjectName, theme) => {
+  const isDark = theme.palette.mode === 'dark';
+  const nameLower = (subjectName || '').toLowerCase();
   
-  const nameLower = subjectName.toLowerCase();
+  // Categorize subjects to match the primary (Indigo) and secondary (Fuchsia) accents
+  const isSecondary = nameLower.includes('english') || 
+                      nameLower.includes('history') || 
+                      nameLower.includes('art') || 
+                      nameLower.includes('music') || 
+                      nameLower.includes('chemistry') || 
+                      nameLower.includes('biology');
+                      
+  const accent = isSecondary ? theme.palette.secondary : theme.palette.primary;
   
-  for (const key in SUBJECT_PALETTES) {
-    if (key !== 'default' && nameLower.includes(key)) {
-      return SUBJECT_PALETTES[key][isDark ? 'dark' : 'light'];
-    }
-  }
-  
-  // Custom hash-based fallback palette generator with high contrast
-  let hash = 0;
-  for (let i = 0; i < subjectName.length; i++) {
-    hash = subjectName.charCodeAt(i) + ((hash << 5) - hash);
-  }
-  const h = Math.abs(hash % 360);
-  
-  if (isDark) {
-    return {
-      bg: `hsla(${h}, 50%, 40%, 0.12)`,
-      border: `hsl(${h}, 55%, 60%)`,
-      text: `hsl(${h}, 70%, 90%)`
-    };
-  } else {
-    return {
-      bg: `hsl(${h}, 65%, 97%)`,
-      border: `hsl(${h}, 50%, 65%)`,
-      text: `hsl(${h}, 70%, 22%)`
-    };
-  }
+  return {
+    border: accent.main,
+    badgeBg: isDark 
+      ? (isSecondary ? 'rgba(217, 70, 239, 0.12)' : 'rgba(99, 102, 241, 0.12)')
+      : (isSecondary ? '#FDF2F8' : '#EEF2FF'),
+    badgeText: isDark
+      ? (isSecondary ? '#FDF2F8' : '#EEF2FF')
+      : accent.dark || accent.main
+  };
 };
 
 // Framer Motion variants for timetable grid items
@@ -473,10 +414,9 @@ function TimetableManagement() {
               style={{ width: '100%' }}
             >
               <Grid container spacing={2.5}>
-                {dayEntries.map((entry) => {
+                 {dayEntries.map((entry) => {
                   const isDark = theme.palette.mode === 'dark';
-                  const palette = getSubjectPalette(entry.subjectId?.name, isDark);
-                  const dividerColor = isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.08)';
+                  const palette = getSubjectPalette(entry.subjectId?.name, theme);
 
                   return (
                     <Grid
@@ -505,7 +445,9 @@ function TimetableManagement() {
                           sx={{
                             borderRadius: 3,
                             borderLeft: `6px solid ${palette.border}`,
-                            backgroundColor: palette.bg,
+                            border: `1px solid ${theme.palette.divider}`,
+                            borderLeftWidth: '6px',
+                            backgroundColor: theme.palette.background.paper,
                             height: '100%',
                             display: 'flex',
                             flexDirection: 'column',
@@ -516,7 +458,7 @@ function TimetableManagement() {
                           <CardContent sx={{ p: 2.5, height: '100%' }}>
                             {/* Period Header (Subject) */}
                             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1 }}>
-                              <Typography variant="h6" sx={{ fontWeight: 800, fontFamily: "'Outfit', sans-serif", color: palette.text }}>
+                              <Typography variant="h6" sx={{ fontWeight: 800, fontFamily: "'Outfit', sans-serif", color: theme.palette.text.primary }}>
                                 {entry.subjectId?.name}
                               </Typography>
                               {canManage && (
@@ -525,7 +467,7 @@ function TimetableManagement() {
                                     size="small"
                                     onClick={() => handleOpenEdit(entry)}
                                     sx={{
-                                      color: palette.text,
+                                      color: theme.palette.text.secondary,
                                       opacity: 0.8,
                                       '&:hover': { opacity: 1, backgroundColor: isDark ? 'rgba(255,255,255,0.08)' : 'rgba(0,0,0,0.04)' }
                                     }}
@@ -550,30 +492,30 @@ function TimetableManagement() {
                             {/* Timing details */}
                             <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mb: 1.5 }}>
                               <TimeIcon fontSize="small" sx={{ color: palette.border }} />
-                              <Typography variant="body2" sx={{ fontWeight: 700, color: palette.text, opacity: 0.9 }}>
+                              <Typography variant="body2" sx={{ fontWeight: 700, color: theme.palette.text.primary }}>
                                 {entry.startTime} - {entry.endTime}
                               </Typography>
                             </Box>
 
-                            <Divider sx={{ my: 1.5, borderColor: dividerColor }} />
+                            <Divider sx={{ my: 1.5, borderColor: theme.palette.divider }} />
 
                             {/* Other Meta Fields */}
                             <Grid container spacing={1}>
                               <Grid item xs={12} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <SchoolIcon fontSize="small" sx={{ color: palette.border, opacity: 0.8 }} />
-                                <Typography variant="body2" sx={{ fontWeight: 600, color: palette.text, opacity: 0.95 }}>
+                                <SchoolIcon fontSize="small" sx={{ color: theme.palette.text.secondary, opacity: 0.8 }} />
+                                <Typography variant="body2" sx={{ fontWeight: 600, color: theme.palette.text.secondary }}>
                                   {entry.classId?.name} - {entry.sectionId?.name}
                                 </Typography>
                               </Grid>
                               <Grid item xs={12} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                <TeacherIcon fontSize="small" sx={{ color: palette.border, opacity: 0.8 }} />
-                                <Typography variant="body2" sx={{ fontWeight: 600, color: palette.text, opacity: 0.95 }}>
+                                <TeacherIcon fontSize="small" sx={{ color: theme.palette.text.secondary, opacity: 0.8 }} />
+                                <Typography variant="body2" sx={{ fontWeight: 600, color: theme.palette.text.secondary }}>
                                   {entry.teacherId?.firstName} {entry.teacherId?.lastName}
                                 </Typography>
                               </Grid>
                               {entry.roomNumber && (
                                 <Grid item xs={12} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                                  <RoomIcon fontSize="small" sx={{ color: palette.border, opacity: 0.8 }} />
+                                  <RoomIcon fontSize="small" sx={{ color: theme.palette.text.secondary, opacity: 0.8 }} />
                                   <Chip
                                     size="small"
                                     label={`Room ${entry.roomNumber}`}
@@ -581,8 +523,8 @@ function TimetableManagement() {
                                       fontWeight: 700,
                                       fontSize: '0.75rem',
                                       height: 20,
-                                      backgroundColor: isDark ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)',
-                                      color: palette.text,
+                                      backgroundColor: palette.badgeBg,
+                                      color: palette.badgeText,
                                       border: `1px solid ${palette.border}33`
                                     }}
                                   />

@@ -91,7 +91,8 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
       { text: 'Class Management', icon: <SchoolIcon />, path: '/classes' },
       { text: 'Weekly Timetable', icon: <GradesIcon />, path: '/timetable' },
       { text: 'Exam Schedule', icon: <GradesIcon />, path: '/exams' },
-      { text: 'Staff Attendance', icon: <AttendanceIcon />, path: '/staff-attendance' }
+      { text: 'Staff Attendance', icon: <AttendanceIcon />, path: '/staff-attendance' },
+      { text: 'Leave Management', icon: <LeaveIcon />, path: '/leaves' }
     ] : []),
 
     // ACCOUNTANT
@@ -107,6 +108,7 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
       { text: 'Weekly Timetable', icon: <GradesIcon />, path: '/timetable' },
       { text: 'Bus Tracker', icon: <BusIcon />, path: '/bus-tracker' },
       { text: 'Daily Attendance', icon: <AttendanceIcon />, path: '/attendance' },
+      { text: 'Leave Management', icon: <LeaveIcon />, path: '/leaves' },
       { text: 'Homework Board', icon: <HomeworkIcon />, path: '/homework' },
       { text: 'Grades Entry', icon: <GradesIcon />, path: '/grades' },
       { text: 'Performance Analytics', icon: <DashboardIcon />, path: '/analytics' },

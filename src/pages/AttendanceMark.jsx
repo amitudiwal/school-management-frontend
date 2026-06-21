@@ -6,10 +6,13 @@ import {
   Paper, Typography, CircularProgress, Alert, ToggleButton, ToggleButtonGroup,
   TablePagination
 } from '@mui/material';
+import { useSelector } from 'react-redux';
 import { GET_CLASSES, GET_SECTIONS, GET_STUDENTS, MARK_BULK_ATTENDANCE, GET_SCHOOL_ADMIN_DASHBOARD } from '../graphql/operations';
 import CustomDatePicker from '../components/CustomDatePicker';
 
 function AttendanceMark() {
+  const { user } = useSelector((state) => state.auth);
+  const isAdminOrPrincipal = ['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role);
   const [classId, setClassId] = useState('');
   const [sectionId, setSectionId] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
@@ -47,7 +50,7 @@ function AttendanceMark() {
 
   // Mutation
   const [markAttendanceMutation, { loading: saveLoading }] = useMutation(MARK_BULK_ATTENDANCE, {
-    refetchQueries: ['GetSchoolAdminDashboard'],
+    refetchQueries: isAdminOrPrincipal ? ['GetSchoolAdminDashboard'] : [],
     awaitRefetchQueries: true,
     onCompleted: () => {
       setSaveStatus('Attendance saved successfully!');

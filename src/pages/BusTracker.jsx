@@ -1,11 +1,12 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
+import { useSelector } from 'react-redux';
 import { useQuery, useMutation } from '@apollo/client';
 import { motion } from 'framer-motion';
 import {
   Box, Grid, Card, CardContent, Typography, Button, FormControl,
   InputLabel, Select, MenuItem, CircularProgress, Alert, Stack,
   Chip, Avatar, Divider, Tabs, Tab, useTheme, List, ListItem, ListItemText,
-  TextField, Paper, IconButton
+  TextField, Paper, IconButton, Autocomplete
 } from '@mui/material';
 import {
   DirectionsBus as BusIcon,
@@ -24,7 +25,8 @@ import {
   UPDATE_VEHICLE_LOCATION,
   CREATE_TRANSPORT_ROUTE,
   CREATE_VEHICLE,
-  GET_TRANSPORT_ROUTES
+  GET_TRANSPORT_ROUTES,
+  GET_SCHOOL
 } from '../graphql/operations';
 
 const SIM_ROUTES = {
@@ -44,12 +46,44 @@ const SIM_ROUTES = {
   ]
 };
 
-const getRoutePoints = (name) => {
-  return SIM_ROUTES[name] || SIM_ROUTES['Route A - North City'];
+const LOCATION_COORDS = {
+  // Delhi / Defaults
+  'Terminal A - Sector 12': { lat: 28.6139, lng: 77.2090 },
+  'Stop 1 - Sector 15 Metro': { lat: 28.6250, lng: 77.2200 },
+  'Stop 2 - Rajeev Chowk Hub': { lat: 28.6300, lng: 77.2180 },
+  'Stop 3 - Connaught Place': { lat: 28.6328, lng: 77.2197 },
+  'School Main Gate': { lat: 28.6400, lng: 77.2400 },
+  'School Campus': { lat: 28.6400, lng: 77.2400 },
+  'Central School Campus': { lat: 28.6400, lng: 77.2400 },
+  
+  'Terminal B - Vasant Kunj': { lat: 28.5355, lng: 77.1554 },
+  'Stop 1 - Saket City Mall': { lat: 28.5244, lng: 77.2066 },
+  'Stop 2 - Hauz Khas Metro': { lat: 28.5434, lng: 77.2061 },
+  'Stop 3 - AIIMS Crossing': { lat: 28.5672, lng: 77.2100 },
+
+  'East Crossing Terminal': { lat: 28.6300, lng: 77.2900 },
+  'Central Market': { lat: 28.6200, lng: 77.2700 },
+  'Tech Park': { lat: 28.6250, lng: 77.2500 },
+
+  'Sector 62 Terminal': { lat: 28.6200, lng: 77.3700 },
+  'Metro Station Gate 2': { lat: 28.6250, lng: 77.3500 },
+
+  // Jaipur
+  'Jaipur Railway Station': { lat: 26.9196, lng: 75.7878 },
+  'Gopalbari': { lat: 26.9170, lng: 75.7920 },
+  'Jaipur Central Bus Stand': { lat: 26.9280, lng: 75.7980 },
 };
+
 
 function BusTracker() {
   const theme = useTheme();
+  const { user } = useSelector((state) => state.auth);
+
+  const { data: schoolData } = useQuery(GET_SCHOOL, {
+    variables: { id: user?.schoolId },
+    skip: !user?.schoolId || user?.role === 'SUPER_ADMIN',
+  });
+
   const [activeTab, setActiveTab] = useState(0);
   const [mapLoaded, setMapLoaded] = useState(false);
   const [leafletError, setLeafletError] = useState(false);
@@ -83,6 +117,137 @@ function BusTracker() {
 
   const vehiclesList = data?.getVehicles || [];
   const routesList = routesData?.getTransportRoutes || [];
+
+  // Dynamic base coordinates and location resolver
+  const city = schoolData?.getSchool?.address?.city || '';
+  let baseLat = 28.6400;
+  let baseLng = 77.2400;
+  if (city) {
+    const cityLower = city.toLowerCase().trim();
+    if (cityLower === 'jaipur') {
+      baseLat = 26.9124;
+      baseLng = 75.7873;
+    } else if (cityLower === 'boston') {
+      baseLat = 42.3601;
+      baseLng = -71.0589;
+    } else if (cityLower === 'mumbai') {
+      baseLat = 19.0760;
+      baseLng = 72.8777;
+    } else if (cityLower === 'bangalore' || cityLower === 'bengaluru') {
+      baseLat = 12.9716;
+      baseLng = 77.5946;
+    }
+  }
+
+  const getCoordsForLocation = useCallback((locName) => {
+    if (!locName) return { lat: baseLat, lng: baseLng };
+    const normalized = locName.trim();
+    if (LOCATION_COORDS[normalized]) {
+      return LOCATION_COORDS[normalized];
+    }
+    
+    // Deterministic hash of string to generate offset
+    let hash = 0;
+    for (let i = 0; i < normalized.length; i++) {
+      hash = normalized.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    
+    const offsetLat = ((Math.abs(hash) % 1000) / 1000 - 0.5) * 0.08;
+    const offsetLng = (((Math.abs(hash >> 3) % 1000) / 1000 - 0.5) * 0.08);
+    
+    return {
+      lat: baseLat + offsetLat,
+      lng: baseLng + offsetLng
+    };
+  }, [baseLat, baseLng]);
+
+  const getRoutePoints = useCallback((name) => {
+    if (SIM_ROUTES[name]) {
+      return SIM_ROUTES[name];
+    }
+    
+    const dbRoute = routesList.find(r => r.routeName === name);
+    if (dbRoute) {
+      const points = [];
+      points.push({
+        name: dbRoute.startLocation,
+        ...getCoordsForLocation(dbRoute.startLocation)
+      });
+      if (dbRoute.stops && dbRoute.stops.length > 0) {
+        dbRoute.stops.forEach(s => {
+          points.push({
+            name: s.stopName,
+            ...getCoordsForLocation(s.stopName)
+          });
+        });
+      }
+      points.push({
+        name: dbRoute.endLocation,
+        ...getCoordsForLocation(dbRoute.endLocation)
+      });
+      return points;
+    }
+    
+    return SIM_ROUTES['Route A - North City'];
+  }, [routesList, getCoordsForLocation]);
+
+  // Pan map when school location details load
+  useEffect(() => {
+    if (mapRef.current && schoolData?.getSchool?.address?.city) {
+      const cityVal = schoolData.getSchool.address.city.toLowerCase().trim();
+      let bLat = 28.6400;
+      let bLng = 77.2400;
+      if (cityVal === 'jaipur') {
+        bLat = 26.9124;
+        bLng = 75.7873;
+      } else if (cityVal === 'boston') {
+        bLat = 42.3601;
+        bLng = -71.0589;
+      } else if (cityVal === 'mumbai') {
+        bLat = 19.0760;
+        bLng = 72.8777;
+      } else if (cityVal === 'bangalore' || cityVal === 'bengaluru') {
+        bLat = 12.9716;
+        bLng = 77.5946;
+      }
+      mapRef.current.setView([bLat, bLng], 12);
+    }
+  }, [schoolData]);
+
+  const locationSuggestions = React.useMemo(() => {
+    const city = schoolData?.getSchool?.address?.city || '';
+    const defaults = city 
+      ? [
+          'School Campus',
+          'School Main Gate',
+          `${city} Railway Station`,
+          `${city} Central Bus Stand`,
+          `${city} City Center`,
+          `${city} Metro Station`,
+          `${city} Main Market`,
+          `${city} Airport`,
+          `${city} East Crossing`,
+          `${city} West Hub`,
+          `${city} South Junction`,
+          `${city} North Terminal`,
+        ]
+      : [
+          'School Campus',
+          'School Main Gate',
+          'Central Railway Station',
+          'Main Bus Terminal',
+          'City Center',
+          'Metro Station Hub',
+          'Main Market Crossing',
+          'Local Airport',
+          'East Crossing Terminal',
+          'West Hub Terminal',
+          'South Junction Hub',
+          'North Terminal Gate',
+        ];
+    const existing = routesList.flatMap(r => [r.startLocation, r.endLocation]).filter(Boolean);
+    return Array.from(new Set([...defaults, ...existing]));
+  }, [routesList, schoolData]);
 
   // --- Fleet Manager Form State ---
   // Transport Route Form
@@ -391,7 +556,7 @@ function BusTracker() {
     } catch (err) {
       console.error('Error rendering markers:', err);
     }
-  }, [mapLoaded, vehiclesList]);
+  }, [mapLoaded, vehiclesList, routesList, getRoutePoints]);
 
   // --- INITIALIZE DEMO VEHICLES & ROUTES ---
   const handleInitDemo = async () => {
@@ -924,23 +1089,45 @@ function BusTracker() {
                       required
                       variant="outlined"
                     />
-                    <TextField
-                      fullWidth
-                      label="Starting Point Location"
-                      placeholder="e.g. East Crossing Terminal"
+                    <Autocomplete
+                      freeSolo
+                      options={locationSuggestions}
                       value={startLocation}
-                      onChange={(e) => setStartLocation(e.target.value)}
-                      required
-                      variant="outlined"
+                      onChange={(event, newValue) => {
+                        setStartLocation(newValue || '');
+                      }}
+                      onInputChange={(event, newInputValue) => {
+                        setStartLocation(newInputValue || '');
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Starting Point Location"
+                          placeholder="e.g. East Crossing Terminal"
+                          required
+                          variant="outlined"
+                        />
+                      )}
                     />
-                    <TextField
-                      fullWidth
-                      label="Destination Point Location"
-                      placeholder="e.g. School Campus"
+                    <Autocomplete
+                      freeSolo
+                      options={locationSuggestions}
                       value={endLocation}
-                      onChange={(e) => setEndLocation(e.target.value)}
-                      required
-                      variant="outlined"
+                      onChange={(event, newValue) => {
+                        setEndLocation(newValue || '');
+                      }}
+                      onInputChange={(event, newInputValue) => {
+                        setEndLocation(newInputValue || '');
+                      }}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          label="Destination Point Location"
+                          placeholder="e.g. School Campus"
+                          required
+                          variant="outlined"
+                        />
+                      )}
                     />
                     <TextField
                       fullWidth

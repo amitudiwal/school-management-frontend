@@ -34,6 +34,11 @@ function SchoolsList() {
   const [adminName, setAdminName] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
+  const [street, setStreet] = useState('');
+  const [city, setCity] = useState('');
+  const [state, setState] = useState('');
+  const [zipCode, setZipCode] = useState('');
+  const [country, setCountry] = useState('');
   const [formError, setFormError] = useState('');
   const [schoolCode, setSchoolCode] = useState('');
   const [logo, setLogo] = useState('');
@@ -124,6 +129,11 @@ function SchoolsList() {
     setAdminEmail('');
     setAdminPassword('');
     setSchoolCode('');
+    setStreet('');
+    setCity('');
+    setState('');
+    setZipCode('');
+    setCountry('');
     setFormError('');
     setSelectedSchool(null);
     setLogo('');
@@ -147,6 +157,11 @@ function SchoolsList() {
     setSchoolCode(sch.schoolCode || '');
     setLogo(sch.logo || '');
     setSchoolLogo(sch.schoolLogo || '');
+    setStreet(sch.address?.street || '');
+    setCity(sch.address?.city || '');
+    setState(sch.address?.state || '');
+    setZipCode(sch.address?.zipCode || '');
+    setCountry(sch.address?.country || '');
     setFormError('');
     setOpenModal(true);
   };
@@ -171,7 +186,14 @@ function SchoolsList() {
           name,
           plan,
           logo,
-          schoolLogo
+          schoolLogo,
+          address: {
+            street,
+            city,
+            state,
+            zipCode,
+            country
+          }
         }
       });
       return;
@@ -194,7 +216,14 @@ function SchoolsList() {
         adminEmail,
         adminPassword,
         logo,
-        schoolLogo
+        schoolLogo,
+        address: {
+          street,
+          city,
+          state,
+          zipCode,
+          country
+        }
       }
     });
   };
@@ -238,6 +267,8 @@ function SchoolsList() {
                   <TableCell sx={{ fontWeight: 700 }} width="80px">Logo</TableCell>
                   <TableCell>School Name</TableCell>
                   <TableCell>Subdomain Slug</TableCell>
+                  <TableCell>City</TableCell>
+                  <TableCell>State</TableCell>
                   <TableCell>Subscription Plan</TableCell>
                   <TableCell>Account Status</TableCell>
                   <TableCell>Contact Email</TableCell>
@@ -261,6 +292,8 @@ function SchoolsList() {
                       </TableCell>
                       <TableCell sx={{ fontWeight: 700 }}>{sch.name}</TableCell>
                       <TableCell>{sch.slug}</TableCell>
+                      <TableCell>{sch.address?.city || '—'}</TableCell>
+                      <TableCell>{sch.address?.state || '—'}</TableCell>
                       <TableCell>
                         <Chip size="small" label={sch.subscription?.plan} color="primary" variant="outlined" sx={{ fontWeight: 700 }} />
                       </TableCell>
@@ -446,6 +479,53 @@ function SchoolsList() {
                   <MenuItem value="PREMIUM">Premium Suite</MenuItem>
                   <MenuItem value="ENTERPRISE">Enterprise Tier</MenuItem>
                 </TextField>
+              </Grid>
+              <Grid item xs={12}>
+                <Typography variant="subtitle2" sx={{ fontWeight: 800, mt: 1 }}>
+                  School Address Configuration
+                </Typography>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Street Address"
+                  value={street}
+                  onChange={(e) => setStreet(e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  required
+                  label="City"
+                  value={city}
+                  onChange={(e) => setCity(e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  required
+                  label="State"
+                  value={state}
+                  onChange={(e) => setState(e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Zip/Postal Code"
+                  value={zipCode}
+                  onChange={(e) => setZipCode(e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  label="Country"
+                  value={country}
+                  onChange={(e) => setCountry(e.target.value)}
+                />
               </Grid>
               {!selectedSchool && (
                 <>

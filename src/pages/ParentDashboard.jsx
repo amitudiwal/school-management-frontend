@@ -420,7 +420,7 @@ function ParentDashboard() {
                     <>
                       <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
                         <Table>
-                          <TableHead sx={{ bgcolor: theme.palette.grey[100] }}>
+                          <TableHead sx={{ bgcolor: theme.palette.background.neutral || (theme.palette.mode === 'dark' ? '#1F2937' : '#F1F5F9') }}>
                             <TableRow>
                               <TableCell sx={{ fontWeight: 700 }}>Exam</TableCell>
                               <TableCell sx={{ fontWeight: 700 }}>Subject</TableCell>
@@ -553,7 +553,7 @@ function ParentDashboard() {
                     <>
                       <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
                         <Table>
-                          <TableHead sx={{ bgcolor: theme.palette.grey[100] }}>
+                          <TableHead sx={{ bgcolor: theme.palette.background.neutral || (theme.palette.mode === 'dark' ? '#1F2937' : '#F1F5F9') }}>
                             <TableRow>
                               <TableCell sx={{ fontWeight: 700 }}>Title / Category</TableCell>
                               <TableCell sx={{ fontWeight: 700 }}>Due Date</TableCell>
@@ -685,7 +685,7 @@ function ParentDashboard() {
                                 Stopping Stations & Schedules:
                               </Typography>
                               {route.stops && route.stops.length > 0 ? (
-                                <List dense sx={{ bgcolor: theme.palette.grey[50], borderRadius: 1 }}>
+                                <List dense sx={{ bgcolor: theme.palette.background.neutral || (theme.palette.mode === 'dark' ? '#1F2937' : '#F1F5F9'), borderRadius: 1 }}>
                                   {route.stops.map((stop, sIdx) => (
                                     <ListItem key={sIdx}>
                                       <ListItemIcon><TimeIcon fontSize="small" /></ListItemIcon>
