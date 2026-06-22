@@ -72,6 +72,7 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
   const menuItems = [
     // SUPER_ADMIN
     ...(user?.role === 'SUPER_ADMIN' ? [
+      { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
       { text: 'Manage Schools', icon: <SchoolIcon />, path: '/schools' }
     ] : []),
 
