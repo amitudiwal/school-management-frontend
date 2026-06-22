@@ -22,6 +22,7 @@ function SuperAdminLogin() {
   const [step, setStep] = useState('CREDENTIALS');
   const [twoFactorCode, setTwoFactorCode] = useState('');
   const [validationError, setValidationError] = useState('');
+  const [errors, setErrors] = useState({});
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -48,10 +49,29 @@ function SuperAdminLogin() {
 
   const handleSubmit = (e) => {
     e.preventDefault();
+    setErrors({});
     setValidationError('');
 
-    if (!email || !password) {
-      setValidationError('Please fill in all credentials.');
+    const newErrors = {};
+    if (step === 'CREDENTIALS') {
+      if (!email.trim()) {
+        newErrors.email = 'Email Address is required.';
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+        newErrors.email = 'Please enter a valid email address.';
+      }
+      if (!password) {
+        newErrors.password = 'Password is required.';
+      }
+    } else if (step === '2FA_VERIFY') {
+      if (!twoFactorCode.trim()) {
+        newErrors.twoFactorCode = 'Verification Code is required.';
+      } else if (twoFactorCode !== '123456') {
+        newErrors.twoFactorCode = 'Invalid 2FA Verification Code. Use demo code 123456.';
+      }
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
@@ -61,15 +81,10 @@ function SuperAdminLogin() {
       return;
     }
 
-    if (step === '2FA_VERIFY' && twoFactorCode !== '123456') {
-      setValidationError('Invalid 2FA Verification Code. Use demo code 123456.');
-      return;
-    }
-
     dispatch(loginStart());
     loginMutation({
       variables: {
-        email,
+        email: email.trim(),
         password,
         schoolId: null // Super Admin is global
       }
@@ -179,7 +194,12 @@ function SuperAdminLogin() {
                   label="Super Admin Email"
                   variant="outlined"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
+                  }}
+                  error={Boolean(errors.email)}
+                  helperText={errors.email}
                   sx={textFieldSx}
                   InputProps={{
                     startAdornment: (
@@ -196,7 +216,12 @@ function SuperAdminLogin() {
                   type={showPassword ? 'text' : 'password'}
                   variant="outlined"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
+                  }}
+                  error={Boolean(errors.password)}
+                  helperText={errors.password}
                   sx={textFieldSx}
                   InputProps={{
                     startAdornment: (
@@ -273,7 +298,12 @@ function SuperAdminLogin() {
                   placeholder="e.g. 123456"
                   variant="outlined"
                   value={twoFactorCode}
-                  onChange={(e) => setTwoFactorCode(e.target.value)}
+                  onChange={(e) => {
+                    setTwoFactorCode(e.target.value);
+                    if (errors.twoFactorCode) setErrors(prev => ({ ...prev, twoFactorCode: '' }));
+                  }}
+                  error={Boolean(errors.twoFactorCode)}
+                  helperText={errors.twoFactorCode}
                   sx={textFieldSx}
                   InputProps={{
                     startAdornment: (

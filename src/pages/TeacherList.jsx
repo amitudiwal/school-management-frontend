@@ -51,6 +51,7 @@ function TeacherList() {
   const [password, setPassword] = useState('');
   const [department, setDepartment] = useState('HR');
   const [formError, setFormError] = useState('');
+  const [errors, setErrors] = useState({});
 
   // Image Upload States
   const { token } = useSelector((state) => state.auth);
@@ -182,6 +183,7 @@ function TeacherList() {
     setDesignation('');
     setPassword('');
     setFormError('');
+    setErrors({});
     setSelectedTeacher(null);
     setAvatar('');
     setShowPassword(false);
@@ -196,6 +198,7 @@ function TeacherList() {
     setDepartment('HR');
     setDesignation('');
     setFormError('');
+    setErrors({});
     setSelectedStaff(null);
   };
 
@@ -211,6 +214,8 @@ function TeacherList() {
     setDesignation(teacher.designation || '');
     setPassword('dummy_pass');
     setAvatar(teacher.userId?.avatar || '');
+    setFormError('');
+    setErrors({});
     setOpenTeacherModal(true);
   };
 
@@ -223,15 +228,43 @@ function TeacherList() {
     setPhone(staff.phone);
     setDepartment(staff.department || 'HR');
     setDesignation(staff.designation || '');
+    setFormError('');
+    setErrors({});
     setOpenStaffModal(true);
   };
 
   const handleTeacherSubmit = (e) => {
     e.preventDefault();
     setFormError('');
+    setErrors({});
 
-    if (!firstName || !lastName || !email || !dob || !phone || !qualification) {
-      setFormError('Please fill in all required fields.');
+    const newErrors = {};
+    if (!firstName.trim()) newErrors.firstName = 'First Name is required.';
+    if (!lastName.trim()) newErrors.lastName = 'Last Name is required.';
+    
+    if (!email.trim()) {
+      newErrors.email = 'Email Address is required.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      newErrors.email = 'Please enter a valid email address.';
+    }
+
+    if (!dob) newErrors.dob = 'Date of Birth is required.';
+    
+    if (!phone.trim()) {
+      newErrors.phone = 'Phone number is required.';
+    } else if (!/^\d{10}$/.test(phone.trim())) {
+      newErrors.phone = 'Phone number must be exactly 10 digits.';
+    }
+
+    if (!qualification.trim()) newErrors.qualification = 'Qualification is required.';
+
+    if (!selectedTeacher && !password) {
+      newErrors.password = 'Password is required for registration.';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setFormError('Please correct the highlighted errors before submitting.');
       return;
     }
 
@@ -239,31 +272,27 @@ function TeacherList() {
       updateTeacher({
         variables: {
           id: selectedTeacher.id,
-          firstName,
-          lastName,
-          email,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: email.trim(),
           gender,
           dateOfBirth: dob,
-          phone,
-          qualification,
-          designation
+          phone: phone.trim(),
+          qualification: qualification.trim(),
+          designation: designation.trim()
         }
       });
     } else {
-      if (!password) {
-        setFormError('Password is required for registration.');
-        return;
-      }
       registerTeacher({
         variables: {
-          firstName,
-          lastName,
-          email,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: email.trim(),
           gender,
           dateOfBirth: dob,
-          phone,
-          qualification,
-          designation,
+          phone: phone.trim(),
+          qualification: qualification.trim(),
+          designation: designation.trim(),
           password,
           avatar
         }
@@ -274,9 +303,30 @@ function TeacherList() {
   const handleStaffSubmit = (e) => {
     e.preventDefault();
     setFormError('');
+    setErrors({});
 
-    if (!firstName || !lastName || !email || !phone || !department || !designation) {
-      setFormError('Please fill in all required fields.');
+    const newErrors = {};
+    if (!firstName.trim()) newErrors.firstName = 'First Name is required.';
+    if (!lastName.trim()) newErrors.lastName = 'Last Name is required.';
+    
+    if (!email.trim()) {
+      newErrors.email = 'Email Address is required.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      newErrors.email = 'Please enter a valid email address.';
+    }
+
+    if (!phone.trim()) {
+      newErrors.phone = 'Phone number is required.';
+    } else if (!/^\d{10}$/.test(phone.trim())) {
+      newErrors.phone = 'Phone number must be exactly 10 digits.';
+    }
+
+    if (!department) newErrors.department = 'Department is required.';
+    if (!designation.trim()) newErrors.designation = 'Designation is required.';
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setFormError('Please correct the highlighted errors before submitting.');
       return;
     }
 
@@ -284,25 +334,25 @@ function TeacherList() {
       updateStaff({
         variables: {
           id: selectedStaff.id,
-          firstName,
-          lastName,
-          email,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: email.trim(),
           gender,
-          phone,
+          phone: phone.trim(),
           department,
-          designation
+          designation: designation.trim()
         }
       });
     } else {
       registerStaff({
         variables: {
-          firstName,
-          lastName,
-          email,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: email.trim(),
           gender,
-          phone,
+          phone: phone.trim(),
           department,
-          designation
+          designation: designation.trim()
         }
       });
     }
@@ -486,13 +536,47 @@ function TeacherList() {
                 </Button>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth required label="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                <TextField 
+                  fullWidth 
+                  required 
+                  label="First Name" 
+                  value={firstName} 
+                  onChange={(e) => {
+                    setFirstName(e.target.value);
+                    if (errors.firstName) setErrors(prev => ({ ...prev, firstName: '' }));
+                  }} 
+                  error={Boolean(errors.firstName)}
+                  helperText={errors.firstName}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth required label="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                <TextField 
+                  fullWidth 
+                  required 
+                  label="Last Name" 
+                  value={lastName} 
+                  onChange={(e) => {
+                    setLastName(e.target.value);
+                    if (errors.lastName) setErrors(prev => ({ ...prev, lastName: '' }));
+                  }} 
+                  error={Boolean(errors.lastName)}
+                  helperText={errors.lastName}
+                />
               </Grid>
               <Grid item xs={12}>
-                <TextField fullWidth required type="email" label="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <TextField 
+                  fullWidth 
+                  required 
+                  type="email" 
+                  label="Email Address" 
+                  value={email} 
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
+                  }} 
+                  error={Boolean(errors.email)}
+                  helperText={errors.email}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField fullWidth required select label="Gender" value={gender} onChange={(e) => setGender(e.target.value)}>
@@ -502,13 +586,46 @@ function TeacherList() {
                 </TextField>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <CustomDatePicker fullWidth required label="Date of Birth" value={dob} onChange={(e) => setDob(e.target.value)} />
+                <CustomDatePicker 
+                  fullWidth 
+                  required 
+                  label="Date of Birth" 
+                  value={dob} 
+                  onChange={(e) => {
+                    setDob(e.target.value);
+                    if (errors.dob) setErrors(prev => ({ ...prev, dob: '' }));
+                  }} 
+                  error={Boolean(errors.dob)}
+                  helperText={errors.dob}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth required label="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                <TextField 
+                  fullWidth 
+                  required 
+                  label="Phone" 
+                  value={phone} 
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                    if (errors.phone) setErrors(prev => ({ ...prev, phone: '' }));
+                  }} 
+                  error={Boolean(errors.phone)}
+                  helperText={errors.phone}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth required label="Qualification" value={qualification} onChange={(e) => setQualification(e.target.value)} />
+                <TextField 
+                  fullWidth 
+                  required 
+                  label="Qualification" 
+                  value={qualification} 
+                  onChange={(e) => {
+                    setQualification(e.target.value);
+                    if (errors.qualification) setErrors(prev => ({ ...prev, qualification: '' }));
+                  }} 
+                  error={Boolean(errors.qualification)}
+                  helperText={errors.qualification}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField fullWidth label="Designation" value={designation} onChange={(e) => setDesignation(e.target.value)} />
@@ -521,7 +638,12 @@ function TeacherList() {
                     type={showPassword ? 'text' : 'password'}
                     label="Teacher Login Password"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
+                    }}
+                    error={Boolean(errors.password)}
+                    helperText={errors.password}
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position="end">
@@ -553,13 +675,47 @@ function TeacherList() {
             {formError && <Alert severity="error" sx={{ mb: 2 }}>{formError}</Alert>}
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth required label="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                <TextField 
+                  fullWidth 
+                  required 
+                  label="First Name" 
+                  value={firstName} 
+                  onChange={(e) => {
+                    setFirstName(e.target.value);
+                    if (errors.firstName) setErrors(prev => ({ ...prev, firstName: '' }));
+                  }} 
+                  error={Boolean(errors.firstName)}
+                  helperText={errors.firstName}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth required label="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                <TextField 
+                  fullWidth 
+                  required 
+                  label="Last Name" 
+                  value={lastName} 
+                  onChange={(e) => {
+                    setLastName(e.target.value);
+                    if (errors.lastName) setErrors(prev => ({ ...prev, lastName: '' }));
+                  }} 
+                  error={Boolean(errors.lastName)}
+                  helperText={errors.lastName}
+                />
               </Grid>
               <Grid item xs={12}>
-                <TextField fullWidth required type="email" label="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <TextField 
+                  fullWidth 
+                  required 
+                  type="email" 
+                  label="Email Address" 
+                  value={email} 
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
+                  }} 
+                  error={Boolean(errors.email)}
+                  helperText={errors.email}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField fullWidth required select label="Gender" value={gender} onChange={(e) => setGender(e.target.value)}>
@@ -569,10 +725,33 @@ function TeacherList() {
                 </TextField>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth required label="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                <TextField 
+                  fullWidth 
+                  required 
+                  label="Phone" 
+                  value={phone} 
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                    if (errors.phone) setErrors(prev => ({ ...prev, phone: '' }));
+                  }} 
+                  error={Boolean(errors.phone)}
+                  helperText={errors.phone}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth required select label="Department" value={department} onChange={(e) => setDepartment(e.target.value)}>
+                <TextField 
+                  fullWidth 
+                  required 
+                  select 
+                  label="Department" 
+                  value={department} 
+                  onChange={(e) => {
+                    setDepartment(e.target.value);
+                    if (errors.department) setErrors(prev => ({ ...prev, department: '' }));
+                  }}
+                  error={Boolean(errors.department)}
+                  helperText={errors.department}
+                >
                   <MenuItem value="LIBRARY">Library</MenuItem>
                   <MenuItem value="HR">HR Staff</MenuItem>
                   {/* <MenuItem value="FINANCE">Finance</MenuItem> */}
@@ -583,7 +762,18 @@ function TeacherList() {
                 </TextField>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth required label="Designation (e.g. Librarian, Cleaner, Peon)" value={designation} onChange={(e) => setDesignation(e.target.value)} />
+                <TextField 
+                  fullWidth 
+                  required 
+                  label="Designation (e.g. Librarian, Cleaner, Peon)" 
+                  value={designation} 
+                  onChange={(e) => {
+                    setDesignation(e.target.value);
+                    if (errors.designation) setErrors(prev => ({ ...prev, designation: '' }));
+                  }} 
+                  error={Boolean(errors.designation)}
+                  helperText={errors.designation}
+                />
               </Grid>
             </Grid>
           </DialogContent>

@@ -270,6 +270,7 @@ function BusTracker() {
   // Feedback State
   const [formSuccess, setFormSuccess] = useState('');
   const [formError, setFormError] = useState('');
+  const [errors, setErrors] = useState({});
 
   // --- Handlers ---
   const handleAddStop = () => {
@@ -285,19 +286,33 @@ function BusTracker() {
 
   const handleCreateRoute = async (e) => {
     e.preventDefault();
-    if (!routeName.trim() || !startLocation.trim() || !endLocation.trim() || !routeFee) {
-      setFormError('Please fill in all route fields.');
+    setFormError('');
+    setFormSuccess('');
+    setErrors({});
+
+    const newErrors = {};
+    if (!routeName.trim()) newErrors.routeName = 'Route Name is required.';
+    if (!startLocation.trim()) newErrors.startLocation = 'Starting Point is required.';
+    if (!endLocation.trim()) newErrors.endLocation = 'Destination Point is required.';
+    
+    const feeVal = parseFloat(routeFee);
+    if (isNaN(feeVal) || feeVal <= 0) {
+      newErrors.routeFee = 'Monthly Route Fee must be a positive number.';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setFormError('Please correct the highlighted errors before submitting.');
       return;
     }
+
     try {
-      setFormError('');
-      setFormSuccess('');
       await createRoute({
         variables: {
           routeName: routeName.trim(),
           startLocation: startLocation.trim(),
           endLocation: endLocation.trim(),
-          routeFee: parseFloat(routeFee),
+          routeFee: feeVal,
           stops: stops.map(s => ({ stopName: s.stopName, arrivalTime: s.arrivalTime }))
         }
       });
@@ -316,18 +331,38 @@ function BusTracker() {
 
   const handleCreateVehicle = async (e) => {
     e.preventDefault();
-    if (!vehicleNo.trim() || !vehicleCapacity || !vehicleDriverName.trim() || !vehicleDriverPhone.trim()) {
-      setFormError('Please fill in all required vehicle fields.');
+    setFormError('');
+    setFormSuccess('');
+    setErrors({});
+
+    const newErrors = {};
+    if (!vehicleNo.trim()) newErrors.vehicleNo = 'Vehicle Plate Number is required.';
+    
+    const capVal = parseInt(vehicleCapacity, 10);
+    if (isNaN(capVal) || capVal <= 0) {
+      newErrors.vehicleCapacity = 'Seating Capacity must be a positive integer.';
+    }
+
+    if (!vehicleDriverName.trim()) newErrors.vehicleDriverName = 'Driver Full Name is required.';
+
+    if (!vehicleDriverPhone.trim()) {
+      newErrors.vehicleDriverPhone = 'Driver Phone Number is required.';
+    } else if (!/^\d{10}$/.test(vehicleDriverPhone.trim())) {
+      newErrors.vehicleDriverPhone = 'Driver phone number must be exactly 10 digits (digits only).';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setFormError('Please correct the highlighted errors before submitting.');
       return;
     }
+
     try {
-      setFormError('');
-      setFormSuccess('');
       await createVehicle({
         variables: {
           vehicleNo: vehicleNo.trim(),
           model: vehicleModel.trim() || null,
-          capacity: parseInt(vehicleCapacity, 10),
+          capacity: capVal,
           driverName: vehicleDriverName.trim(),
           driverPhone: vehicleDriverPhone.trim(),
           routeId: vehicleRouteId || null
@@ -723,6 +758,7 @@ function BusTracker() {
   useEffect(() => {
     setFormSuccess('');
     setFormError('');
+    setErrors({});
   }, [activeTab]);
 
   if (error) {
@@ -1085,7 +1121,12 @@ function BusTracker() {
                       label="Route Name"
                       placeholder="e.g. Route C - East Loop"
                       value={routeName}
-                      onChange={(e) => setRouteName(e.target.value)}
+                      onChange={(e) => {
+                        setRouteName(e.target.value);
+                        if (errors.routeName) setErrors(prev => ({ ...prev, routeName: '' }));
+                      }}
+                      error={Boolean(errors.routeName)}
+                      helperText={errors.routeName}
                       required
                       variant="outlined"
                     />
@@ -1095,15 +1136,19 @@ function BusTracker() {
                       value={startLocation}
                       onChange={(event, newValue) => {
                         setStartLocation(newValue || '');
+                        if (errors.startLocation) setErrors(prev => ({ ...prev, startLocation: '' }));
                       }}
                       onInputChange={(event, newInputValue) => {
                         setStartLocation(newInputValue || '');
+                        if (errors.startLocation) setErrors(prev => ({ ...prev, startLocation: '' }));
                       }}
                       renderInput={(params) => (
                         <TextField
                           {...params}
                           label="Starting Point Location"
                           placeholder="e.g. East Crossing Terminal"
+                          error={Boolean(errors.startLocation)}
+                          helperText={errors.startLocation}
                           required
                           variant="outlined"
                         />
@@ -1115,15 +1160,19 @@ function BusTracker() {
                       value={endLocation}
                       onChange={(event, newValue) => {
                         setEndLocation(newValue || '');
+                        if (errors.endLocation) setErrors(prev => ({ ...prev, endLocation: '' }));
                       }}
                       onInputChange={(event, newInputValue) => {
                         setEndLocation(newInputValue || '');
+                        if (errors.endLocation) setErrors(prev => ({ ...prev, endLocation: '' }));
                       }}
                       renderInput={(params) => (
                         <TextField
                           {...params}
                           label="Destination Point Location"
                           placeholder="e.g. School Campus"
+                          error={Boolean(errors.endLocation)}
+                          helperText={errors.endLocation}
                           required
                           variant="outlined"
                         />
@@ -1135,7 +1184,12 @@ function BusTracker() {
                       type="number"
                       placeholder="e.g. 1200"
                       value={routeFee}
-                      onChange={(e) => setRouteFee(e.target.value)}
+                      onChange={(e) => {
+                        setRouteFee(e.target.value);
+                        if (errors.routeFee) setErrors(prev => ({ ...prev, routeFee: '' }));
+                      }}
+                      error={Boolean(errors.routeFee)}
+                      helperText={errors.routeFee}
                       required
                       variant="outlined"
                     />
@@ -1243,7 +1297,12 @@ function BusTracker() {
                       label="Vehicle Plate Number"
                       placeholder="e.g. DL-1CA-5678"
                       value={vehicleNo}
-                      onChange={(e) => setVehicleNo(e.target.value)}
+                      onChange={(e) => {
+                        setVehicleNo(e.target.value);
+                        if (errors.vehicleNo) setErrors(prev => ({ ...prev, vehicleNo: '' }));
+                      }}
+                      error={Boolean(errors.vehicleNo)}
+                      helperText={errors.vehicleNo}
                       required
                       variant="outlined"
                     />
@@ -1261,7 +1320,12 @@ function BusTracker() {
                       type="number"
                       placeholder="e.g. 35"
                       value={vehicleCapacity}
-                      onChange={(e) => setVehicleCapacity(e.target.value)}
+                      onChange={(e) => {
+                        setVehicleCapacity(e.target.value);
+                        if (errors.vehicleCapacity) setErrors(prev => ({ ...prev, vehicleCapacity: '' }));
+                      }}
+                      error={Boolean(errors.vehicleCapacity)}
+                      helperText={errors.vehicleCapacity}
                       required
                       variant="outlined"
                     />
@@ -1270,7 +1334,12 @@ function BusTracker() {
                       label="Driver Full Name"
                       placeholder="e.g. John Doe"
                       value={vehicleDriverName}
-                      onChange={(e) => setVehicleDriverName(e.target.value)}
+                      onChange={(e) => {
+                        setVehicleDriverName(e.target.value);
+                        if (errors.vehicleDriverName) setErrors(prev => ({ ...prev, vehicleDriverName: '' }));
+                      }}
+                      error={Boolean(errors.vehicleDriverName)}
+                      helperText={errors.vehicleDriverName}
                       required
                       variant="outlined"
                     />
@@ -1279,7 +1348,12 @@ function BusTracker() {
                       label="Driver Phone Number"
                       placeholder="e.g. +91 98765 43210"
                       value={vehicleDriverPhone}
-                      onChange={(e) => setVehicleDriverPhone(e.target.value)}
+                      onChange={(e) => {
+                        setVehicleDriverPhone(e.target.value);
+                        if (errors.vehicleDriverPhone) setErrors(prev => ({ ...prev, vehicleDriverPhone: '' }));
+                      }}
+                      error={Boolean(errors.vehicleDriverPhone)}
+                      helperText={errors.vehicleDriverPhone}
                       required
                       variant="outlined"
                     />

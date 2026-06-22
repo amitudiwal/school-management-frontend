@@ -31,6 +31,7 @@ function AccountantRegister() {
   const [designation, setDesignation] = useState('School Accountant');
   const [password, setPassword] = useState('');
   const [formError, setFormError] = useState('');
+  const [errors, setErrors] = useState({});
   const [showPassword, setShowPassword] = useState(false);
 
   // Query staff members
@@ -86,6 +87,7 @@ function AccountantRegister() {
     setDesignation('School Accountant');
     setPassword('');
     setFormError('');
+    setErrors({});
     setSelectedStaff(null);
     setShowPassword(false);
   };
@@ -105,9 +107,32 @@ function AccountantRegister() {
   const handleSubmit = (e) => {
     e.preventDefault();
     setFormError('');
+    setErrors({});
 
-    if (!firstName || !lastName || !email || !phone || !designation) {
-      setFormError('Please fill in all required fields.');
+    const newErrors = {};
+    if (!firstName.trim()) newErrors.firstName = 'First Name is required.';
+    if (!lastName.trim()) newErrors.lastName = 'Last Name is required.';
+    
+    if (!email.trim()) {
+      newErrors.email = 'Email Address is required.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      newErrors.email = 'Please enter a valid email address.';
+    }
+
+    if (!phone.trim()) {
+      newErrors.phone = 'Phone number is required.';
+    } else if (!/^\d{10}$/.test(phone.trim())) {
+      newErrors.phone = 'Phone number must be exactly 10 digits.';
+    }
+
+    if (!designation.trim()) newErrors.designation = 'Designation is required.';
+
+    if (!selectedStaff && !password) {
+      newErrors.password = 'Password is required for registration.';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
 
@@ -115,29 +140,25 @@ function AccountantRegister() {
       updateStaff({
         variables: {
           id: selectedStaff.id,
-          firstName,
-          lastName,
-          email,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: email.trim(),
           gender,
-          phone,
+          phone: phone.trim(),
           department: 'FINANCE',
-          designation
+          designation: designation.trim()
         }
       });
     } else {
-      if (!password) {
-        setFormError('Password is required for registration.');
-        return;
-      }
       registerStaff({
         variables: {
-          firstName,
-          lastName,
-          email,
+          firstName: firstName.trim(),
+          lastName: lastName.trim(),
+          email: email.trim(),
           gender,
-          phone,
+          phone: phone.trim(),
           department: 'FINANCE',
-          designation,
+          designation: designation.trim(),
           password
         }
       });
@@ -228,13 +249,47 @@ function AccountantRegister() {
             {formError && <Alert severity="error" sx={{ mb: 2 }}>{formError}</Alert>}
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth required label="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                <TextField 
+                  fullWidth 
+                  required 
+                  label="First Name" 
+                  value={firstName} 
+                  onChange={(e) => {
+                    setFirstName(e.target.value);
+                    if (errors.firstName) setErrors(prev => ({ ...prev, firstName: '' }));
+                  }} 
+                  error={Boolean(errors.firstName)}
+                  helperText={errors.firstName}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth required label="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                <TextField 
+                  fullWidth 
+                  required 
+                  label="Last Name" 
+                  value={lastName} 
+                  onChange={(e) => {
+                    setLastName(e.target.value);
+                    if (errors.lastName) setErrors(prev => ({ ...prev, lastName: '' }));
+                  }} 
+                  error={Boolean(errors.lastName)}
+                  helperText={errors.lastName}
+                />
               </Grid>
               <Grid item xs={12}>
-                <TextField fullWidth required type="email" label="Email Address" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <TextField 
+                  fullWidth 
+                  required 
+                  type="email" 
+                  label="Email Address" 
+                  value={email} 
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
+                  }} 
+                  error={Boolean(errors.email)}
+                  helperText={errors.email}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField fullWidth required select label="Gender" value={gender} onChange={(e) => setGender(e.target.value)}>
@@ -244,10 +299,32 @@ function AccountantRegister() {
                 </TextField>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth required label="Phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                <TextField 
+                  fullWidth 
+                  required 
+                  label="Phone" 
+                  value={phone} 
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                    if (errors.phone) setErrors(prev => ({ ...prev, phone: '' }));
+                  }} 
+                  error={Boolean(errors.phone)}
+                  helperText={errors.phone}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth required label="Designation" value={designation} onChange={(e) => setDesignation(e.target.value)} />
+                <TextField 
+                  fullWidth 
+                  required 
+                  label="Designation" 
+                  value={designation} 
+                  onChange={(e) => {
+                    setDesignation(e.target.value);
+                    if (errors.designation) setErrors(prev => ({ ...prev, designation: '' }));
+                  }} 
+                  error={Boolean(errors.designation)}
+                  helperText={errors.designation}
+                />
               </Grid>
               {!selectedStaff && (
                 <Grid item xs={12} sm={6}>
@@ -257,7 +334,12 @@ function AccountantRegister() {
                     type={showPassword ? 'text' : 'password'} 
                     label="Accountant Login Password" 
                     value={password} 
-                    onChange={(e) => setPassword(e.target.value)} 
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
+                    }} 
+                    error={Boolean(errors.password)}
+                    helperText={errors.password}
                     InputProps={{
                       endAdornment: (
                         <InputAdornment position="end">

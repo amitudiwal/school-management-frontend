@@ -40,6 +40,7 @@ function SchoolsList() {
   const [zipCode, setZipCode] = useState('');
   const [country, setCountry] = useState('');
   const [formError, setFormError] = useState('');
+  const [errors, setErrors] = useState({});
   const [schoolCode, setSchoolCode] = useState('');
   const [logo, setLogo] = useState('');
   const [schoolLogo, setSchoolLogo] = useState('');
@@ -135,6 +136,7 @@ function SchoolsList() {
     setZipCode('');
     setCountry('');
     setFormError('');
+    setErrors({});
     setSelectedSchool(null);
     setLogo('');
     setSchoolLogo('');
@@ -174,55 +176,85 @@ function SchoolsList() {
   const handleSubmit = (e) => {
     e.preventDefault();
     setFormError('');
+    setErrors({});
+
+    const newErrors = {};
+    if (!name.trim()) newErrors.name = 'School Entity Name is required.';
+    if (!city.trim()) newErrors.city = 'City is required.';
+    if (!state.trim()) newErrors.state = 'State is required.';
+
+    if (!selectedSchool) {
+      if (!slug.trim()) newErrors.slug = 'Domain Slug is required.';
+      
+      if (!email.trim()) {
+        newErrors.email = 'Contact Email is required.';
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+        newErrors.email = 'Please enter a valid email address.';
+      }
+
+      if (!phone.trim()) {
+        newErrors.phone = 'Contact Phone is required.';
+      } else if (!/^\d{10}$/.test(phone.trim())) {
+        newErrors.phone = 'Contact Phone must be exactly 10 digits.';
+      }
+
+      if (!schoolCode.trim()) newErrors.schoolCode = 'School Code is required.';
+
+      if (!adminName.trim()) newErrors.adminName = 'Admin Name is required.';
+      
+      if (!adminEmail.trim()) {
+        newErrors.adminEmail = 'Admin Login Email is required.';
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(adminEmail.trim())) {
+        newErrors.adminEmail = 'Please enter a valid email address.';
+      }
+
+      if (!adminPassword) newErrors.adminPassword = 'Admin Password is required.';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
 
     if (selectedSchool) {
-      if (!name) {
-        setFormError('Please fill in the School Entity Name.');
-        return;
-      }
       updateSchoolMutation({
         variables: {
           id: selectedSchool.id,
-          name,
+          name: name.trim(),
           plan,
           logo,
           schoolLogo,
           address: {
-            street,
-            city,
-            state,
-            zipCode,
-            country
+            street: street.trim(),
+            city: city.trim(),
+            state: state.trim(),
+            zipCode: zipCode.trim(),
+            country: country.trim()
           }
         }
       });
       return;
     }
 
-    if (!name || !slug || !email || !phone || !adminName || !adminEmail || !adminPassword) {
-      setFormError('Please fill in all required fields.');
-      return;
-    }
-
     createSchoolMutation({
       variables: {
-        name,
-        slug,
-        schoolCode,
-        contactEmail: email,
-        contactPhone: phone,
+        name: name.trim(),
+        slug: slug.trim(),
+        schoolCode: schoolCode.trim().toUpperCase(),
+        contactEmail: email.trim(),
+        contactPhone: phone.trim(),
         plan,
-        adminName,
-        adminEmail,
+        adminName: adminName.trim(),
+        adminEmail: adminEmail.trim(),
         adminPassword,
         logo,
         schoolLogo,
         address: {
-          street,
-          city,
-          state,
-          zipCode,
-          country
+          street: street.trim(),
+          city: city.trim(),
+          state: state.trim(),
+          zipCode: zipCode.trim(),
+          country: country.trim()
         }
       }
     });
@@ -447,22 +479,75 @@ function SchoolsList() {
                 </Button>
               </Grid>
               <Grid item xs={12}>
-                <TextField fullWidth required label="School Entity Name" value={name} onChange={(e) => setName(e.target.value)} />
+                <TextField 
+                  fullWidth 
+                  required 
+                  label="School Entity Name" 
+                  value={name} 
+                  onChange={(e) => {
+                    setName(e.target.value);
+                    if (errors.name) setErrors(prev => ({ ...prev, name: '' }));
+                  }} 
+                  error={Boolean(errors.name)}
+                  helperText={errors.name}
+                />
               </Grid>
               <Grid item xs={12}>
-                <TextField fullWidth required disabled={Boolean(selectedSchool)} label="Domain Slug (e.g. greenwood)" value={slug} onChange={(e) => setSlug(e.target.value)} />
+                <TextField 
+                  fullWidth 
+                  required 
+                  disabled={Boolean(selectedSchool)} 
+                  label="Domain Slug (e.g. greenwood)" 
+                  value={slug} 
+                  onChange={(e) => {
+                    setSlug(e.target.value);
+                    if (errors.slug) setErrors(prev => ({ ...prev, slug: '' }));
+                  }} 
+                  error={Boolean(errors.slug)}
+                  helperText={errors.slug}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth required type="email" disabled={Boolean(selectedSchool)} label="Contact Email" value={email} onChange={(e) => setEmail(e.target.value)} />
+                <TextField 
+                  fullWidth 
+                  required 
+                  type="email" 
+                  disabled={Boolean(selectedSchool)} 
+                  label="Contact Email" 
+                  value={email} 
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
+                  }} 
+                  error={Boolean(errors.email)}
+                  helperText={errors.email}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth required disabled={Boolean(selectedSchool)} label="Contact Phone" value={phone} onChange={(e) => setPhone(e.target.value)} />
+                <TextField 
+                  fullWidth 
+                  required 
+                  disabled={Boolean(selectedSchool)} 
+                  label="Contact Phone" 
+                  value={phone} 
+                  onChange={(e) => {
+                    setPhone(e.target.value);
+                    if (errors.phone) setErrors(prev => ({ ...prev, phone: '' }));
+                  }} 
+                  error={Boolean(errors.phone)}
+                  helperText={errors.phone}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
                   label="School Code"
                   value={schoolCode}
-                  onChange={(e) => setSchoolCode(e.target.value)}
+                  onChange={(e) => {
+                    setSchoolCode(e.target.value);
+                    if (errors.schoolCode) setErrors(prev => ({ ...prev, schoolCode: '' }));
+                  }}
+                  error={Boolean(errors.schoolCode)}
+                  helperText={errors.schoolCode}
                   fullWidth
                   required
                   disabled={Boolean(selectedSchool)}
@@ -499,7 +584,12 @@ function SchoolsList() {
                   required
                   label="City"
                   value={city}
-                  onChange={(e) => setCity(e.target.value)}
+                  onChange={(e) => {
+                    setCity(e.target.value);
+                    if (errors.city) setErrors(prev => ({ ...prev, city: '' }));
+                  }}
+                  error={Boolean(errors.city)}
+                  helperText={errors.city}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -508,7 +598,12 @@ function SchoolsList() {
                   required
                   label="State"
                   value={state}
-                  onChange={(e) => setState(e.target.value)}
+                  onChange={(e) => {
+                    setState(e.target.value);
+                    if (errors.state) setErrors(prev => ({ ...prev, state: '' }));
+                  }}
+                  error={Boolean(errors.state)}
+                  helperText={errors.state}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
@@ -535,10 +630,33 @@ function SchoolsList() {
                     </Typography>
                   </Grid>
                   <Grid item xs={12}>
-                    <TextField fullWidth required label="Admin Name" value={adminName} onChange={(e) => setAdminName(e.target.value)} />
+                    <TextField 
+                      fullWidth 
+                      required 
+                      label="Admin Name" 
+                      value={adminName} 
+                      onChange={(e) => {
+                        setAdminName(e.target.value);
+                        if (errors.adminName) setErrors(prev => ({ ...prev, adminName: '' }));
+                      }} 
+                      error={Boolean(errors.adminName)}
+                      helperText={errors.adminName}
+                    />
                   </Grid>
                   <Grid item xs={12} sm={6}>
-                    <TextField fullWidth required type="email" label="Admin Login Email" value={adminEmail} onChange={(e) => setAdminEmail(e.target.value)} />
+                    <TextField 
+                      fullWidth 
+                      required 
+                      type="email" 
+                      label="Admin Login Email" 
+                      value={adminEmail} 
+                      onChange={(e) => {
+                        setAdminEmail(e.target.value);
+                        if (errors.adminEmail) setErrors(prev => ({ ...prev, adminEmail: '' }));
+                      }} 
+                      error={Boolean(errors.adminEmail)}
+                      helperText={errors.adminEmail}
+                    />
                   </Grid>
                   <Grid item xs={12} sm={6}>
                     <TextField 
@@ -547,7 +665,12 @@ function SchoolsList() {
                       type={showPassword ? 'text' : 'password'} 
                       label="Admin Password" 
                       value={adminPassword} 
-                      onChange={(e) => setAdminPassword(e.target.value)} 
+                      onChange={(e) => {
+                        setAdminPassword(e.target.value);
+                        if (errors.adminPassword) setErrors(prev => ({ ...prev, adminPassword: '' }));
+                      }} 
+                      error={Boolean(errors.adminPassword)}
+                      helperText={errors.adminPassword}
                       InputProps={{
                         endAdornment: (
                           <InputAdornment position="end">

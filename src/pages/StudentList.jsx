@@ -64,6 +64,7 @@ function StudentList() {
   const [formSectionId, setFormSectionId] = useState('');
   const [formParentId, setFormParentId] = useState('');
   const [formError, setFormError] = useState('');
+  const [errors, setErrors] = useState({});
 
   // Parent simultaneous registration states
   const [parentMode, setParentMode] = useState('EXISTING'); // 'EXISTING' or 'NEW'
@@ -174,6 +175,7 @@ function StudentList() {
     setFormSectionId('');
     setFormParentId('');
     setFormError('');
+    setErrors({});
     setSelectedStudent(null);
     setAvatar('');
     setParentMode('EXISTING');
@@ -204,6 +206,7 @@ function StudentList() {
     setFormSectionId(student.sectionId?.id || '');
     setFormParentId(student.parentId?.id || '');
     setFormError('');
+    setErrors({});
     setAvatar(student.userId?.avatar || '');
     setOpenModal(true);
   };
@@ -216,28 +219,52 @@ function StudentList() {
   const handleAdmissionSubmit = (e) => {
     e.preventDefault();
     setFormError('');
+    setErrors({});
 
-    if (!firstName || !lastName || !email || !admissionNo || !dob) {
-      setFormError('Please fill in all required fields (First Name, Last Name, Email, Admission Number, Date of Birth).');
-      return;
+    const newErrors = {};
+    if (!firstName.trim()) newErrors.firstName = 'First Name is required.';
+    if (!lastName.trim()) newErrors.lastName = 'Last Name is required.';
+    
+    if (!email.trim()) {
+      newErrors.email = 'Email Address is required.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      newErrors.email = 'Please enter a valid email address.';
     }
 
-    if (!formClassId) {
-      setFormError('Class selection is required. Please select a class.');
-      return;
+    if (!admissionNo.trim()) newErrors.admissionNo = 'Admission Number is required.';
+    if (!dob) newErrors.dob = 'Date of Birth is required.';
+    if (!formClassId) newErrors.formClassId = 'Class selection is required.';
+    if (!formSectionId) newErrors.formSectionId = 'Section selection is required.';
+
+    if (!selectedStudent && parentMode === 'NEW') {
+      if (!parentFirstName.trim()) newErrors.parentFirstName = 'Parent First Name is required.';
+      if (!parentLastName.trim()) newErrors.parentLastName = 'Parent Last Name is required.';
+      
+      if (!parentEmail.trim()) {
+        newErrors.parentEmail = 'Parent Email is required.';
+      } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(parentEmail.trim())) {
+        newErrors.parentEmail = 'Please enter a valid email address.';
+      }
+
+      if (!parentPhone.trim()) {
+        newErrors.parentPhone = 'Parent Phone Number is required.';
+      } else if (!/^\d{10}$/.test(parentPhone.trim())) {
+        newErrors.parentPhone = 'Parent Phone Number must be exactly 10 digits.';
+      }
     }
 
-    if (!formSectionId) {
-      setFormError('Section selection is required. Please select a section.');
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      setFormError('Please correct the highlighted errors before submitting.');
       return;
     }
 
     const variables = {
-      firstName,
-      lastName,
-      email,
-      admissionNo,
-      rollNo,
+      firstName: firstName.trim(),
+      lastName: lastName.trim(),
+      email: email.trim(),
+      admissionNo: admissionNo.trim(),
+      rollNo: rollNo.trim(),
       gender,
       dateOfBirth: new Date(dob),
       classId: formClassId,
@@ -245,15 +272,11 @@ function StudentList() {
     };
 
     if (!selectedStudent && parentMode === 'NEW') {
-      if (!parentFirstName || !parentLastName || !parentEmail || !parentPhone || !parentRelation) {
-        setFormError('Please fill in all required parent details (First Name, Last Name, Relationship, Phone, Email).');
-        return;
-      }
       variables.parentId = null;
-      variables.parentFirstName = parentFirstName;
-      variables.parentLastName = parentLastName;
-      variables.parentEmail = parentEmail;
-      variables.parentPhone = parentPhone;
+      variables.parentFirstName = parentFirstName.trim();
+      variables.parentLastName = parentLastName.trim();
+      variables.parentEmail = parentEmail.trim();
+      variables.parentPhone = parentPhone.trim();
       variables.parentRelation = parentRelation;
       variables.parentPassword = parentPassword || null;
     } else {
@@ -498,10 +521,32 @@ function StudentList() {
                 </Button>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth required label="First Name" value={firstName} onChange={(e) => setFirstName(e.target.value)} />
+                <TextField 
+                  fullWidth 
+                  required 
+                  label="First Name" 
+                  value={firstName} 
+                  onChange={(e) => {
+                    setFirstName(e.target.value);
+                    if (errors.firstName) setErrors(prev => ({ ...prev, firstName: '' }));
+                  }} 
+                  error={Boolean(errors.firstName)}
+                  helperText={errors.firstName}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth required label="Last Name" value={lastName} onChange={(e) => setLastName(e.target.value)} />
+                <TextField 
+                  fullWidth 
+                  required 
+                  label="Last Name" 
+                  value={lastName} 
+                  onChange={(e) => {
+                    setLastName(e.target.value);
+                    if (errors.lastName) setErrors(prev => ({ ...prev, lastName: '' }));
+                  }} 
+                  error={Boolean(errors.lastName)}
+                  helperText={errors.lastName}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField 
@@ -509,13 +554,28 @@ function StudentList() {
                   required 
                   type="email" 
                   label="Student Login Email" 
-                  helperText="Unique login email for the student (e.g. st1212@school.com)"
                   value={email} 
-                  onChange={(e) => setEmail(e.target.value)} 
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
+                  }} 
+                  error={Boolean(errors.email)}
+                  helperText={errors.email || "Unique login email for the student (e.g. st1212@school.com)"}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField fullWidth required label="Admission Number" value={admissionNo} onChange={(e) => setAdmissionNo(e.target.value)} />
+                <TextField 
+                  fullWidth 
+                  required 
+                  label="Admission Number" 
+                  value={admissionNo} 
+                  onChange={(e) => {
+                    setAdmissionNo(e.target.value);
+                    if (errors.admissionNo) setErrors(prev => ({ ...prev, admissionNo: '' }));
+                  }} 
+                  error={Boolean(errors.admissionNo)}
+                  helperText={errors.admissionNo}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField fullWidth label="Roll Number" value={rollNo} onChange={(e) => setRollNo(e.target.value)} />
@@ -528,7 +588,18 @@ function StudentList() {
                 </TextField>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <CustomDatePicker fullWidth required label="Date of Birth" value={dob} onChange={(e) => setDob(e.target.value)} />
+                <CustomDatePicker 
+                  fullWidth 
+                  required 
+                  label="Date of Birth" 
+                  value={dob} 
+                  onChange={(e) => {
+                    setDob(e.target.value);
+                    if (errors.dob) setErrors(prev => ({ ...prev, dob: '' }));
+                  }} 
+                  error={Boolean(errors.dob)}
+                  helperText={errors.dob}
+                />
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField
@@ -537,7 +608,10 @@ function StudentList() {
                   onChange={(e) => {
                     setFormClassId(e.target.value);
                     setFormSectionId('');
+                    if (errors.formClassId) setErrors(prev => ({ ...prev, formClassId: '' }));
                   }}
+                  error={Boolean(errors.formClassId)}
+                  helperText={errors.formClassId}
                 >
                   {classesData?.getClasses?.map((cls) => (
                     <MenuItem key={cls.id} value={cls.id}>{cls.name}</MenuItem>
@@ -554,7 +628,12 @@ function StudentList() {
                   fullWidth required select label="Select Section"
                   value={formSectionId}
                   disabled={!formClassId}
-                  onChange={(e) => setFormSectionId(e.target.value)}
+                  onChange={(e) => {
+                    setFormSectionId(e.target.value);
+                    if (errors.formSectionId) setErrors(prev => ({ ...prev, formSectionId: '' }));
+                  }}
+                  error={Boolean(errors.formSectionId)}
+                  helperText={errors.formSectionId}
                 >
                   {formSectionsData?.getSections?.map((sec) => (
                     <MenuItem key={sec.id} value={sec.id}>{sec.name}</MenuItem>
@@ -602,10 +681,32 @@ function StudentList() {
                   ) : (
                     <>
                       <Grid item xs={12} sm={6}>
-                        <TextField fullWidth required label="Parent First Name" value={parentFirstName} onChange={(e) => setParentFirstName(e.target.value)} />
+                        <TextField 
+                          fullWidth 
+                          required 
+                          label="Parent First Name" 
+                          value={parentFirstName} 
+                          onChange={(e) => {
+                            setParentFirstName(e.target.value);
+                            if (errors.parentFirstName) setErrors(prev => ({ ...prev, parentFirstName: '' }));
+                          }} 
+                          error={Boolean(errors.parentFirstName)}
+                          helperText={errors.parentFirstName}
+                        />
                       </Grid>
                       <Grid item xs={12} sm={6}>
-                        <TextField fullWidth required label="Parent Last Name" value={parentLastName} onChange={(e) => setParentLastName(e.target.value)} />
+                        <TextField 
+                          fullWidth 
+                          required 
+                          label="Parent Last Name" 
+                          value={parentLastName} 
+                          onChange={(e) => {
+                            setParentLastName(e.target.value);
+                            if (errors.parentLastName) setErrors(prev => ({ ...prev, parentLastName: '' }));
+                          }} 
+                          error={Boolean(errors.parentLastName)}
+                          helperText={errors.parentLastName}
+                        />
                       </Grid>
                       <Grid item xs={12} sm={6}>
                         <TextField fullWidth required select label="Relationship to Student" value={parentRelation} onChange={(e) => setParentRelation(e.target.value)}>
@@ -615,7 +716,18 @@ function StudentList() {
                         </TextField>
                       </Grid>
                       <Grid item xs={12} sm={6}>
-                        <TextField fullWidth required label="Parent Phone Number" value={parentPhone} onChange={(e) => setParentPhone(e.target.value)} />
+                        <TextField 
+                          fullWidth 
+                          required 
+                          label="Parent Phone Number" 
+                          value={parentPhone} 
+                          onChange={(e) => {
+                            setParentPhone(e.target.value);
+                            if (errors.parentPhone) setErrors(prev => ({ ...prev, parentPhone: '' }));
+                          }} 
+                          error={Boolean(errors.parentPhone)}
+                          helperText={errors.parentPhone}
+                        />
                       </Grid>
                       <Grid item xs={12} sm={6}>
                         <TextField 
@@ -623,9 +735,13 @@ function StudentList() {
                           required 
                           type="email" 
                           label="Parent Login Email" 
-                          helperText="Unique login email for the parent (e.g. parent@gmail.com)"
                           value={parentEmail} 
-                          onChange={(e) => setParentEmail(e.target.value)} 
+                          onChange={(e) => {
+                            setParentEmail(e.target.value);
+                            if (errors.parentEmail) setErrors(prev => ({ ...prev, parentEmail: '' }));
+                          }} 
+                          error={Boolean(errors.parentEmail)}
+                          helperText={errors.parentEmail || "Unique login email for the parent (e.g. parent@gmail.com)"}
                         />
                       </Grid>
                       <Grid item xs={12} sm={6}>

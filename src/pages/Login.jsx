@@ -45,6 +45,7 @@ function Login() {
   // UI UX helper states
   const [showPassword, setShowPassword] = useState(false);
   const [validationError, setValidationError] = useState('');
+  const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState('');
   const [otpTimer, setOtpTimer] = useState(300);
 
@@ -282,9 +283,10 @@ function Login() {
 
   const handleSchoolCodeSubmit = (e) => {
     e.preventDefault();
+    setErrors({});
     setValidationError('');
-    if (!schoolCode) {
-      setValidationError('Please enter your School Code.');
+    if (!schoolCode.trim()) {
+      setErrors({ schoolCode: 'School Code is required.' });
       return;
     }
     fetchSchool({ variables: { code: schoolCode.trim().toUpperCase() } });
@@ -292,6 +294,7 @@ function Login() {
 
   const handleRoleSelectionSubmit = (e) => {
     e.preventDefault();
+    setErrors({});
     setValidationError('');
     if (selectedRole === 'SCHOOL_ADMIN') {
       setStep('ADMIN_LOGIN');
@@ -308,12 +311,29 @@ function Login() {
 
   const handleLoginSubmit = (e) => {
     e.preventDefault();
+    setErrors({});
     setValidationError('');
+    
+    const newErrors = {};
+    if (!email.trim()) {
+      newErrors.email = 'Email Address is required.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      newErrors.email = 'Please enter a valid email address.';
+    }
+    if (!password) {
+      newErrors.password = 'Password is required.';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
+      return;
+    }
+
     dispatch(loginStart());
 
     loginWithPasswordMutation({
       variables: {
-        email,
+        email: email.trim(),
         password,
         schoolId: school?.id
       }
@@ -322,11 +342,21 @@ function Login() {
 
   const handleSendOTP = (e) => {
     if (e) e.preventDefault();
+    setErrors({});
     setValidationError('');
-    if (!mobile) {
-      setValidationError('Please enter your mobile number.');
+    
+    const newErrors = {};
+    if (!mobile.trim()) {
+      newErrors.mobile = 'Mobile number is required.';
+    } else if (!/^\d{10}$/.test(mobile.trim())) {
+      newErrors.mobile = 'Mobile number must be exactly 10 digits.';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
+
     sendOTPMutation({
       variables: {
         mobile: mobile.trim(),
@@ -337,11 +367,19 @@ function Login() {
 
   const handleVerifyOTP = (e) => {
     e.preventDefault();
+    setErrors({});
     setValidationError('');
-    if (!otp) {
-      setValidationError('Please enter the OTP.');
+    
+    const newErrors = {};
+    if (!otp.trim()) {
+      newErrors.otp = 'Verification OTP is required.';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
+
     dispatch(loginStart());
     verifyOTPMutation({
       variables: {
@@ -354,13 +392,23 @@ function Login() {
 
   const handleForgotPasswordSubmit = (e) => {
     e.preventDefault();
+    setErrors({});
     setValidationError('');
     setSuccessMessage('');
-    if (!email) {
-      setValidationError('Please enter your email.');
+    
+    const newErrors = {};
+    if (!email.trim()) {
+      newErrors.email = 'Email Address is required.';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
+      newErrors.email = 'Please enter a valid email address.';
+    }
+
+    if (Object.keys(newErrors).length > 0) {
+      setErrors(newErrors);
       return;
     }
-    forgotPasswordMutation({ variables: { email } });
+
+    forgotPasswordMutation({ variables: { email: email.trim() } });
   };
 
   // Helper autofills
@@ -564,7 +612,12 @@ function Login() {
                   placeholder="e.g. SUNRISE001"
                   variant="outlined"
                   value={schoolCode}
-                  onChange={(e) => setSchoolCode(e.target.value)}
+                  onChange={(e) => {
+                    setSchoolCode(e.target.value);
+                    if (errors.schoolCode) setErrors(prev => ({ ...prev, schoolCode: '' }));
+                  }}
+                  error={Boolean(errors.schoolCode)}
+                  helperText={errors.schoolCode}
                   sx={textFieldSx}
                   InputProps={{
                     startAdornment: (
@@ -718,7 +771,12 @@ function Login() {
                   label="Email Address"
                   variant="outlined"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
+                  }}
+                  error={Boolean(errors.email)}
+                  helperText={errors.email}
                   sx={textFieldSx}
                   InputProps={{
                     startAdornment: (
@@ -735,7 +793,12 @@ function Login() {
                   type={showPassword ? 'text' : 'password'}
                   variant="outlined"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  onChange={(e) => {
+                    setPassword(e.target.value);
+                    if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
+                  }}
+                  error={Boolean(errors.password)}
+                  helperText={errors.password}
                   sx={textFieldSx}
                   InputProps={{
                     startAdornment: (
@@ -803,7 +866,12 @@ function Login() {
                     label="Email Address"
                     variant="outlined"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
+                    }}
+                    error={Boolean(errors.email)}
+                    helperText={errors.email}
                     sx={textFieldSx}
                     InputProps={{
                       startAdornment: (
@@ -820,7 +888,12 @@ function Login() {
                     type={showPassword ? 'text' : 'password'}
                     variant="outlined"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
+                    }}
+                    error={Boolean(errors.password)}
+                    helperText={errors.password}
                     sx={textFieldSx}
                     InputProps={{
                       startAdornment: (
@@ -875,7 +948,12 @@ function Login() {
                     label="Email Address"
                     variant="outlined"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
+                    }}
+                    error={Boolean(errors.email)}
+                    helperText={errors.email}
                     sx={textFieldSx}
                     InputProps={{
                       startAdornment: (
@@ -892,7 +970,12 @@ function Login() {
                     type={showPassword ? 'text' : 'password'}
                     variant="outlined"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
+                    }}
+                    error={Boolean(errors.password)}
+                    helperText={errors.password}
                     sx={textFieldSx}
                     InputProps={{
                       startAdornment: (
@@ -947,7 +1030,12 @@ function Login() {
                     label="Email Address"
                     variant="outlined"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
+                    }}
+                    error={Boolean(errors.email)}
+                    helperText={errors.email}
                     sx={textFieldSx}
                     InputProps={{
                       startAdornment: (
@@ -964,7 +1052,12 @@ function Login() {
                     type={showPassword ? 'text' : 'password'}
                     variant="outlined"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
+                    }}
+                    error={Boolean(errors.password)}
+                    helperText={errors.password}
                     sx={textFieldSx}
                     InputProps={{
                       startAdornment: (
@@ -1020,7 +1113,12 @@ function Login() {
                     label="Email Address"
                     variant="outlined"
                     value={email}
-                    onChange={(e) => setEmail(e.target.value)}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
+                    }}
+                    error={Boolean(errors.email)}
+                    helperText={errors.email}
                     sx={textFieldSx}
                     InputProps={{
                       startAdornment: (
@@ -1037,7 +1135,12 @@ function Login() {
                     type={showPassword ? 'text' : 'password'}
                     variant="outlined"
                     value={password}
-                    onChange={(e) => setPassword(e.target.value)}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
+                    }}
+                    error={Boolean(errors.password)}
+                    helperText={errors.password}
                     sx={textFieldSx}
                     InputProps={{
                       startAdornment: (
@@ -1092,7 +1195,12 @@ function Login() {
                   placeholder="Enter 6-digit code"
                   variant="outlined"
                   value={otp}
-                  onChange={(e) => setOtp(e.target.value)}
+                  onChange={(e) => {
+                    setOtp(e.target.value);
+                    if (errors.otp) setErrors(prev => ({ ...prev, otp: '' }));
+                  }}
+                  error={Boolean(errors.otp)}
+                  helperText={errors.otp}
                   sx={textFieldSx}
                   InputProps={{
                     startAdornment: (
@@ -1158,7 +1266,12 @@ function Login() {
                   label="Email Address"
                   variant="outlined"
                   value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  onChange={(e) => {
+                    setEmail(e.target.value);
+                    if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
+                  }}
+                  error={Boolean(errors.email)}
+                  helperText={errors.email}
                   sx={textFieldSx}
                   InputProps={{
                     startAdornment: (
