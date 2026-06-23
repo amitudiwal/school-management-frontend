@@ -591,6 +591,30 @@ export const GET_SCHOOL = gql`
         zipCode
         country
       }
+      settings {
+        featurePermissions {
+          SUPER_TEACHER
+          ACCOUNTANT
+          TEACHER
+          PARENT
+        }
+      }
+    }
+  }
+`;
+
+export const UPDATE_SCHOOL_PERMISSIONS = gql`
+  mutation UpdateSchoolPermissions($schoolId: ID!, $permissions: RolePermissionsInput!) {
+    updateSchoolPermissions(schoolId: $schoolId, permissions: $permissions) {
+      id
+      settings {
+        featurePermissions {
+          SUPER_TEACHER
+          ACCOUNTANT
+          TEACHER
+          PARENT
+        }
+      }
     }
   }
 `;

@@ -22,7 +22,8 @@ import {
   DateRange as LeaveIcon,
   Receipt as PayrollIcon,
   PendingActions as PendingJobsIcon,
-  DirectionsBus as BusIcon
+  DirectionsBus as BusIcon,
+  Security as SettingsIcon
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
 import { toggleTheme } from '../store/slices/uiSlice';
@@ -68,6 +69,31 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
   // Determine active route
   const isActive = (path) => location.pathname === path;
 
+  const getPermissionsForRole = (roleName) => {
+    if (!schoolData?.getSchool?.settings?.featurePermissions) {
+      // Default fallback
+      return {
+        SUPER_TEACHER: ['teachers', 'classes', 'timetable', 'exams', 'staff-attendance', 'leaves'],
+        ACCOUNTANT: ['students', 'fees', 'payroll'],
+        TEACHER: ['pending-jobs', 'timetable', 'bus-tracker', 'attendance', 'leaves', 'homework', 'grades', 'analytics', 'payroll'],
+        PARENT: ['parent-portal', 'bus-tracker']
+      }[roleName] || [];
+    }
+    const perms = schoolData.getSchool.settings.featurePermissions;
+    return perms[roleName] || [];
+  };
+
+  const hasPermission = (roleName, feature) => {
+    if (roleName === 'SUPER_ADMIN') return true;
+    if (['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(roleName)) return true;
+    
+    let mappedRole = roleName;
+    if (roleName === 'CLASS_TEACHER') mappedRole = 'TEACHER';
+    
+    const rolePerms = getPermissionsForRole(mappedRole);
+    return rolePerms.includes(feature);
+  };
+
   // Render navigation links based on user role permissions
   const menuItems = [
     // SUPER_ADMIN
@@ -79,6 +105,7 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
     // SCHOOL_ADMIN / PRINCIPAL / VICE_PRINCIPAL
     ...((['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role)) ? [
       { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
+      { text: 'Feature Permissions', icon: <SettingsIcon />, path: '/permissions' },
       { text: 'Super Teacher Register', icon: <PeopleIcon />, path: '/super-teachers' },
       { text: 'Accountant Register', icon: <PeopleIcon />, path: '/accountants' },
       { text: 'Bus Tracker', icon: <BusIcon />, path: '/bus-tracker' },
@@ -88,39 +115,39 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
 
     // SUPER_TEACHER
     ...(user?.role === 'SUPER_TEACHER' ? [
-      { text: 'Teacher Registration', icon: <TeacherIcon />, path: '/teachers' },
-      { text: 'Class Management', icon: <SchoolIcon />, path: '/classes' },
-      { text: 'Weekly Timetable', icon: <GradesIcon />, path: '/timetable' },
-      { text: 'Exam Schedule', icon: <GradesIcon />, path: '/exams' },
-      { text: 'Staff Attendance', icon: <AttendanceIcon />, path: '/staff-attendance' },
-      { text: 'Leave Management', icon: <LeaveIcon />, path: '/leaves' }
-    ] : []),
+      { text: 'Teacher Registration', icon: <TeacherIcon />, path: '/teachers', feature: 'teachers' },
+      { text: 'Class Management', icon: <SchoolIcon />, path: '/classes', feature: 'classes' },
+      { text: 'Weekly Timetable', icon: <GradesIcon />, path: '/timetable', feature: 'timetable' },
+      { text: 'Exam Schedule', icon: <GradesIcon />, path: '/exams', feature: 'exams' },
+      { text: 'Staff Attendance', icon: <AttendanceIcon />, path: '/staff-attendance', feature: 'staff-attendance' },
+      { text: 'Leave Management', icon: <LeaveIcon />, path: '/leaves', feature: 'leaves' }
+    ].filter(item => hasPermission('SUPER_TEACHER', item.feature)) : []),
 
     // ACCOUNTANT
     ...(user?.role === 'ACCOUNTANT' ? [
-      { text: 'Student Registration', icon: <PeopleIcon />, path: '/students' },
-      { text: 'Fees Accounting', icon: <FeesIcon />, path: '/fees' },
-      { text: 'Payroll & Payslips', icon: <PayrollIcon />, path: '/payroll' }
-    ] : []),
+      { text: 'Student Registration', icon: <PeopleIcon />, path: '/students', feature: 'students' },
+      { text: 'Fees Accounting', icon: <FeesIcon />, path: '/fees', feature: 'fees' },
+      { text: 'Payroll & Payslips', icon: <PayrollIcon />, path: '/payroll', feature: 'payroll' }
+    ].filter(item => hasPermission('ACCOUNTANT', item.feature)) : []),
 
     // TEACHER / CLASS_TEACHER
     ...((['TEACHER', 'CLASS_TEACHER'].includes(user?.role)) ? [
-      { text: 'Pending jobs', icon: <PendingJobsIcon />, path: '/pending-jobs' },
-      { text: 'Weekly Timetable', icon: <GradesIcon />, path: '/timetable' },
-      { text: 'Bus Tracker', icon: <BusIcon />, path: '/bus-tracker' },
-      { text: 'Daily Attendance', icon: <AttendanceIcon />, path: '/attendance' },
-      { text: 'Leave Management', icon: <LeaveIcon />, path: '/leaves' },
-      { text: 'Homework Board', icon: <HomeworkIcon />, path: '/homework' },
-      { text: 'Grades Entry', icon: <GradesIcon />, path: '/grades' },
-      { text: 'Performance Analytics', icon: <DashboardIcon />, path: '/analytics' },
-      { text: 'Payroll & Payslips', icon: <PayrollIcon />, path: '/payroll' }
-    ] : []),
+      { text: 'Pending jobs', icon: <PendingJobsIcon />, path: '/pending-jobs', feature: 'pending-jobs' },
+      { text: 'Weekly Timetable', icon: <GradesIcon />, path: '/timetable', feature: 'timetable' },
+      { text: 'Bus Tracker', icon: <BusIcon />, path: '/bus-tracker', feature: 'bus-tracker' },
+      { text: 'Daily Attendance', icon: <AttendanceIcon />, path: '/attendance', feature: 'attendance' },
+      { text: 'Leave Management', icon: <LeaveIcon />, path: '/leaves', feature: 'leaves' },
+      { text: 'Homework Board', icon: <HomeworkIcon />, path: '/homework', feature: 'homework' },
+      { text: 'Grades Entry', icon: <GradesIcon />, path: '/grades', feature: 'grades' },
+      { text: 'Performance Analytics', icon: <DashboardIcon />, path: '/analytics', feature: 'analytics' },
+      { text: 'Payroll & Payslips', icon: <PayrollIcon />, path: '/payroll', feature: 'payroll' }
+    ].filter(item => hasPermission(user.role, item.feature)) : []),
 
     // PARENT
     ...(user?.role === 'PARENT' ? [
-      { text: 'Parent Portal', icon: <DashboardIcon />, path: '/parent-portal' },
-      { text: 'Bus Tracker', icon: <BusIcon />, path: '/bus-tracker' }
-    ] : [])
+      { text: 'Parent Portal', icon: <DashboardIcon />, path: '/parent-portal', feature: 'parent-portal' },
+      { text: 'Bus Tracker', icon: <BusIcon />, path: '/bus-tracker', feature: 'bus-tracker' }
+    ].filter(item => hasPermission('PARENT', item.feature)) : [])
   ];
 
   return (

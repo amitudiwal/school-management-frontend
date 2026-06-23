@@ -365,25 +365,36 @@ function Dashboard() {
               </Tabs>
             </Box>
             
-            <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-              <ResponsiveContainer width="100%" height={260}>
-                <PieChart>
-                  <Pie
-                    data={currentAttendanceData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius={65}
-                    outerRadius={85}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {currentAttendanceData.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ))}
-                  </Pie>
-                  <Tooltip formatter={(value) => `${Number(value).toFixed(1)}%`} />
-                </PieChart>
-              </ResponsiveContainer>
+            <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 260 }}>
+              {currentAttendanceData.reduce((acc, curr) => acc + curr.value, 0) === 0 ? (
+                <Box sx={{ textAlign: 'center', py: 5 }}>
+                  <Typography variant="subtitle1" color="text.secondary" sx={{ fontWeight: 750, mb: 0.5 }}>
+                    No Attendance Logged
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" display="block">
+                    There are no attendance records for the selected date.
+                  </Typography>
+                </Box>
+              ) : (
+                <ResponsiveContainer width="100%" height={260}>
+                  <PieChart>
+                    <Pie
+                      data={currentAttendanceData}
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={65}
+                      outerRadius={85}
+                      paddingAngle={5}
+                      dataKey="value"
+                    >
+                      {currentAttendanceData.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ))}
+                    </Pie>
+                    <Tooltip formatter={(value) => `${Number(value).toFixed(1)}%`} />
+                  </PieChart>
+                </ResponsiveContainer>
+              )}
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap', mt: 1 }}>
               {currentAttendanceData.map((e, idx) => (
