@@ -73,9 +73,9 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
     if (!schoolData?.getSchool?.settings?.featurePermissions) {
       // Default fallback
       return {
-        SUPER_TEACHER: ['teachers', 'classes', 'timetable', 'exams', 'staff-attendance', 'leaves'],
+        SUPER_TEACHER: ['teachers', 'classes', 'timetable', 'exams', 'staff-attendance', 'leaves', 'copy-submission'],
         ACCOUNTANT: ['students', 'fees', 'payroll'],
-        TEACHER: ['pending-jobs', 'timetable', 'bus-tracker', 'attendance', 'leaves', 'homework', 'grades', 'analytics', 'payroll'],
+        TEACHER: ['pending-jobs', 'timetable', 'bus-tracker', 'attendance', 'leaves', 'homework', 'grades', 'analytics', 'payroll', 'copy-submission'],
         PARENT: ['parent-portal', 'bus-tracker']
       }[roleName] || [];
     }
@@ -136,6 +136,7 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
       { text: 'Weekly Timetable', icon: <GradesIcon />, path: '/timetable', feature: 'timetable' },
       { text: 'Bus Tracker', icon: <BusIcon />, path: '/bus-tracker', feature: 'bus-tracker' },
       { text: 'Daily Attendance', icon: <AttendanceIcon />, path: '/attendance', feature: 'attendance' },
+      { text: 'Copy Submission', icon: <HomeworkIcon />, path: '/copy-submission', feature: 'copy-submission' },
       { text: 'Leave Management', icon: <LeaveIcon />, path: '/leaves', feature: 'leaves' },
       { text: 'Homework Board', icon: <HomeworkIcon />, path: '/homework', feature: 'homework' },
       { text: 'Grades Entry', icon: <GradesIcon />, path: '/grades', feature: 'grades' },

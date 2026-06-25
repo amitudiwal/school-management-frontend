@@ -7,10 +7,14 @@ import {
   TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress, 
   Alert, IconButton, TablePagination
 } from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, AssignmentTurnedIn as ChecklistIcon } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { showToast } from '../store/slices/uiSlice';
-import { GET_HOMEWORK, GET_CLASSES, GET_SECTIONS, GET_SUBJECTS, CREATE_HOMEWORK, GET_TEACHERS, UPDATE_HOMEWORK, DELETE_HOMEWORK } from '../graphql/operations';
+import { 
+  GET_HOMEWORK, GET_CLASSES, GET_SECTIONS, GET_SUBJECTS, CREATE_HOMEWORK, 
+  GET_TEACHERS, UPDATE_HOMEWORK, DELETE_HOMEWORK, GET_STUDENTS,
+  GET_HOMEWORK_SUBMISSIONS, SUBMIT_HOMEWORK, GRADE_HOMEWORK 
+} from '../graphql/operations';
 import CustomDatePicker from '../components/CustomDatePicker';
 
 function HomeworkList() {
@@ -24,6 +28,13 @@ function HomeworkList() {
   const [selectedHomework, setSelectedHomework] = useState(null);
   const [homeworkToDelete, setHomeworkToDelete] = useState(null);
   const [page, setPage] = useState(0);
+
+  // Homework Submissions Grading States
+  const [openSubmissionsModal, setOpenSubmissionsModal] = useState(false);
+  const [activeHomeworkForSubmissions, setActiveHomeworkForSubmissions] = useState(null);
+  const [editingSubmission, setEditingSubmission] = useState(null);
+  const [gradePoints, setGradePoints] = useState('');
+  const [feedback, setFeedback] = useState('');
 
   // Reset page when class or section selection changes
   useEffect(() => {
@@ -54,6 +65,21 @@ function HomeworkList() {
   const { loading: hwLoading, error: hwError, data: hwData, refetch } = useQuery(GET_HOMEWORK, {
     skip: !classId || !sectionId,
     variables: { classId, sectionId }
+  });
+
+  // Submissions Query
+  const { data: submissionsData, refetch: refetchSubmissions, loading: submissionsLoading } = useQuery(GET_HOMEWORK_SUBMISSIONS, {
+    variables: { homeworkId: activeHomeworkForSubmissions?.id },
+    skip: !activeHomeworkForSubmissions
+  });
+
+  // Students Query for the class & section of the active homework
+  const { data: studentsData, loading: studentsLoading } = useQuery(GET_STUDENTS, {
+    variables: { 
+      classId: classId, 
+      sectionId: sectionId 
+    },
+    skip: !activeHomeworkForSubmissions
   });
 
   // Mutations
@@ -94,6 +120,27 @@ function HomeworkList() {
     }
   });
 
+  const [submitHomeworkMutation, { loading: submitHomeworkLoading }] = useMutation(SUBMIT_HOMEWORK, {
+    onCompleted: () => {
+      refetchSubmissions();
+      dispatch(showToast({ message: 'Homework marked as completed for student!', severity: 'success' }));
+    },
+    onError: (err) => {
+      dispatch(showToast({ message: err.message, severity: 'error' }));
+    }
+  });
+
+  const [gradeHomeworkMutation, { loading: gradeHomeworkLoading }] = useMutation(GRADE_HOMEWORK, {
+    onCompleted: () => {
+      setEditingSubmission(null);
+      refetchSubmissions();
+      dispatch(showToast({ message: 'Grade and feedback saved successfully!', severity: 'success' }));
+    },
+    onError: (err) => {
+      dispatch(showToast({ message: err.message, severity: 'error' }));
+    }
+  });
+
   const clearForm = () => {
     setTitle('');
     setDescription('');
@@ -123,6 +170,52 @@ function HomeworkList() {
   const handleConfirmDelete = () => {
     if (!homeworkToDelete) return;
     deleteHomeworkMutation({ variables: { id: homeworkToDelete.id } });
+  };
+
+  const handleOpenSubmissions = (hw) => {
+    setActiveHomeworkForSubmissions(hw);
+    setOpenSubmissionsModal(true);
+    setEditingSubmission(null);
+  };
+
+  const handleCloseSubmissions = () => {
+    setOpenSubmissionsModal(false);
+    setActiveHomeworkForSubmissions(null);
+    setEditingSubmission(null);
+  };
+
+  const handleMarkCompleted = (studentId) => {
+    if (!activeHomeworkForSubmissions) return;
+    submitHomeworkMutation({
+      variables: {
+        homeworkId: activeHomeworkForSubmissions.id,
+        studentId,
+        submissionText: 'Marked as completed by teacher'
+      }
+    });
+  };
+
+  const handleStartGrading = (sub) => {
+    setEditingSubmission(sub);
+    setGradePoints(sub.gradePoints !== undefined && sub.gradePoints !== null ? sub.gradePoints.toString() : '100');
+    setFeedback(sub.feedback || '');
+  };
+
+  const handleSaveGrade = (e) => {
+    e.preventDefault();
+    if (!editingSubmission) return;
+    const pts = parseFloat(gradePoints);
+    if (isNaN(pts) || pts < 0 || pts > 100) {
+      dispatch(showToast({ message: 'Grade points must be a number between 0 and 100.', severity: 'warning' }));
+      return;
+    }
+    gradeHomeworkMutation({
+      variables: {
+        submissionId: editingSubmission.id,
+        gradePoints: pts,
+        feedback: feedback || ''
+      }
+    });
   };
 
   const handleSubmit = (e) => {
@@ -255,6 +348,9 @@ function HomeworkList() {
                       <TableCell>{hw.teacherId ? `Prof. ${hw.teacherId.firstName} ${hw.teacherId.lastName}` : '-'}</TableCell>
                       {['SUPER_ADMIN', 'SCHOOL_ADMIN', 'TEACHER', 'CLASS_TEACHER'].includes(user?.role) && (
                         <TableCell align="right">
+                          <IconButton aria-label="Grade homework submissions" color="success" onClick={() => handleOpenSubmissions(hw)}>
+                            <ChecklistIcon />
+                          </IconButton>
                           <IconButton aria-label="Edit homework" color="primary" onClick={() => handleOpenEdit(hw)}>
                             <EditIcon />
                           </IconButton>
@@ -352,6 +448,158 @@ function HomeworkList() {
           <Button onClick={() => setHomeworkToDelete(null)} variant="outlined">Cancel</Button>
           <Button onClick={handleConfirmDelete} variant="contained" color="error" disabled={deleteLoading}>
             {deleteLoading ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Submissions & Grading Dialog */}
+      <Dialog open={openSubmissionsModal} onClose={handleCloseSubmissions} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <Typography variant="h6" sx={{ fontWeight: 800 }}>
+            {editingSubmission ? 'Grade Submission' : 'Submissions & Homework Completion'}
+          </Typography>
+          <Typography variant="subtitle2" color="text.secondary">
+            {activeHomeworkForSubmissions?.title}
+          </Typography>
+        </DialogTitle>
+        <DialogContent dividers>
+          {submissionsLoading || studentsLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}><CircularProgress /></Box>
+          ) : editingSubmission ? (
+            <Box sx={{ p: 1 }}>
+              <Typography variant="subtitle1" gutterBottom sx={{ fontWeight: 700 }}>
+                Student: {editingSubmission.studentId?.firstName} {editingSubmission.studentId?.lastName}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                Submission Date: {new Date(editingSubmission.submissionDate).toLocaleString()}
+              </Typography>
+              <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>Submitted Text:</Typography>
+              <Paper variant="outlined" sx={{ p: 2, bgcolor: 'action.hover', mb: 3 }}>
+                <Typography variant="body2" sx={{ fontStyle: 'italic', whiteSpace: 'pre-wrap' }}>
+                  {editingSubmission.submissionText || '(No submission text provided)'}
+                </Typography>
+              </Paper>
+              
+              <form onSubmit={handleSaveGrade}>
+                <Grid container spacing={2}>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      required
+                      type="number"
+                      label="Grade Points (0-100)"
+                      value={gradePoints}
+                      onChange={(e) => setGradePoints(e.target.value)}
+                      inputProps={{ min: 0, max: 100, step: 1 }}
+                    />
+                  </Grid>
+                  <Grid item xs={12}>
+                    <TextField
+                      fullWidth
+                      multiline
+                      rows={3}
+                      label="Feedback"
+                      value={feedback}
+                      onChange={(e) => setFeedback(e.target.value)}
+                    />
+                  </Grid>
+                </Grid>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2, mt: 3 }}>
+                  <Button variant="outlined" onClick={() => setEditingSubmission(null)}>
+                    Back to List
+                  </Button>
+                  <Button variant="contained" type="submit" disabled={gradeHomeworkLoading}>
+                    {gradeHomeworkLoading ? 'Saving...' : 'Save Grade'}
+                  </Button>
+                </Box>
+              </form>
+            </Box>
+          ) : (
+            <TableContainer component={Paper} sx={{ maxHeight: 450 }}>
+              <Table stickyHeader size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700 }}>Roll No</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Student Name</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Completion Status</TableCell>
+                    <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {(() => {
+                    const students = studentsData?.getStudents || [];
+                    const submissions = submissionsData?.getHomeworkSubmissions || [];
+                    const merged = students.map(student => {
+                      const sub = submissions.find(s => s.studentId?.id === student.id);
+                      return { student, sub };
+                    });
+
+                    if (merged.length === 0) {
+                      return (
+                        <TableRow>
+                          <TableCell colSpan={4} align="center" sx={{ py: 3 }}>
+                            No students found in this class & section.
+                          </TableCell>
+                        </TableRow>
+                      );
+                    }
+
+                    return merged.map(({ student, sub }) => (
+                      <TableRow key={student.id} hover>
+                        <TableCell>{student.rollNo || '-'}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>
+                          {student.firstName} {student.lastName}
+                        </TableCell>
+                        <TableCell>
+                          {!sub ? (
+                            <Typography variant="body2" sx={{ color: 'text.secondary', fontWeight: 500 }}>
+                              Pending
+                            </Typography>
+                          ) : sub.status === 'GRADED' ? (
+                            <Typography variant="body2" sx={{ color: 'success.main', fontWeight: 700 }}>
+                              Graded ({sub.gradePoints}/100)
+                            </Typography>
+                          ) : (
+                            <Typography variant="body2" sx={{ color: 'info.main', fontWeight: 700 }}>
+                              Submitted (Pending Grade)
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell align="right">
+                          {!sub ? (
+                            <Button 
+                              size="small" 
+                              variant="outlined" 
+                              color="success"
+                              disabled={submitHomeworkLoading}
+                              onClick={() => handleMarkCompleted(student.id)}
+                              sx={{ textTransform: 'none' }}
+                            >
+                              Mark Completed
+                            </Button>
+                          ) : (
+                            <Button 
+                              size="small" 
+                              variant="contained" 
+                              color="primary"
+                              onClick={() => handleStartGrading(sub)}
+                              sx={{ textTransform: 'none' }}
+                            >
+                              {sub.status === 'GRADED' ? 'Edit Grade' : 'Grade'}
+                            </Button>
+                          )}
+                        </TableCell>
+                      </TableRow>
+                    ));
+                  })()}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={handleCloseSubmissions} variant="outlined">
+            Close
           </Button>
         </DialogActions>
       </Dialog>

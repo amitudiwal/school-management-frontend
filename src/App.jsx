@@ -17,6 +17,7 @@ import FeesList from './pages/FeesList';
 import SchoolsList from './pages/SchoolsList';
 import AttendanceMark from './pages/AttendanceMark';
 import HomeworkList from './pages/HomeworkList';
+import CopySubmission from './pages/CopySubmission';
 import ParentList from './pages/ParentList';
 import ClassManagement from './pages/ClassManagement';
 import ParentDashboard from './pages/ParentDashboard';
@@ -215,6 +216,11 @@ function App() {
             <Route 
               path="/attendance" 
               element={isAuthenticated && (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'attendance')) ? <AttendanceMark /> : <Navigate to="/" />} 
+            />
+
+            <Route 
+              path="/copy-submission" 
+              element={isAuthenticated && (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'copy-submission')) ? <CopySubmission /> : <Navigate to="/" />} 
             />
 
             <Route 

@@ -15,7 +15,8 @@ import {
 import { 
   School as SchoolIcon, People as PeopleIcon, LocalLibrary as LibraryIcon, 
   AttachMoney as FeesIcon, AssignmentTurnedIn as AttendanceIcon, 
-  Warning as AlertIcon, Security as AuditIcon 
+  Warning as AlertIcon, Security as AuditIcon, DateRange as LeaveIcon,
+  Assignment as HomeworkIcon
 } from '@mui/icons-material';
 import { GET_SUPER_ADMIN_DASHBOARD, GET_SCHOOL_ADMIN_DASHBOARD, GET_AUDIT_LOGS, GET_PENDING_JOBS } from '../graphql/operations';
 import CustomDatePicker from '../components/CustomDatePicker';
@@ -341,6 +342,124 @@ function Dashboard() {
         ))}
       </Grid>
 
+      {/* School Administration Overview Grid */}
+      <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
+        {/* Library Stats Card */}
+        <Grid item xs={12} md={4} component={motion.div} variants={itemVariants}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+                <Avatar sx={{ bgcolor: 'info.main' + '20', color: 'info.main', width: 44, height: 44 }}>
+                  <LibraryIcon />
+                </Avatar>
+                <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                    Library Checkouts
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Total books vs. active issues
+                  </Typography>
+                </Box>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>Total Books: {stats?.libraryStats?.totalBooks}</Typography>
+                <Typography variant="body2" color="info.main" sx={{ fontWeight: 700 }}>Issued: {stats?.libraryStats?.totalIssuedBooks}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'center' }}>
+                <Typography variant="caption" color="text.secondary">Available Copies</Typography>
+                <Typography variant="body2" color="success.main" sx={{ fontWeight: 700 }}>
+                  {stats?.libraryStats ? (stats.libraryStats.totalBooks - stats.libraryStats.totalIssuedBooks) : 0}
+                </Typography>
+              </Box>
+              <LinearProgress 
+                variant="determinate" 
+                value={stats?.libraryStats?.totalBooks > 0 ? ((stats.libraryStats.totalBooks - stats.libraryStats.totalIssuedBooks) / stats.libraryStats.totalBooks) * 100 : 100} 
+                color="success" 
+                sx={{ height: 8, borderRadius: 4 }} 
+              />
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Leave Requests Summary Card */}
+        <Grid item xs={12} md={4} component={motion.div} variants={itemVariants}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+                <Avatar sx={{ bgcolor: 'warning.main' + '20', color: 'warning.main', width: 44, height: 44 }}>
+                  <LeaveIcon />
+                </Avatar>
+                <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                    Faculty Leaves
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Leave request approval queue
+                  </Typography>
+                </Box>
+              </Box>
+              <Stack direction="row" spacing={1} justifyContent="space-between" sx={{ mt: 2 }}>
+                <Box sx={{ textAlign: 'center', flexGrow: 1, p: 1, borderRadius: 2, bgcolor: theme.palette.mode === 'dark' ? '#334155' : '#F1F5F9' }}>
+                  <Typography variant="h6" color="warning.main" sx={{ fontWeight: 800 }}>
+                    {stats?.leaveStats?.pendingCount || 0}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>Pending</Typography>
+                </Box>
+                <Box sx={{ textAlign: 'center', flexGrow: 1, p: 1, borderRadius: 2, bgcolor: theme.palette.mode === 'dark' ? '#334155' : '#F1F5F9' }}>
+                  <Typography variant="h6" color="success.main" sx={{ fontWeight: 800 }}>
+                    {stats?.leaveStats?.approvedCount || 0}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>Approved</Typography>
+                </Box>
+                <Box sx={{ textAlign: 'center', flexGrow: 1, p: 1, borderRadius: 2, bgcolor: theme.palette.mode === 'dark' ? '#334155' : '#F1F5F9' }}>
+                  <Typography variant="h6" color="error.main" sx={{ fontWeight: 800 }}>
+                    {stats?.leaveStats?.rejectedCount || 0}
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>Rejected</Typography>
+                </Box>
+              </Stack>
+            </CardContent>
+          </Card>
+        </Grid>
+
+        {/* Homework Board Analytics Card */}
+        <Grid item xs={12} md={4} component={motion.div} variants={itemVariants}>
+          <Card sx={{ height: '100%' }}>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
+                <Avatar sx={{ bgcolor: 'secondary.main' + '20', color: 'secondary.main', width: 44, height: 44 }}>
+                  <HomeworkIcon />
+                </Avatar>
+                <Box>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 800 }}>
+                    Homework Board
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    Total assignments and submission rate
+                  </Typography>
+                </Box>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                <Typography variant="body2" sx={{ fontWeight: 600 }}>Assigned: {stats?.homeworkStats?.totalHomework || 0}</Typography>
+                <Typography variant="body2" color="secondary.main" sx={{ fontWeight: 700 }}>Submissions: {stats?.homeworkStats?.totalSubmissions || 0}</Typography>
+              </Box>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1, alignItems: 'center' }}>
+                <Typography variant="caption" color="text.secondary">Completion Rate</Typography>
+                <Typography variant="body2" color="secondary.main" sx={{ fontWeight: 800 }}>
+                  {stats?.homeworkStats?.totalHomework > 0 ? Math.round((stats.homeworkStats.totalSubmissions / (stats.homeworkStats.totalHomework * 20)) * 100) : 0}%
+                </Typography>
+              </Box>
+              <LinearProgress 
+                variant="determinate" 
+                value={stats?.homeworkStats?.totalHomework > 0 ? Math.min(100, Math.round((stats.homeworkStats.totalSubmissions / (stats.homeworkStats.totalHomework * 20)) * 100)) : 0} 
+                color="secondary" 
+                sx={{ height: 8, borderRadius: 4 }} 
+              />
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
       {/* Analytics charts for School Admins */}
       <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
         {/* Attendance Pie Chart with Tabs */}
@@ -491,6 +610,92 @@ function Dashboard() {
             </Card>
           </Grid>
         )}
+      </Grid>
+
+      {/* Operations Row */}
+      <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
+        {/* Left Column: Absent Faculty */}
+        <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
+          <Card sx={{ p: 2, height: 380, display: 'flex', flexDirection: 'column' }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <AlertIcon color="warning" /> Absent / On-Leave Faculty
+            </Typography>
+            <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
+              {(!stats?.absentTeachers || stats.absentTeachers.length === 0) ? (
+                <Box sx={{ py: 8, textAlign: 'center' }}>
+                  <Typography variant="body1" sx={{ color: 'success.main', fontWeight: 700 }}>
+                    🎉 All teachers are present today!
+                  </Typography>
+                </Box>
+              ) : (
+                <TableContainer component={Paper} sx={{ maxHeight: 280 }}>
+                  <Table stickyHeader size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 700 }}>Teacher Name</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Remarks</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {stats.absentTeachers.map((teacher) => (
+                        <TableRow key={teacher.id} hover>
+                          <TableCell sx={{ fontWeight: 600 }}>
+                            {`Prof. ${teacher.firstName} ${teacher.lastName}`}
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              size="small"
+                              label={teacher.status === 'LEAVE' ? 'ON LEAVE' : 'ABSENT'}
+                              color={teacher.status === 'LEAVE' ? 'info' : 'error'}
+                              sx={{ fontWeight: 700, fontSize: '0.75rem' }}
+                            />
+                          </TableCell>
+                          <TableCell sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                            {teacher.remarks || '-'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </Box>
+          </Card>
+        </Grid>
+
+        {/* Right Column: Copy Completion Analytics */}
+        <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
+          <Card sx={{ p: 2, height: 380, display: 'flex', flexDirection: 'column' }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+              Fair Copy Completion Rates (%)
+            </Typography>
+            <Box sx={{ width: '100%', height: 280, flexGrow: 1 }}>
+              {(!stats?.copySubmissionSummary || stats.copySubmissionSummary.length === 0) ? (
+                <Box sx={{ py: 8, textAlign: 'center' }}>
+                  <Typography variant="body2" color="text.secondary">No copy records found.</Typography>
+                </Box>
+              ) : (
+                <ResponsiveContainer width="100%" height="100%">
+                  <BarChart data={stats.copySubmissionSummary.map(item => ({
+                    name: `${item.subjectName} (${item.className})`,
+                    rate: item.completionRate
+                  }))} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
+                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} vertical={false} />
+                    <XAxis dataKey="name" stroke={theme.palette.text.secondary} style={{ fontSize: '0.75rem', fontWeight: 600 }} />
+                    <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: '0.75rem' }} domain={[0, 100]} unit="%" />
+                    <Tooltip formatter={(value) => [`${value}% Completed`, 'Rate']} />
+                    <Bar dataKey="rate" fill="#D946EF" radius={[6, 6, 0, 0]}>
+                      {stats.copySubmissionSummary.map((entry, index) => (
+                        <Cell key={`cell-${index}`} fill="#D946EF" />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              )}
+            </Box>
+          </Card>
+        </Grid>
       </Grid>
 
       {/* Live Class Activity Analytics (For Principal / Admin) */}

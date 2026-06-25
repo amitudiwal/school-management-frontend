@@ -151,6 +151,33 @@ export const GET_SCHOOL_ADMIN_DASHBOARD = gql`
         count
       }
       upcomingExamsCount
+      absentTeachers {
+        id
+        firstName
+        lastName
+        status
+        remarks
+      }
+      copySubmissionSummary {
+        className
+        subjectName
+        completedCount
+        totalCount
+        completionRate
+      }
+      libraryStats {
+        totalBooks
+        totalIssuedBooks
+      }
+      leaveStats {
+        pendingCount
+        approvedCount
+        rejectedCount
+      }
+      homeworkStats {
+        totalHomework
+        totalSubmissions
+      }
     }
   }
 `;
@@ -768,11 +795,21 @@ export const GET_HOMEWORK = gql`
       description
       dueDate
       subjectId {
+        id
         name
       }
       teacherId {
+        id
         firstName
         lastName
+      }
+      classId {
+        id
+        name
+      }
+      sectionId {
+        id
+        name
       }
     }
   }
@@ -1850,6 +1887,99 @@ export const CREATE_VEHICLE = gql`
     createVehicle(vehicleNo: $vehicleNo, model: $model, capacity: $capacity, driverName: $driverName, driverPhone: $driverPhone, routeId: $routeId) {
       id
       vehicleNo
+    }
+  }
+`;
+
+export const GET_COPY_SUBMISSIONS = gql`
+  query GetCopySubmissions($classId: ID!, $sectionId: ID!, $subjectId: ID!) {
+    getCopySubmissions(classId: $classId, sectionId: $sectionId, subjectId: $subjectId) {
+      id
+      studentId {
+        id
+        firstName
+        lastName
+        rollNo
+      }
+      subjectId {
+        id
+        name
+      }
+      classId {
+        id
+        name
+      }
+      sectionId {
+        id
+        name
+      }
+      isCompleted
+      remarks
+    }
+  }
+`;
+
+export const SAVE_COPY_SUBMISSIONS = gql`
+  mutation SaveCopySubmissions($classId: ID!, $sectionId: ID!, $subjectId: ID!, $submissions: [CopySubmissionInput!]!) {
+    saveCopySubmissions(classId: $classId, sectionId: $sectionId, subjectId: $subjectId, submissions: $submissions)
+  }
+`;
+
+export const GET_HOMEWORK_SUBMISSIONS = gql`
+  query GetHomeworkSubmissions($homeworkId: ID!) {
+    getHomeworkSubmissions(homeworkId: $homeworkId) {
+      id
+      homeworkId {
+        id
+        title
+      }
+      studentId {
+        id
+        firstName
+        lastName
+        rollNo
+      }
+      submissionText
+      attachments {
+        name
+        url
+      }
+      submissionDate
+      status
+      gradePoints
+      feedback
+    }
+  }
+`;
+
+export const SUBMIT_HOMEWORK = gql`
+  mutation SubmitHomework($homeworkId: ID!, $studentId: ID!, $submissionText: String, $attachments: [DocumentInput]) {
+    submitHomework(homeworkId: $homeworkId, studentId: $studentId, submissionText: $submissionText, attachments: $attachments) {
+      id
+      status
+      submissionText
+      submissionDate
+      studentId {
+        id
+        firstName
+        lastName
+      }
+    }
+  }
+`;
+
+export const GRADE_HOMEWORK = gql`
+  mutation GradeHomework($submissionId: ID!, $gradePoints: Float!, $feedback: String!) {
+    gradeHomework(submissionId: $submissionId, gradePoints: $gradePoints, feedback: $feedback) {
+      id
+      status
+      gradePoints
+      feedback
+      studentId {
+        id
+        firstName
+        lastName
+      }
     }
   }
 `;

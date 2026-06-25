@@ -23,7 +23,8 @@ const ROLE_FEATURES = {
     { key: 'timetable', label: 'Weekly Timetable', desc: 'Provides capability to schedule and assign lessons.' },
     { key: 'exams', label: 'Exam Schedule', desc: 'Allows creating and managing school examination plans.' },
     { key: 'staff-attendance', label: 'Staff Attendance', desc: 'Allows marking and monitoring teacher and staff logs.' },
-    { key: 'leaves', label: 'Leave Management', desc: 'Allows approving or requesting teacher leave of absence.' }
+    { key: 'leaves', label: 'Leave Management', desc: 'Allows approving or requesting teacher leave of absence.' },
+    { key: 'copy-submission', label: 'Copy Submission', desc: 'Enables teachers to track fair copy submission for students.' }
   ],
   ACCOUNTANT: [
     { key: 'students', label: 'Student Registration', desc: 'Allows onboarding new students and modifying records.' },
@@ -35,6 +36,7 @@ const ROLE_FEATURES = {
     { key: 'timetable', label: 'Weekly Timetable', desc: 'Provides view access to teacher daily and weekly timetable.' },
     { key: 'bus-tracker', label: 'Bus Tracker', desc: 'Allows real-time checking of transport status.' },
     { key: 'attendance', label: 'Daily Attendance', desc: 'Enables marking student daily attendance rolls.' },
+    { key: 'copy-submission', label: 'Copy Submission', desc: 'Enables teachers to track fair copy submission for students.' },
     { key: 'leaves', label: 'Leave Management', desc: 'Allows faculty to request leaves and review statuses.' },
     { key: 'homework', label: 'Homework Board', desc: 'Enables assigning homework assignments to classes.' },
     { key: 'grades', label: 'Grades Entry', desc: 'Allows inputting marks and grades for exams.' },
@@ -48,9 +50,9 @@ const ROLE_FEATURES = {
 };
 
 const DEFAULT_PERMISSIONS = {
-  SUPER_TEACHER: ['teachers', 'classes', 'timetable', 'exams', 'staff-attendance', 'leaves'],
+  SUPER_TEACHER: ['teachers', 'classes', 'timetable', 'exams', 'staff-attendance', 'leaves', 'copy-submission'],
   ACCOUNTANT: ['students', 'fees', 'payroll'],
-  TEACHER: ['pending-jobs', 'timetable', 'bus-tracker', 'attendance', 'leaves', 'homework', 'grades', 'analytics', 'payroll'],
+  TEACHER: ['pending-jobs', 'timetable', 'bus-tracker', 'attendance', 'leaves', 'homework', 'grades', 'analytics', 'payroll', 'copy-submission'],
   PARENT: ['parent-portal', 'bus-tracker']
 };
 
