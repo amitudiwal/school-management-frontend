@@ -93,7 +93,7 @@ function SuperTeacherRegister() {
       setOpenModal(false);
       clearForm();
       refetch();
-      dispatch(showToast({ message: 'Super Teacher registered successfully!', severity: 'success' }));
+      dispatch(showToast({ message: 'Academics Management registered successfully!', severity: 'success' }));
     },
     onError: (err) => {
       setFormError(err.message);
@@ -106,7 +106,7 @@ function SuperTeacherRegister() {
       setOpenModal(false);
       clearForm();
       refetch();
-      dispatch(showToast({ message: 'Super Teacher updated successfully!', severity: 'success' }));
+      dispatch(showToast({ message: 'Academics Management updated successfully!', severity: 'success' }));
     },
     onError: (err) => {
       setFormError(err.message);
@@ -118,7 +118,7 @@ function SuperTeacherRegister() {
     onCompleted: () => {
       setTeacherToDelete(null);
       refetch();
-      dispatch(showToast({ message: 'Super Teacher deleted successfully!', severity: 'success' }));
+      dispatch(showToast({ message: 'Academics Management deleted successfully!', severity: 'success' }));
     },
     onError: (err) => {
       dispatch(showToast({ message: err.message, severity: 'error' }));
@@ -233,7 +233,7 @@ function SuperTeacherRegister() {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 3 }}>
         <Typography variant="h4" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
-          Super Teacher Registration
+          Academics Management Registration
         </Typography>
         <Button 
           variant="contained" 
@@ -241,7 +241,7 @@ function SuperTeacherRegister() {
           onClick={() => { clearForm(); setOpenModal(true); }}
           sx={{ width: { xs: '100%', sm: 'auto' }, background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)', color: '#FFFFFF' }}
         >
-          Register Super Teacher
+          Register Academics Management
         </Button>
       </Box>
 
@@ -256,7 +256,7 @@ function SuperTeacherRegister() {
               <TableHead sx={{ backgroundColor: 'action.hover' }}>
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700 }} width="80px">Photo</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Super Teacher Name</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Academics Management Name</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Email</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Phone</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Qualification</TableCell>
@@ -287,7 +287,7 @@ function SuperTeacherRegister() {
                   ))}
                 {superTeachers.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={7} align="center">No Super Teachers registered yet.</TableCell>
+                    <TableCell colSpan={7} align="center">No Academics Management profiles registered yet.</TableCell>
                   </TableRow>
                 )}
               </TableBody>
@@ -308,7 +308,7 @@ function SuperTeacherRegister() {
 
       {/* Register/Update Dialog */}
       <Dialog open={openModal} onClose={() => setOpenModal(false)} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 800 }}>{selectedTeacher ? 'Update Super Teacher Profile' : 'Register Super Teacher'}</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 800 }}>{selectedTeacher ? 'Update Academics Management Profile' : 'Register Academics Management'}</DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
             {formError && <Alert severity="error" sx={{ mb: 2 }}>{formError}</Alert>}
@@ -423,7 +423,7 @@ function SuperTeacherRegister() {
                     fullWidth 
                     required={!selectedTeacher} 
                     type={showPassword ? 'text' : 'password'} 
-                    label="Super Teacher Password" 
+                    label="Academics Management Password" 
                     value={password} 
                     onChange={(e) => {
                       setPassword(e.target.value);
@@ -448,7 +448,7 @@ function SuperTeacherRegister() {
           <DialogActions sx={{ p: { xs: 2, sm: 3 }, flexDirection: { xs: 'column-reverse', sm: 'row' }, alignItems: { xs: 'stretch', sm: 'center' } }}>
             <Button onClick={() => setOpenModal(false)} variant="outlined">Cancel</Button>
             <Button type="submit" variant="contained" disabled={addLoading || updateLoading}>
-              {addLoading || updateLoading ? 'Saving...' : selectedTeacher ? 'Update Super Teacher' : 'Add Super Teacher'}
+              {addLoading || updateLoading ? 'Saving...' : selectedTeacher ? 'Update Profile' : 'Add Profile'}
             </Button>
           </DialogActions>
         </form>
@@ -456,10 +456,10 @@ function SuperTeacherRegister() {
 
       {/* Delete Confirmation Dialog */}
       <Dialog open={Boolean(teacherToDelete)} onClose={() => setTeacherToDelete(null)} maxWidth="xs" fullWidth>
-        <DialogTitle sx={{ fontWeight: 800 }}>Delete Super Teacher</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 800 }}>Delete Academics Management Profile</DialogTitle>
         <DialogContent>
           <Typography>
-            Are you sure you want to delete Super Teacher "{teacherToDelete ? `${teacherToDelete.firstName} ${teacherToDelete.lastName}` : ''}"?
+            Are you sure you want to delete Academics Management profile "{teacherToDelete ? `${teacherToDelete.firstName} ${teacherToDelete.lastName}` : ''}"?
           </Typography>
         </DialogContent>
         <DialogActions sx={{ p: { xs: 2, sm: 3 }, flexDirection: { xs: 'column-reverse', sm: 'row' }, alignItems: { xs: 'stretch', sm: 'center' } }}>

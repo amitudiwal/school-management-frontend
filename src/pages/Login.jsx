@@ -86,9 +86,9 @@ function Login() {
         return;
       }
       if (selectedRole === 'SUPER_TEACHER' && user.role !== 'SUPER_TEACHER') {
-        dispatch(loginFailure('Access denied: You are not registered as a Super Teacher.'));
-        setValidationError('Access denied: You are not registered as a Super Teacher.');
-        dispatch(showToast({ message: 'Access denied: You are not registered as a Super Teacher.', severity: 'error' }));
+        dispatch(loginFailure('Access denied: You are not registered as Academics Management.'));
+        setValidationError('Access denied: You are not registered as Academics Management.');
+        dispatch(showToast({ message: 'Access denied: You are not registered as Academics Management.', severity: 'error' }));
         return;
       }
       if (selectedRole === 'ACCOUNTANT' && user.role !== 'ACCOUNTANT') {
@@ -154,9 +154,9 @@ function Login() {
         return;
       }
       if (selectedRole === 'SUPER_TEACHER' && user.role !== 'SUPER_TEACHER') {
-        dispatch(loginFailure('Access denied: You are not registered as a Super Teacher.'));
-        setValidationError('Access denied: You are not registered as a Super Teacher.');
-        dispatch(showToast({ message: 'Access denied: You are not registered as a Super Teacher.', severity: 'error' }));
+        dispatch(loginFailure('Access denied: You are not registered as Academics Management.'));
+        setValidationError('Access denied: You are not registered as Academics Management.');
+        dispatch(showToast({ message: 'Access denied: You are not registered as Academics Management.', severity: 'error' }));
         return;
       }
       if (selectedRole === 'ACCOUNTANT' && user.role !== 'ACCOUNTANT') {
@@ -530,11 +530,11 @@ function Login() {
                   <Box
                     component="img"
                     src={vidyaflowLogo}
-                    alt="VidyaFlow Logo"
+                    alt="VidhyaFlowAI Logo"
                     sx={{ width: 72, height: 72, objectFit: 'contain', mb: 2 }}
                   />
                   <Typography variant="h4" sx={{ fontWeight: 900, fontFamily: "'Outfit', sans-serif", letterSpacing: '-0.025em' }}>
-                    VidyaFlow
+                    VidhyaFlowAI
                   </Typography>
                   <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5, fontWeight: 500 }}>
                     School ERP Platform
@@ -699,7 +699,7 @@ function Login() {
                   >
                     {[
                       { value: 'SCHOOL_ADMIN', label: 'School Admin', icon: <AdminPanelSettings /> },
-                      { value: 'SUPER_TEACHER', label: 'Super Teacher', icon: <SupervisorAccount /> },
+                      { value: 'SUPER_TEACHER', label: 'Academics Management', icon: <SupervisorAccount /> },
                       { value: 'ACCOUNTANT', label: 'School Accountant', icon: <AccountantIcon /> },
                       { value: 'TEACHER', label: 'Faculty Teacher', icon: <Person /> },
                       { value: 'PARENT', label: 'Parent / Guardian', icon: <SupervisorAccount /> }
@@ -936,11 +936,11 @@ function Login() {
             {step === 'SUPER_TEACHER_LOGIN' && (
               <Box>
                 <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, textAlign: 'center' }}>
-                  Super Teacher Sign In
+                  Academics Management Sign In
                 </Typography>
                 <form onSubmit={handleLoginSubmit}>
                   <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textAlign: 'center' }}>
-                    Enter your Super Teacher credentials to log in.
+                    Enter your Academics Management credentials to log in.
                   </Typography>
 
                   <TextField
@@ -1005,7 +1005,7 @@ function Login() {
 
                   <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid', borderColor: 'divider', textAlign: 'center' }}>
                     <Chip
-                      label="Autofill Demo Super Teacher"
+                      label="Autofill Demo Academics Management"
                       onClick={() => handleQuickFillUser('SUPER_TEACHER')}
                       sx={{ cursor: 'pointer', backgroundColor: `${activeColor}15`, color: activeColor, border: `1px solid ${activeColor}30` }}
                     />

@@ -452,7 +452,7 @@ function LeaveManagement() {
                             {req.userId?.name}
                           </Typography>
                           <Typography variant="caption" color="text.secondary">
-                            {req.userId?.role?.replace('_', ' ')}
+                            {req.userId?.role === 'SUPER_TEACHER' ? 'Academic Management' : req.userId?.role?.replace('_', ' ')}
                           </Typography>
                         </TableCell>
                         <TableCell sx={{ fontWeight: 700 }}>{formatLeaveTypeName(req.leaveType)}</TableCell>
@@ -709,7 +709,7 @@ function LeaveManagement() {
                 {selectedLeave.userId?.name}
               </Typography>
               <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                Role: {selectedLeave.userId?.role?.replace('_', ' ')}
+                Role: {selectedLeave.userId?.role === 'SUPER_TEACHER' ? 'Academic Management' : selectedLeave.userId?.role?.replace('_', ' ')}
               </Typography>
 
               <Typography variant="subtitle2" color="text.secondary" sx={{ fontWeight: 600 }}>

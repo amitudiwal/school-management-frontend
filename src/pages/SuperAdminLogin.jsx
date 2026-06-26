@@ -159,7 +159,7 @@ function SuperAdminLogin() {
             <Box
               component="img"
               src={vidyaflowLogo}
-              alt="VidyaFlow Logo"
+              alt="VidhyaFlowAI Logo"
               sx={{
                 width: 72,
                 height: 72,
@@ -174,7 +174,7 @@ function SuperAdminLogin() {
               Super Admin Portal
             </Typography>
             <Typography variant="body2" sx={{ color: isDark ? '#94A3B8' : '#475569', fontWeight: 500 }}>
-              VidyaFlow Global Management Console
+              VidhyaFlowAI Global Management Console
             </Typography>
           </Box>
 

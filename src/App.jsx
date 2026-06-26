@@ -100,7 +100,7 @@ function App() {
                 <MenuIcon />
               </IconButton>
               <Typography variant="h6" noWrap sx={{ fontWeight: 800 }}>
-                VidyaFlow
+                VidhyaFlowAI
               </Typography>
             </Toolbar>
           </AppBar>

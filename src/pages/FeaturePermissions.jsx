@@ -193,7 +193,7 @@ function FeaturePermissions() {
             }
           }}
         >
-          <Tab label="Super Teacher" />
+          <Tab label="Academics Management" />
           <Tab label="Accountant" />
           <Tab label="Faculty Teacher" />
           <Tab label="Parent" />

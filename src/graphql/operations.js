@@ -117,8 +117,8 @@ export const GET_SUPER_ADMIN_DASHBOARD = gql`
 `;
 
 export const GET_SCHOOL_ADMIN_DASHBOARD = gql`
-  query GetSchoolAdminDashboard($date: Date) {
-    getSchoolAdminDashboard(date: $date) {
+  query GetSchoolAdminDashboard($startDate: Date, $endDate: Date) {
+    getSchoolAdminDashboard(startDate: $startDate, endDate: $endDate) {
       studentCount
       teacherCount
       staffCount
@@ -256,6 +256,37 @@ export const GET_STUDENTS = gql`
         firstName
         lastName
       }
+      branch
+      category
+      mobileNumber
+      house
+      height
+      weight
+      apaarId
+      rteNumber
+      penNumber
+      aadhaarFront
+      aadhaarBack
+      permanentAddress
+      fatherOccupation
+      motherName
+      motherOccupation
+      motherPhone
+      guardianName
+      guardianPhone
+      admissionFee
+      tuitionFee
+      transportFee
+      hostelFee
+      otherFee
+      dueDate
+      totalDiscount
+      discountType
+      installmentPlan
+      prevSchoolName
+      prevClass
+      passingYear
+      bloodGroup
     }
   }
 `;
@@ -281,6 +312,37 @@ export const REGISTER_STUDENT = gql`
     $parentRelation: String
     $parentPhone: String
     $parentPassword: String
+    $branch: String
+    $category: String
+    $mobileNumber: String
+    $house: String
+    $height: Float
+    $weight: Float
+    $apaarId: String
+    $rteNumber: String
+    $penNumber: String
+    $aadhaarFront: String
+    $aadhaarBack: String
+    $permanentAddress: String
+    $fatherOccupation: String
+    $motherName: String
+    $motherOccupation: String
+    $motherPhone: String
+    $guardianName: String
+    $guardianPhone: String
+    $admissionFee: Float
+    $tuitionFee: Float
+    $transportFee: Float
+    $hostelFee: Float
+    $otherFee: Float
+    $dueDate: Date
+    $totalDiscount: Float
+    $discountType: String
+    $installmentPlan: String
+    $prevSchoolName: String
+    $prevClass: String
+    $passingYear: String
+    $bloodGroup: String
   ) {
     registerStudent(
       email: $email
@@ -302,6 +364,37 @@ export const REGISTER_STUDENT = gql`
       parentRelation: $parentRelation
       parentPhone: $parentPhone
       parentPassword: $parentPassword
+      branch: $branch
+      category: $category
+      mobileNumber: $mobileNumber
+      house: $house
+      height: $height
+      weight: $weight
+      apaarId: $apaarId
+      rteNumber: $rteNumber
+      penNumber: $penNumber
+      aadhaarFront: $aadhaarFront
+      aadhaarBack: $aadhaarBack
+      permanentAddress: $permanentAddress
+      fatherOccupation: $fatherOccupation
+      motherName: $motherName
+      motherOccupation: $motherOccupation
+      motherPhone: $motherPhone
+      guardianName: $guardianName
+      guardianPhone: $guardianPhone
+      admissionFee: $admissionFee
+      tuitionFee: $tuitionFee
+      transportFee: $transportFee
+      hostelFee: $hostelFee
+      otherFee: $otherFee
+      dueDate: $dueDate
+      totalDiscount: $totalDiscount
+      discountType: $discountType
+      installmentPlan: $installmentPlan
+      prevSchoolName: $prevSchoolName
+      prevClass: $prevClass
+      passingYear: $passingYear
+      bloodGroup: $bloodGroup
     ) {
       id
       admissionNo
@@ -324,6 +417,37 @@ export const UPDATE_STUDENT = gql`
     $classId: ID
     $sectionId: ID
     $parentId: ID
+    $branch: String
+    $category: String
+    $mobileNumber: String
+    $house: String
+    $height: Float
+    $weight: Float
+    $apaarId: String
+    $rteNumber: String
+    $penNumber: String
+    $aadhaarFront: String
+    $aadhaarBack: String
+    $permanentAddress: String
+    $fatherOccupation: String
+    $motherName: String
+    $motherOccupation: String
+    $motherPhone: String
+    $guardianName: String
+    $guardianPhone: String
+    $admissionFee: Float
+    $tuitionFee: Float
+    $transportFee: Float
+    $hostelFee: Float
+    $otherFee: Float
+    $dueDate: Date
+    $totalDiscount: Float
+    $discountType: String
+    $installmentPlan: String
+    $prevSchoolName: String
+    $prevClass: String
+    $passingYear: String
+    $bloodGroup: String
   ) {
     updateStudent(
       id: $id
@@ -337,6 +461,37 @@ export const UPDATE_STUDENT = gql`
       classId: $classId
       sectionId: $sectionId
       parentId: $parentId
+      branch: $branch
+      category: $category
+      mobileNumber: $mobileNumber
+      house: $house
+      height: $height
+      weight: $weight
+      apaarId: $apaarId
+      rteNumber: $rteNumber
+      penNumber: $penNumber
+      aadhaarFront: $aadhaarFront
+      aadhaarBack: $aadhaarBack
+      permanentAddress: $permanentAddress
+      fatherOccupation: $fatherOccupation
+      motherName: $motherName
+      motherOccupation: $motherOccupation
+      motherPhone: $motherPhone
+      guardianName: $guardianName
+      guardianPhone: $guardianPhone
+      admissionFee: $admissionFee
+      tuitionFee: $tuitionFee
+      transportFee: $transportFee
+      hostelFee: $hostelFee
+      otherFee: $otherFee
+      dueDate: $dueDate
+      totalDiscount: $totalDiscount
+      discountType: $discountType
+      installmentPlan: $installmentPlan
+      prevSchoolName: $prevSchoolName
+      prevClass: $prevClass
+      passingYear: $passingYear
+      bloodGroup: $bloodGroup
     ) {
       id
       admissionNo

@@ -622,7 +622,7 @@ function PayrollManagement() {
                         <TableCell sx={{ fontWeight: 700 }}>
                           {pay.userId?.name}
                           <Typography variant="caption" display="block" color="text.secondary">
-                            {pay.userId?.role?.replace('_', ' ')}
+                            {pay.userId?.role === 'SUPER_TEACHER' ? 'Academic Management' : pay.userId?.role?.replace('_', ' ')}
                           </Typography>
                         </TableCell>
                         <TableCell sx={{ fontWeight: 600 }}>{pay.payslipNo}</TableCell>
@@ -711,13 +711,13 @@ function PayrollManagement() {
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 3 }}>
                   <Box>
                     <Typography variant="h5" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800 }}>
-                      VIDYAFLOW ACADEMY
+                      VIDHYAFLOWAI ACADEMY
                     </Typography>
                     <Typography variant="caption" color="text.secondary" display="block">
                       123 Education Boulevard, Campus City, 94016
                     </Typography>
                     <Typography variant="caption" color="text.secondary" display="block">
-                      Email: HR@vidyaflow.edu | Tel: (555) 019-2831
+                      Email: HR@vidhyaflowai.edu | Tel: (555) 019-2831
                     </Typography>
                   </Box>
                   <Box sx={{ textAlign: 'right' }}>
@@ -748,7 +748,7 @@ function PayrollManagement() {
                       Email: {selectedPayslip.userId?.email}
                     </Typography>
                     <Typography variant="body2" color="text.secondary">
-                      Designation: {selectedPayslip.userId?.role?.replace('_', ' ')}
+                      Designation: {selectedPayslip.userId?.role === 'SUPER_TEACHER' ? 'Academic Management' : selectedPayslip.userId?.role?.replace('_', ' ')}
                     </Typography>
                   </Grid>
                   <Grid item xs={12} sm={6}>

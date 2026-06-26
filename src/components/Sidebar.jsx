@@ -87,10 +87,10 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
   const hasPermission = (roleName, feature) => {
     if (roleName === 'SUPER_ADMIN') return true;
     if (['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(roleName)) return true;
-    
+
     let mappedRole = roleName;
     if (roleName === 'CLASS_TEACHER') mappedRole = 'TEACHER';
-    
+
     const rolePerms = getPermissionsForRole(mappedRole);
     return rolePerms.includes(feature);
   };
@@ -107,7 +107,7 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
     ...((['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role)) ? [
       { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
       { text: 'Feature Permissions', icon: <SettingsIcon />, path: '/permissions' },
-      { text: 'Super Teacher Register', icon: <PeopleIcon />, path: '/super-teachers' },
+      { text: 'Academics Management Register', icon: <PeopleIcon />, path: '/super-teachers' },
       { text: 'Accountant Register', icon: <PeopleIcon />, path: '/accountants' },
       { text: 'Bus Tracker', icon: <BusIcon />, path: '/bus-tracker' },
       { text: 'Leave Management', icon: <LeaveIcon />, path: '/leaves' },
@@ -179,14 +179,14 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
             backgroundColor: 'transparent',
           },
           '&::-webkit-scrollbar-thumb': {
-            backgroundColor: theme.palette.mode === 'dark' 
-              ? 'rgba(255, 255, 255, 0.15)' 
+            backgroundColor: theme.palette.mode === 'dark'
+              ? 'rgba(255, 255, 255, 0.15)'
               : 'rgba(0, 0, 0, 0.12)',
             borderRadius: '10px',
           },
           '&::-webkit-scrollbar-thumb:hover': {
-            backgroundColor: theme.palette.mode === 'dark' 
-              ? 'rgba(255, 255, 255, 0.3)' 
+            backgroundColor: theme.palette.mode === 'dark'
+              ? 'rgba(255, 255, 255, 0.3)'
               : 'rgba(0, 0, 0, 0.25)',
           }
         },
@@ -204,7 +204,7 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
           </Avatar>
           <Box>
             <Typography variant="h6" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, lineHeight: 1.2 }}>
-              {schoolName || "VidyaFlow"}
+              {schoolName || "VidhyaFlowAI"}
             </Typography>
             <Typography variant="caption" color="text.secondary">
               {schoolName ? "School ERP Portal" : "School ERP System"}
@@ -233,7 +233,7 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
             </Box>
           </Box>
           <Chip
-            label={user?.role?.replace('_', ' ')}
+            label={user?.role === 'SUPER_TEACHER' ? 'Academic Management' : user?.role?.replace('_', ' ')}
             size="small"
             color="primary"
             variant="soft"

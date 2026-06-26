@@ -46,7 +46,9 @@ function Dashboard() {
   const theme = useTheme();
   const navigate = useNavigate();
   const [activeAttendanceTab, setActiveAttendanceTab] = useState(0);
-  const [dashboardDate, setDashboardDate] = useState(new Date().toISOString().split('T')[0]);
+  const todayStr = new Date().toISOString().split('T')[0];
+  const [startDate, setStartDate] = useState(todayStr);
+  const [endDate, setEndDate] = useState(todayStr);
   const [page, setPage] = useState(0);
 
   // Load appropriate dashboard queries based on user role
@@ -58,7 +60,10 @@ function Dashboard() {
   
   const { loading: schoolLoading, error: schoolError, data: schoolData, refetch: refetchSchoolDashboard } = useQuery(GET_SCHOOL_ADMIN_DASHBOARD, {
     skip: isSuperAdmin,
-    variables: { date: new Date(dashboardDate) },
+    variables: { 
+      startDate: new Date(startDate), 
+      endDate: new Date(endDate) 
+    },
     fetchPolicy: 'network-only'
   });
 
@@ -75,11 +80,14 @@ function Dashboard() {
     if (isSuperAdmin) {
       refetchSuperDashboard?.();
     } else {
-      refetchSchoolDashboard?.({ date: new Date(dashboardDate) });
+      refetchSchoolDashboard?.({ 
+        startDate: new Date(startDate), 
+        endDate: new Date(endDate) 
+      });
       refetchJobs?.();
       refetchEvents?.();
     }
-  }, [isSuperAdmin, dashboardDate, refetchSuperDashboard, refetchSchoolDashboard, refetchJobs, refetchEvents]);
+  }, [isSuperAdmin, startDate, endDate, refetchSuperDashboard, refetchSchoolDashboard, refetchJobs, refetchEvents]);
 
   const { loading: logsLoading, data: logsData } = useQuery(GET_AUDIT_LOGS, {
     skip: !['SUPER_ADMIN', 'SCHOOL_ADMIN'].includes(user?.role)
@@ -319,12 +327,20 @@ function Dashboard() {
         <Typography variant="h4" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
           School Overview Portal
         </Typography>
-        <CustomDatePicker
-          label="Attendance & Metrics Date"
-          value={dashboardDate}
-          onChange={(e) => setDashboardDate(e.target.value)}
-          sx={{ width: { xs: '100%', sm: 240 } }}
-        />
+        <Box sx={{ display: 'flex', gap: 2, flexDirection: { xs: 'column', sm: 'row' }, width: { xs: '100%', sm: 'auto' } }}>
+          <CustomDatePicker
+            label="Start Date"
+            value={startDate}
+            onChange={(e) => setStartDate(e.target.value)}
+            sx={{ width: { xs: '100%', sm: 180 } }}
+          />
+          <CustomDatePicker
+            label="End Date"
+            value={endDate}
+            onChange={(e) => setEndDate(e.target.value)}
+            sx={{ width: { xs: '100%', sm: 180 } }}
+          />
+        </Box>
       </Box>
 
       {/* Stats Grid */}
