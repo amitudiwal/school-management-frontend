@@ -1984,4 +1984,36 @@ export const GRADE_HOMEWORK = gql`
   }
 `;
 
+export const GET_EVENTS = gql`
+  query GetEvents {
+    getEvents {
+      id
+      title
+      type
+      date
+      description
+      status
+    }
+  }
+`;
+
+export const CREATE_EVENT = gql`
+  mutation CreateEvent($title: String!, $type: String!, $date: Date!, $description: String) {
+    createEvent(title: $title, type: $type, date: $date, description: $description) {
+      id
+      title
+      type
+      date
+      description
+      status
+    }
+  }
+`;
+
+export const DELETE_EVENT = gql`
+  mutation DeleteEvent($id: ID!) {
+    deleteEvent(id: $id)
+  }
+`;
+
 

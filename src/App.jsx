@@ -33,6 +33,7 @@ import AccountantRegister from './pages/AccountantRegister';
 import PendingJobs from './pages/PendingJobs';
 import BusTracker from './pages/BusTracker';
 import FeaturePermissions from './pages/FeaturePermissions';
+import EventsManagement from './pages/EventsManagement';
 import { useQuery } from '@apollo/client';
 import { GET_SCHOOL } from './graphql/operations';
 
@@ -58,7 +59,7 @@ function App() {
     if (!schoolData?.getSchool?.settings?.featurePermissions) {
       // Default fallback
       return {
-        SUPER_TEACHER: ['teachers', 'classes', 'timetable', 'exams', 'staff-attendance', 'leaves'],
+        SUPER_TEACHER: ['teachers', 'classes', 'timetable', 'exams', 'staff-attendance', 'leaves', 'copy-submission', 'events'],
         ACCOUNTANT: ['students', 'fees', 'payroll'],
         TEACHER: ['pending-jobs', 'timetable', 'bus-tracker', 'attendance', 'leaves', 'homework', 'grades', 'analytics', 'payroll'],
         PARENT: ['parent-portal', 'bus-tracker']
@@ -266,6 +267,11 @@ function App() {
             <Route 
               path="/payroll" 
               element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (user?.role === 'ACCOUNTANT' && hasPermission('ACCOUNTANT', 'payroll')) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'payroll'))) ? <PayrollManagement /> : <Navigate to="/" />} 
+            />
+
+            <Route 
+              path="/events" 
+              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'events'))) ? <EventsManagement /> : <Navigate to="/" />} 
             />
 
             <Route 

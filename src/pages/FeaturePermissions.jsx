@@ -24,7 +24,8 @@ const ROLE_FEATURES = {
     { key: 'exams', label: 'Exam Schedule', desc: 'Allows creating and managing school examination plans.' },
     { key: 'staff-attendance', label: 'Staff Attendance', desc: 'Allows marking and monitoring teacher and staff logs.' },
     { key: 'leaves', label: 'Leave Management', desc: 'Allows approving or requesting teacher leave of absence.' },
-    { key: 'copy-submission', label: 'Copy Submission', desc: 'Enables teachers to track fair copy submission for students.' }
+    { key: 'copy-submission', label: 'Copy Submission', desc: 'Enables teachers to track fair copy submission for students.' },
+    { key: 'events', label: 'Events & Holidays', desc: 'Allows managing and adding school events and holidays.' }
   ],
   ACCOUNTANT: [
     { key: 'students', label: 'Student Registration', desc: 'Allows onboarding new students and modifying records.' },
@@ -50,7 +51,7 @@ const ROLE_FEATURES = {
 };
 
 const DEFAULT_PERMISSIONS = {
-  SUPER_TEACHER: ['teachers', 'classes', 'timetable', 'exams', 'staff-attendance', 'leaves', 'copy-submission'],
+  SUPER_TEACHER: ['teachers', 'classes', 'timetable', 'exams', 'staff-attendance', 'leaves', 'copy-submission', 'events'],
   ACCOUNTANT: ['students', 'fees', 'payroll'],
   TEACHER: ['pending-jobs', 'timetable', 'bus-tracker', 'attendance', 'leaves', 'homework', 'grades', 'analytics', 'payroll', 'copy-submission'],
   PARENT: ['parent-portal', 'bus-tracker']

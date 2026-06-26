@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useSelector } from 'react-redux';
 import { useQuery } from '@apollo/client';
@@ -16,9 +17,9 @@ import {
   School as SchoolIcon, People as PeopleIcon, LocalLibrary as LibraryIcon, 
   AttachMoney as FeesIcon, AssignmentTurnedIn as AttendanceIcon, 
   Warning as AlertIcon, Security as AuditIcon, DateRange as LeaveIcon,
-  Assignment as HomeworkIcon
+  Assignment as HomeworkIcon, CalendarMonth as CalendarIcon
 } from '@mui/icons-material';
-import { GET_SUPER_ADMIN_DASHBOARD, GET_SCHOOL_ADMIN_DASHBOARD, GET_AUDIT_LOGS, GET_PENDING_JOBS } from '../graphql/operations';
+import { GET_SUPER_ADMIN_DASHBOARD, GET_SCHOOL_ADMIN_DASHBOARD, GET_AUDIT_LOGS, GET_PENDING_JOBS, GET_EVENTS } from '../graphql/operations';
 import CustomDatePicker from '../components/CustomDatePicker';
 
 const containerVariants = {
@@ -43,6 +44,7 @@ const itemVariants = {
 function Dashboard() {
   const { user } = useSelector((state) => state.auth);
   const theme = useTheme();
+  const navigate = useNavigate();
   const [activeAttendanceTab, setActiveAttendanceTab] = useState(0);
   const [dashboardDate, setDashboardDate] = useState(new Date().toISOString().split('T')[0]);
   const [page, setPage] = useState(0);
@@ -64,14 +66,20 @@ function Dashboard() {
     skip: isSuperAdmin || !['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role)
   });
 
+  const { loading: eventsLoading, data: eventsData, refetch: refetchEvents } = useQuery(GET_EVENTS, {
+    skip: isSuperAdmin,
+    fetchPolicy: 'network-only'
+  });
+
   React.useEffect(() => {
     if (isSuperAdmin) {
       refetchSuperDashboard?.();
     } else {
       refetchSchoolDashboard?.({ date: new Date(dashboardDate) });
       refetchJobs?.();
+      refetchEvents?.();
     }
-  }, [isSuperAdmin, dashboardDate, refetchSuperDashboard, refetchSchoolDashboard, refetchJobs]);
+  }, [isSuperAdmin, dashboardDate, refetchSuperDashboard, refetchSchoolDashboard, refetchJobs, refetchEvents]);
 
   const { loading: logsLoading, data: logsData } = useQuery(GET_AUDIT_LOGS, {
     skip: !['SUPER_ADMIN', 'SCHOOL_ADMIN'].includes(user?.role)
@@ -694,6 +702,133 @@ function Dashboard() {
                 </ResponsiveContainer>
               )}
             </Box>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Events & Holidays Row */}
+      <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
+        <Grid item xs={12} component={motion.div} variants={itemVariants}>
+          <Card 
+            sx={{ 
+              p: 3,
+              borderRadius: 4,
+              border: theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.05)',
+              background: theme.palette.mode === 'dark' ? 'rgba(17, 24, 39, 0.7)' : '#ffffff',
+              backdropFilter: 'blur(10px)',
+              boxShadow: theme.palette.mode === 'dark' ? '0 8px 32px 0 rgba(0, 0, 0, 0.3)' : '0 8px 32px 0 rgba(99, 102, 241, 0.04)'
+            }}
+          >
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>
+              <Box>
+                <Typography variant="h6" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <CalendarIcon color="primary" sx={{ fontSize: 28 }} /> Upcoming Events & Holidays
+                </Typography>
+                <Typography variant="caption" color="text.secondary">
+                  Scheduled functions, parent-teacher meets, and festive holiday breaks.
+                </Typography>
+              </Box>
+              <Button 
+                variant="outlined" 
+                size="small" 
+                onClick={() => navigate('/events')}
+                sx={{ 
+                  borderRadius: 3, 
+                  fontWeight: 700, 
+                  px: 2.5, 
+                  py: 0.8,
+                  textTransform: 'none',
+                  fontFamily: "'Outfit', sans-serif"
+                }}
+              >
+                Manage Events
+              </Button>
+            </Box>
+
+            {eventsLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress size={30} /></Box>
+            ) : !eventsData?.getEvents || eventsData.getEvents.length === 0 ? (
+              <Box sx={{ py: 6, textAlign: 'center', border: `1px dashed ${theme.palette.divider}`, borderRadius: 3 }}>
+                <Typography color="text.secondary" variant="body2" sx={{ fontWeight: 600 }}>
+                  No upcoming events or holidays scheduled.
+                </Typography>
+              </Box>
+            ) : (
+              <Grid container spacing={2.5}>
+                {eventsData.getEvents.slice(0, 4).map((evt) => {
+                  const evtDate = new Date(evt.date);
+                  const isHoliday = evt.type === 'HOLIDAY';
+                  const accentColor = isHoliday ? '#EF4444' : '#6366F1';
+                  const formattedDate = evtDate.toLocaleDateString('en-US', {
+                    month: 'short',
+                    day: 'numeric',
+                    year: 'numeric'
+                  });
+
+                  return (
+                    <Grid item xs={12} sm={6} md={3} key={evt.id}>
+                      <Paper 
+                        elevation={0}
+                        sx={{ 
+                          p: 2.5, 
+                          borderRadius: 3.5, 
+                          border: `1px solid ${theme.palette.divider}`,
+                          bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.01)',
+                          height: '100%',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          justifyContent: 'space-between',
+                          position: 'relative',
+                          overflow: 'hidden',
+                          transition: 'all 0.2s',
+                          '&:hover': {
+                            transform: 'translateY(-2px)',
+                            borderColor: accentColor,
+                            boxShadow: '0 4px 20px rgba(0,0,0,0.05)'
+                          },
+                          '&::before': {
+                            content: '""',
+                            position: 'absolute',
+                            top: 0,
+                            left: 0,
+                            height: '4px',
+                            width: '100%',
+                            bgcolor: accentColor
+                          }
+                        }}
+                      >
+                        <Box>
+                          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                            <Chip 
+                              label={evt.type} 
+                              size="small" 
+                              sx={{ 
+                                fontWeight: 800, 
+                                fontSize: '0.6rem', 
+                                height: 20,
+                                bgcolor: `${accentColor}15`,
+                                color: accentColor
+                              }} 
+                            />
+                            <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
+                              {formattedDate}
+                            </Typography>
+                          </Box>
+                          <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1, lineHeight: 1.3, fontFamily: "'Outfit', sans-serif" }}>
+                            {evt.title}
+                          </Typography>
+                          {evt.description && (
+                            <Typography variant="caption" color="text.secondary" sx={{ display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden', lineBreak: 'anywhere' }}>
+                              {evt.description}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Paper>
+                    </Grid>
+                  );
+                })}
+              </Grid>
+            )}
           </Card>
         </Grid>
       </Grid>

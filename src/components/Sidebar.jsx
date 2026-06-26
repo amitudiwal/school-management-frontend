@@ -23,7 +23,8 @@ import {
   Receipt as PayrollIcon,
   PendingActions as PendingJobsIcon,
   DirectionsBus as BusIcon,
-  Security as SettingsIcon
+  Security as SettingsIcon,
+  EventNote as EventsIcon
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
 import { toggleTheme } from '../store/slices/uiSlice';
@@ -73,7 +74,7 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
     if (!schoolData?.getSchool?.settings?.featurePermissions) {
       // Default fallback
       return {
-        SUPER_TEACHER: ['teachers', 'classes', 'timetable', 'exams', 'staff-attendance', 'leaves', 'copy-submission'],
+        SUPER_TEACHER: ['teachers', 'classes', 'timetable', 'exams', 'staff-attendance', 'leaves', 'copy-submission', 'events'],
         ACCOUNTANT: ['students', 'fees', 'payroll'],
         TEACHER: ['pending-jobs', 'timetable', 'bus-tracker', 'attendance', 'leaves', 'homework', 'grades', 'analytics', 'payroll', 'copy-submission'],
         PARENT: ['parent-portal', 'bus-tracker']
@@ -110,7 +111,8 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
       { text: 'Accountant Register', icon: <PeopleIcon />, path: '/accountants' },
       { text: 'Bus Tracker', icon: <BusIcon />, path: '/bus-tracker' },
       { text: 'Leave Management', icon: <LeaveIcon />, path: '/leaves' },
-      { text: 'Weekly Timetable', icon: <GradesIcon />, path: '/timetable' }
+      { text: 'Weekly Timetable', icon: <GradesIcon />, path: '/timetable' },
+      { text: 'Events & Holidays', icon: <EventsIcon />, path: '/events' }
     ] : []),
 
     // SUPER_TEACHER
@@ -120,7 +122,8 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
       { text: 'Weekly Timetable', icon: <GradesIcon />, path: '/timetable', feature: 'timetable' },
       { text: 'Exam Schedule', icon: <GradesIcon />, path: '/exams', feature: 'exams' },
       { text: 'Staff Attendance', icon: <AttendanceIcon />, path: '/staff-attendance', feature: 'staff-attendance' },
-      { text: 'Leave Management', icon: <LeaveIcon />, path: '/leaves', feature: 'leaves' }
+      { text: 'Leave Management', icon: <LeaveIcon />, path: '/leaves', feature: 'leaves' },
+      { text: 'Events & Holidays', icon: <EventsIcon />, path: '/events', feature: 'events' }
     ].filter(item => hasPermission('SUPER_TEACHER', item.feature)) : []),
 
     // ACCOUNTANT
