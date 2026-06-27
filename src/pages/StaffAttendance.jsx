@@ -5,7 +5,7 @@ import {
   Box, Button, Card, CardContent, Grid, TextField, MenuItem, 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
   Paper, Typography, CircularProgress, Alert, ToggleButton, ToggleButtonGroup,
-  Tabs, Tab, TablePagination
+  Tabs, Tab, TablePagination, Avatar, useTheme
 } from '@mui/material';
 import { 
   GET_TEACHERS, 
@@ -22,6 +22,7 @@ import { People as StaffIcon, PersonAdd as TeacherIcon } from '@mui/icons-materi
 import CustomDatePicker from '../components/CustomDatePicker';
 
 function StaffAttendance() {
+  const theme = useTheme();
   const dispatch = useDispatch();
   const { user } = useSelector((state) => state.auth);
   const isAdminOrPrincipal = ['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role);
@@ -33,8 +34,10 @@ function StaffAttendance() {
   // Attendance states
   const [teacherAttendance, setTeacherAttendance] = useState({});
   const [teacherRemarks, setTeacherRemarks] = useState({});
+  const [teacherFaceImages, setTeacherFaceImages] = useState({});
   const [staffAttendance, setStaffAttendance] = useState({});
   const [staffRemarks, setStaffRemarks] = useState({});
+  const [staffFaceImages, setStaffFaceImages] = useState({});
 
   // Queries
   const { loading: teachersLoading, error: teachersError, data: teachersData } = useQuery(GET_TEACHERS);
@@ -46,9 +49,10 @@ function StaffAttendance() {
     onCompleted: (data) => {
       const att = {};
       const rem = {};
-      // First default everyone to PRESENT
+      const faces = {};
+      // First default everyone to ABSENT
       teachersData?.getTeachers.forEach(t => {
-        att[t.id] = 'PRESENT';
+        att[t.id] = 'ABSENT';
         rem[t.id] = '';
       });
       // Then overlay actual database records
@@ -56,10 +60,14 @@ function StaffAttendance() {
         if (rec.teacherId?.id) {
           att[rec.teacherId.id] = rec.status;
           rem[rec.teacherId.id] = rec.remarks || '';
+          if (rec.faceImage) {
+            faces[rec.teacherId.id] = rec.faceImage;
+          }
         }
       });
       setTeacherAttendance(att);
       setTeacherRemarks(rem);
+      setTeacherFaceImages(faces);
     }
   });
 
@@ -69,9 +77,10 @@ function StaffAttendance() {
     onCompleted: (data) => {
       const att = {};
       const rem = {};
-      // First default everyone to PRESENT
+      const faces = {};
+      // First default everyone to ABSENT
       staffData?.getStaff.forEach(s => {
-        att[s.id] = 'PRESENT';
+        att[s.id] = 'ABSENT';
         rem[s.id] = '';
       });
       // Then overlay actual database records
@@ -79,10 +88,14 @@ function StaffAttendance() {
         if (rec.staffId?.id) {
           att[rec.staffId.id] = rec.status;
           rem[rec.staffId.id] = rec.remarks || '';
+          if (rec.faceImage) {
+            faces[rec.staffId.id] = rec.faceImage;
+          }
         }
       });
       setStaffAttendance(att);
       setStaffRemarks(rem);
+      setStaffFaceImages(faces);
     }
   });
 
@@ -210,10 +223,36 @@ function StaffAttendance() {
                       .map((teach) => (
                         <TableRow key={teach.id} hover>
                           <TableCell sx={{ fontWeight: 700 }}>
-                            {`Prof. ${teach.firstName} ${teach.lastName}`}
-                            <Typography variant="caption" display="block" color="text.secondary">
-                              {teach.designation || 'Faculty'}
-                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                              {teacherFaceImages[teach.id] ? (
+                                <Avatar 
+                                  src={teacherFaceImages[teach.id]} 
+                                  sx={{ 
+                                    width: 44, 
+                                    height: 44, 
+                                    border: `2px solid ${theme.palette.success.main}`,
+                                    boxShadow: `0 0 8px ${theme.palette.success.main}30`,
+                                    cursor: 'pointer'
+                                  }}
+                                  onClick={() => {
+                                    const win = window.open();
+                                    if (win) {
+                                      win.document.write(`<div style="background:#000; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;"><img src="${teacherFaceImages[teach.id]}" style="max-width:100%; max-height:100vh; object-fit:contain; border-radius:8px;" /></div>`);
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <Avatar sx={{ width: 44, height: 44, bgcolor: theme.palette.mode === 'dark' ? '#334155' : '#e2e8f0', color: theme.palette.mode === 'dark' ? '#f1f5f9' : '#475569' }}>
+                                  {teach.firstName.charAt(0)}
+                                </Avatar>
+                              )}
+                              <Box>
+                                {`Prof. ${teach.firstName} ${teach.lastName}`}
+                                <Typography variant="caption" display="block" color="text.secondary">
+                                  {teach.designation || 'Faculty'}
+                                </Typography>
+                              </Box>
+                            </Box>
                           </TableCell>
                           <TableCell>{teach.phone || '-'}</TableCell>
                           <TableCell align="center">
@@ -300,10 +339,36 @@ function StaffAttendance() {
                       .map((st) => (
                         <TableRow key={st.id} hover>
                           <TableCell sx={{ fontWeight: 700 }}>
-                            {`${st.firstName} ${st.lastName}`}
-                            <Typography variant="caption" display="block" color="text.secondary">
-                              {st.designation || 'Staff'}
-                            </Typography>
+                            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                              {staffFaceImages[st.id] ? (
+                                <Avatar 
+                                  src={staffFaceImages[st.id]} 
+                                  sx={{ 
+                                    width: 44, 
+                                    height: 44, 
+                                    border: `2px solid ${theme.palette.success.main}`,
+                                    boxShadow: `0 0 8px ${theme.palette.success.main}30`,
+                                    cursor: 'pointer'
+                                  }}
+                                  onClick={() => {
+                                    const win = window.open();
+                                    if (win) {
+                                      win.document.write(`<div style="background:#000; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;"><img src="${staffFaceImages[st.id]}" style="max-width:100%; max-height:100vh; object-fit:contain; border-radius:8px;" /></div>`);
+                                    }
+                                  }}
+                                />
+                              ) : (
+                                <Avatar sx={{ width: 44, height: 44, bgcolor: theme.palette.mode === 'dark' ? '#334155' : '#e2e8f0', color: theme.palette.mode === 'dark' ? '#f1f5f9' : '#475569' }}>
+                                  {st.firstName.charAt(0)}
+                                </Avatar>
+                              )}
+                              <Box>
+                                {`${st.firstName} ${st.lastName}`}
+                                <Typography variant="caption" display="block" color="text.secondary">
+                                  {st.designation || 'Staff'}
+                                </Typography>
+                              </Box>
+                            </Box>
                           </TableCell>
                           <TableCell sx={{ fontWeight: 600 }}>{st.department}</TableCell>
                           <TableCell align="center">

@@ -117,6 +117,7 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
 
     // SUPER_TEACHER
     ...(user?.role === 'SUPER_TEACHER' ? [
+      { text: 'Mark Attendance', icon: <AttendanceIcon />, path: '/self-attendance' },
       { text: 'Teacher Registration', icon: <TeacherIcon />, path: '/teachers', feature: 'teachers' },
       { text: 'Class Management', icon: <SchoolIcon />, path: '/classes', feature: 'classes' },
       { text: 'Weekly Timetable', icon: <GradesIcon />, path: '/timetable', feature: 'timetable' },
@@ -124,17 +125,19 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
       { text: 'Staff Attendance', icon: <AttendanceIcon />, path: '/staff-attendance', feature: 'staff-attendance' },
       { text: 'Leave Management', icon: <LeaveIcon />, path: '/leaves', feature: 'leaves' },
       { text: 'Events & Holidays', icon: <EventsIcon />, path: '/events', feature: 'events' }
-    ].filter(item => hasPermission('SUPER_TEACHER', item.feature)) : []),
+    ].filter(item => !item.feature || hasPermission('SUPER_TEACHER', item.feature)) : []),
 
     // ACCOUNTANT
     ...(user?.role === 'ACCOUNTANT' ? [
+      { text: 'Mark Attendance', icon: <AttendanceIcon />, path: '/self-attendance' },
       { text: 'Student Registration', icon: <PeopleIcon />, path: '/students', feature: 'students' },
       { text: 'Fees Accounting', icon: <FeesIcon />, path: '/fees', feature: 'fees' },
       { text: 'Payroll & Payslips', icon: <PayrollIcon />, path: '/payroll', feature: 'payroll' }
-    ].filter(item => hasPermission('ACCOUNTANT', item.feature)) : []),
+    ].filter(item => !item.feature || hasPermission('ACCOUNTANT', item.feature)) : []),
 
     // TEACHER / CLASS_TEACHER
     ...((['TEACHER', 'CLASS_TEACHER'].includes(user?.role)) ? [
+      { text: 'Mark Attendance', icon: <AttendanceIcon />, path: '/self-attendance' },
       { text: 'Pending jobs', icon: <PendingJobsIcon />, path: '/pending-jobs', feature: 'pending-jobs' },
       { text: 'Weekly Timetable', icon: <GradesIcon />, path: '/timetable', feature: 'timetable' },
       { text: 'Bus Tracker', icon: <BusIcon />, path: '/bus-tracker', feature: 'bus-tracker' },
@@ -145,7 +148,7 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
       { text: 'Grades Entry', icon: <GradesIcon />, path: '/grades', feature: 'grades' },
       { text: 'Performance Analytics', icon: <DashboardIcon />, path: '/analytics', feature: 'analytics' },
       { text: 'Payroll & Payslips', icon: <PayrollIcon />, path: '/payroll', feature: 'payroll' }
-    ].filter(item => hasPermission(user.role, item.feature)) : []),
+    ].filter(item => !item.feature || hasPermission(user.role, item.feature)) : []),
 
     // PARENT
     ...(user?.role === 'PARENT' ? [

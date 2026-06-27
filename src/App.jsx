@@ -22,6 +22,7 @@ import ParentList from './pages/ParentList';
 import ClassManagement from './pages/ClassManagement';
 import ParentDashboard from './pages/ParentDashboard';
 import StaffAttendance from './pages/StaffAttendance';
+import SelfAttendance from './pages/SelfAttendance';
 import GradesEntry from './pages/GradesEntry';
 import ClassAnalytics from './pages/ClassAnalytics';
 import TimetableManagement from './pages/TimetableManagement';
@@ -227,6 +228,11 @@ function App() {
             <Route 
               path="/staff-attendance" 
               element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'staff-attendance'))) ? <StaffAttendance /> : <Navigate to="/" />} 
+            />
+
+            <Route 
+              path="/self-attendance" 
+              element={isAuthenticated && (['TEACHER', 'CLASS_TEACHER', 'SUPER_TEACHER', 'ACCOUNTANT'].includes(user?.role)) ? <SelfAttendance /> : <Navigate to="/" />} 
             />
 
             <Route 

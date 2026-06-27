@@ -178,6 +178,13 @@ export const GET_SCHOOL_ADMIN_DASHBOARD = gql`
         totalHomework
         totalSubmissions
       }
+      facultyAttendanceTrend {
+        date
+        presentTeachers
+        absentTeachers
+        presentStaff
+        absentStaff
+      }
     }
   }
 `;
@@ -1269,6 +1276,7 @@ export const GET_TEACHER_ATTENDANCE = gql`
       id
       status
       remarks
+      faceImage
       teacherId {
         id
         firstName
@@ -1285,6 +1293,7 @@ export const GET_STAFF_ATTENDANCE = gql`
       id
       status
       remarks
+      faceImage
       staffId {
         id
         firstName
@@ -2170,5 +2179,23 @@ export const DELETE_EVENT = gql`
     deleteEvent(id: $id)
   }
 `;
+
+export const GET_MY_ATTENDANCE_TODAY = gql`
+  query GetMyAttendanceToday {
+    getMyAttendanceToday {
+      marked
+      status
+      checkIn
+      faceImage
+    }
+  }
+`;
+
+export const MARK_SELF_ATTENDANCE = gql`
+  mutation MarkSelfAttendance($faceImage: String!) {
+    markSelfAttendance(faceImage: $faceImage)
+  }
+`;
+
 
 

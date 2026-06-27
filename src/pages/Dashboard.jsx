@@ -321,6 +321,8 @@ function Dashboard() {
     count: g.count
   })) || [];
 
+  const trendData = stats?.facultyAttendanceTrend || [];
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 3 }}>
@@ -580,6 +582,44 @@ function Dashboard() {
           </Card>
         </Grid>
       </Grid>
+
+      {/* Faculty Attendance Trend Chart */}
+      {trendData.length > 0 && (
+        <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
+          <Grid item xs={12} component={motion.div} variants={itemVariants}>
+            <Card sx={{ p: 3, display: 'flex', flexDirection: 'column' }}>
+              <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>
+                Faculty & Staff Attendance Trend (Last 7 Days)
+              </Typography>
+              <Box sx={{ width: '100%', height: { xs: 260, sm: 320 } }}>
+                <ResponsiveContainer>
+                  <AreaChart data={trendData}>
+                    <defs>
+                      <linearGradient id="colorPresentTeachers" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                      </linearGradient>
+                      <linearGradient id="colorPresentStaff" x1="0" y1="0" x2="0" y2="1">
+                        <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3}/>
+                        <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
+                      </linearGradient>
+                    </defs>
+                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                    <XAxis dataKey="date" stroke={theme.palette.text.secondary} />
+                    <YAxis stroke={theme.palette.text.secondary} allowDecimals={false} />
+                    <Tooltip contentStyle={{ backgroundColor: theme.palette.background.paper, borderColor: theme.palette.divider }} />
+                    <Legend />
+                    <Area type="monotone" name="Present Teachers" dataKey="presentTeachers" stroke="#10B981" fillOpacity={1} fill="url(#colorPresentTeachers)" strokeWidth={3} />
+                    <Area type="monotone" name="Present Staff" dataKey="presentStaff" stroke="#6366F1" fillOpacity={1} fill="url(#colorPresentStaff)" strokeWidth={3} />
+                    <Area type="monotone" name="Absent Teachers" dataKey="absentTeachers" stroke="#EF4444" strokeWidth={2} strokeDasharray="5 5" fill="none" />
+                    <Area type="monotone" name="Absent Staff" dataKey="absentStaff" stroke="#F59E0B" strokeWidth={2} strokeDasharray="5 5" fill="none" />
+                  </AreaChart>
+                </ResponsiveContainer>
+              </Box>
+            </Card>
+          </Grid>
+        </Grid>
+      )}
 
       {/* Demographic & Performance Distribution */}
       <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
