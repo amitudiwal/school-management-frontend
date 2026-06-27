@@ -285,17 +285,17 @@ function SelfAttendance() {
       ) : (
         /* Case 2: Camera Capture / Scanning UI */
         <Card sx={{ borderRadius: 4, overflow: 'hidden', boxShadow: '0 8px 24px rgba(0,0,0,0.08)', border: `1px solid ${theme.palette.divider}` }}>
-          <CardContent sx={{ p: 4 }}>
+          <CardContent sx={{ p: { xs: 2.5, sm: 4 } }}>
             {!isCameraActive && !capturedImage && (
               /* Initial State */
-              <Box sx={{ textAlign: 'center', py: 6 }}>
+              <Box sx={{ textAlign: 'center', py: { xs: 4, sm: 6 } }}>
                 <Avatar sx={{ width: 80, height: 80, mx: 'auto', mb: 3, bgcolor: 'primary.main' + '15', color: 'primary.main' }}>
                   <ProfileIcon sx={{ fontSize: 40 }} />
                 </Avatar>
-                <Typography variant="h5" sx={{ fontWeight: 800, mb: 1 }}>
+                <Typography variant="h5" sx={{ fontWeight: 800, mb: 1, fontSize: { xs: '1.25rem', sm: '1.5rem' } }}>
                   Faculty Attendance Verification
                 </Typography>
-                <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 500, mx: 'auto', mb: 4 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ maxWidth: 500, mx: 'auto', mb: 4, px: 2 }}>
                   Ensure you are in a well-lit environment and directly facing the camera. Our biometric algorithm will automatically verify your facial features.
                 </Typography>
                 
@@ -316,6 +316,8 @@ function SelfAttendance() {
                     py: 1.5, 
                     fontWeight: 700,
                     textTransform: 'none',
+                    width: { xs: '100%', sm: 'auto' },
+                    maxWidth: 320,
                     boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)'
                   }}
                 >
@@ -332,7 +334,7 @@ function SelfAttendance() {
                     position: 'relative', 
                     width: '100%', 
                     maxWidth: 480, 
-                    height: { xs: 320, sm: 400 },
+                    height: { xs: 280, sm: 360, md: 400 },
                     borderRadius: 4, 
                     overflow: 'hidden',
                     bgcolor: 'black',
@@ -356,7 +358,7 @@ function SelfAttendance() {
                       left: 0, 
                       right: 0, 
                       bottom: 0, 
-                      border: '20px solid rgba(0,0,0,0.5)',
+                      border: { xs: '10px solid rgba(0,0,0,0.5)', sm: '20px solid rgba(0,0,0,0.5)' },
                       pointerEvents: 'none',
                       display: 'flex',
                       alignItems: 'center',
@@ -366,8 +368,8 @@ function SelfAttendance() {
                     {/* Glowing Circular Face Frame */}
                     <Box 
                       sx={{ 
-                        width: { xs: 200, sm: 260 }, 
-                        height: { xs: 200, sm: 260 }, 
+                        width: { xs: 160, sm: 220, md: 260 }, 
+                        height: { xs: 160, sm: 220, md: 260 }, 
                         borderRadius: '50%', 
                         border: `2px dashed ${theme.palette.primary.main}`,
                         boxShadow: `0 0 0 999px rgba(0,0,0,0.25), 0 0 15px ${theme.palette.primary.main}50`,
@@ -426,7 +428,7 @@ function SelfAttendance() {
                   </Box>
                 </Box>
 
-                <Stack direction="row" spacing={2} sx={{ mt: 4, width: '100%', maxWidth: 480 }}>
+                <Stack direction={{ xs: 'column-reverse', sm: 'row' }} spacing={{ xs: 1.5, sm: 2 }} sx={{ mt: { xs: 3, sm: 4 }, width: '100%', maxWidth: 480 }}>
                   <Button 
                     variant="outlined" 
                     fullWidth 
@@ -456,7 +458,7 @@ function SelfAttendance() {
                     position: 'relative', 
                     width: '100%', 
                     maxWidth: 400, 
-                    height: 300, 
+                    height: { xs: 240, sm: 300 }, 
                     borderRadius: 4, 
                     overflow: 'hidden',
                     border: `3px solid ${isVerifying ? theme.palette.warning.main : theme.palette.success.main}`
@@ -479,7 +481,7 @@ function SelfAttendance() {
                       }}
                     >
                       <CircularProgress color="warning" size={50} sx={{ mb: 2 }} />
-                      <Typography variant="body1" sx={{ color: 'white', fontWeight: 700, mb: 1 }}>
+                      <Typography variant="body1" sx={{ color: 'white', fontWeight: 700, mb: 1, fontSize: { xs: '0.9rem', sm: '1rem' } }}>
                         {verificationStep}
                       </Typography>
                       <Typography variant="caption" sx={{ color: 'warning.main', fontWeight: 800 }}>
