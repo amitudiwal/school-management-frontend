@@ -164,13 +164,25 @@ function SelfAttendance() {
   const attendanceInfo = queryData?.getMyAttendanceToday;
 
   return (
-    <Box sx={{ maxWidth: 800, mx: 'auto', p: { xs: 1, sm: 3 } }}>
+    <Box sx={{ maxWidth: 800, mx: 'auto', p: { xs: 1.5, sm: 3 } }}>
       {/* Title */}
-      <Box sx={{ mb: 4, textAlign: 'center' }}>
-        <Typography variant="h4" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, mb: 1 }}>
+      <Box sx={{ mb: { xs: 3, sm: 4 }, textAlign: 'center' }}>
+        <Typography 
+          variant="h4" 
+          sx={{ 
+            fontFamily: "'Outfit', sans-serif", 
+            fontWeight: 800, 
+            mb: 1,
+            fontSize: { xs: '1.5rem', sm: '2rem', md: '2.125rem' }
+          }}
+        >
           Secure Self Attendance Portal
         </Typography>
-        <Typography variant="body2" color="text.secondary">
+        <Typography 
+          variant="body2" 
+          color="text.secondary"
+          sx={{ fontSize: { xs: '0.8rem', sm: '0.875rem' } }}
+        >
           VidhyaFlowAI Identity Verification Check-in System
         </Typography>
       </Box>
@@ -198,16 +210,16 @@ function SelfAttendance() {
             boxShadow: '0 10px 30px rgba(0,0,0,0.1)'
           }}
         >
-          <CardContent sx={{ p: { xs: 3, sm: 5 } }}>
-            <Grid container spacing={4} alignItems="center">
+          <CardContent sx={{ p: { xs: 2.5, sm: 4, md: 5 } }}>
+            <Grid container spacing={{ xs: 3, sm: 4 }} alignItems="center">
               <Grid item xs={12} md={5} sx={{ display: 'flex', justifyContent: 'center' }}>
                 <Box sx={{ position: 'relative' }}>
                   {attendanceInfo.faceImage ? (
                     <Avatar 
                       src={attendanceInfo.faceImage}
                       sx={{ 
-                        width: { xs: 180, sm: 220 }, 
-                        height: { xs: 180, sm: 220 },
+                        width: { xs: 140, sm: 180, md: 220 }, 
+                        height: { xs: 140, sm: 180, md: 220 },
                         border: `4px solid ${theme.palette.success.main}`,
                         boxShadow: '0 8px 24px rgba(16, 185, 129, 0.25)'
                       }}
@@ -215,14 +227,14 @@ function SelfAttendance() {
                   ) : (
                     <Avatar 
                       sx={{ 
-                        width: { xs: 180, sm: 220 }, 
-                        height: { xs: 180, sm: 220 },
+                        width: { xs: 140, sm: 180, md: 220 }, 
+                        height: { xs: 140, sm: 180, md: 220 },
                         bgcolor: 'success.main' + '20',
                         color: 'success.main',
                         border: `4px solid ${theme.palette.success.main}`
                       }}
                     >
-                      <VerifiedIcon sx={{ fontSize: 90 }} />
+                      <VerifiedIcon sx={{ fontSize: { xs: 60, sm: 80, md: 90 } }} />
                     </Avatar>
                   )}
                   <Chip 
@@ -234,17 +246,29 @@ function SelfAttendance() {
                       bottom: -10, 
                       left: '50%', 
                       transform: 'translateX(-50%)',
-                      fontWeight: 800
+                      fontWeight: 800,
+                      size: { xs: 'small', sm: 'medium' }
                     }} 
                   />
                 </Box>
               </Grid>
               <Grid item xs={12} md={7}>
                 <Stack spacing={2} sx={{ textAlign: { xs: 'center', md: 'left' } }}>
-                  <Typography variant="h5" sx={{ fontWeight: 800, color: 'success.main', display: 'flex', alignItems: 'center', justifyContent: { xs: 'center', md: 'flex-start' }, gap: 1 }}>
+                  <Typography 
+                    variant="h5" 
+                    sx={{ 
+                      fontWeight: 800, 
+                      color: 'success.main', 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: { xs: 'center', md: 'flex-start' }, 
+                      gap: 1,
+                      fontSize: { xs: '1.25rem', sm: '1.5rem' }
+                    }}
+                  >
                     <SuccessIcon /> Attendance Logged Today
                   </Typography>
-                  <Typography variant="body1">
+                  <Typography variant="body1" sx={{ fontSize: { xs: '0.9rem', sm: '1rem' } }}>
                     Good day, <strong>{user?.name || 'Faculty Member'}</strong>! Your daily check-in is complete.
                   </Typography>
                   
@@ -252,18 +276,18 @@ function SelfAttendance() {
                     component={Paper} 
                     elevation={0}
                     sx={{ 
-                      p: 2.5, 
+                      p: { xs: 2, sm: 2.5 }, 
                       bgcolor: theme.palette.mode === 'dark' ? '#33415550' : '#f1f5f9',
                       border: `1px solid ${theme.palette.divider}`,
                       borderRadius: 3
                     }}
                   >
                     <Grid container spacing={2}>
-                      <Grid item xs={6}>
+                      <Grid item xs={12} sm={6}>
                         <Typography variant="caption" color="text.secondary" display="block">STATUS</Typography>
                         <Typography variant="body1" sx={{ fontWeight: 700, color: 'success.main' }}>{attendanceInfo.status}</Typography>
                       </Grid>
-                      <Grid item xs={6}>
+                      <Grid item xs={12} sm={6}>
                         <Typography variant="caption" color="text.secondary" display="block">CHECK-IN TIME</Typography>
                         <Typography variant="body1" sx={{ fontWeight: 700 }}>{attendanceInfo.checkIn}</Typography>
                       </Grid>

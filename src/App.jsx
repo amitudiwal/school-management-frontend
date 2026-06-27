@@ -124,7 +124,7 @@ function App() {
             overflowX: 'hidden',
             px: isAuthenticated ? { xs: 2, sm: 3 } : 0,
             py: isAuthenticated ? { xs: 2, sm: 3 } : 0,
-            pt: isAuthenticated && isMobile ? 10 : isAuthenticated ? 3 : 0
+            pt: isAuthenticated ? { xs: 10, md: 3 } : 0
           }}
         >
           <AnimatePresence mode="wait">

@@ -5,7 +5,7 @@ import {
   Box, Button, Card, CardContent, Grid, TextField, MenuItem, 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
   Paper, Typography, CircularProgress, Alert, ToggleButton, ToggleButtonGroup,
-  Tabs, Tab, TablePagination, Avatar, useTheme
+  Tabs, Tab, TablePagination, Avatar, useTheme, Dialog, IconButton
 } from '@mui/material';
 import { 
   GET_TEACHERS, 
@@ -18,7 +18,7 @@ import {
 } from '../graphql/operations';
 import { useDispatch, useSelector } from 'react-redux';
 import { showToast } from '../store/slices/uiSlice';
-import { People as StaffIcon, PersonAdd as TeacherIcon } from '@mui/icons-material';
+import { People as StaffIcon, PersonAdd as TeacherIcon, Close as CloseIcon } from '@mui/icons-material';
 import CustomDatePicker from '../components/CustomDatePicker';
 
 function StaffAttendance() {
@@ -38,6 +38,7 @@ function StaffAttendance() {
   const [staffAttendance, setStaffAttendance] = useState({});
   const [staffRemarks, setStaffRemarks] = useState({});
   const [staffFaceImages, setStaffFaceImages] = useState({});
+  const [previewImage, setPreviewImage] = useState(null);
 
   // Queries
   const { loading: teachersLoading, error: teachersError, data: teachersData } = useQuery(GET_TEACHERS);
@@ -234,12 +235,7 @@ function StaffAttendance() {
                                     boxShadow: `0 0 8px ${theme.palette.success.main}30`,
                                     cursor: 'pointer'
                                   }}
-                                  onClick={() => {
-                                    const win = window.open();
-                                    if (win) {
-                                      win.document.write(`<div style="background:#000; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;"><img src="${teacherFaceImages[teach.id]}" style="max-width:100%; max-height:100vh; object-fit:contain; border-radius:8px;" /></div>`);
-                                    }
-                                  }}
+                                  onClick={() => setPreviewImage(teacherFaceImages[teach.id])}
                                 />
                               ) : (
                                 <Avatar sx={{ width: 44, height: 44, bgcolor: theme.palette.mode === 'dark' ? '#334155' : '#e2e8f0', color: theme.palette.mode === 'dark' ? '#f1f5f9' : '#475569' }}>
@@ -350,12 +346,7 @@ function StaffAttendance() {
                                     boxShadow: `0 0 8px ${theme.palette.success.main}30`,
                                     cursor: 'pointer'
                                   }}
-                                  onClick={() => {
-                                    const win = window.open();
-                                    if (win) {
-                                      win.document.write(`<div style="background:#000; display:flex; align-items:center; justify-content:center; height:100vh; margin:0;"><img src="${staffFaceImages[st.id]}" style="max-width:100%; max-height:100vh; object-fit:contain; border-radius:8px;" /></div>`);
-                                    }
-                                  }}
+                                  onClick={() => setPreviewImage(staffFaceImages[st.id])}
                                 />
                               ) : (
                                 <Avatar sx={{ width: 44, height: 44, bgcolor: theme.palette.mode === 'dark' ? '#334155' : '#e2e8f0', color: theme.palette.mode === 'dark' ? '#f1f5f9' : '#475569' }}>
@@ -426,6 +417,52 @@ function StaffAttendance() {
           </motion.div>
         )}
       </AnimatePresence>
+
+      {/* Biometric Photo Fullscreen Modal */}
+      <Dialog 
+        open={Boolean(previewImage)} 
+        onClose={() => setPreviewImage(null)}
+        maxWidth="md"
+        PaperProps={{
+          sx: {
+            bgcolor: 'rgba(0, 0, 0, 0.95)',
+            borderRadius: 4,
+            overflow: 'hidden',
+            boxShadow: 24,
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            p: 1,
+            position: 'relative'
+          }
+        }}
+      >
+        {previewImage && (
+          <Box sx={{ position: 'relative', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+            <IconButton 
+              onClick={() => setPreviewImage(null)}
+              sx={{ 
+                position: 'absolute', 
+                top: 8, 
+                right: 8, 
+                color: 'white',
+                bgcolor: 'rgba(0,0,0,0.5)',
+                '&:hover': { bgcolor: 'rgba(0,0,0,0.7)' }
+              }}
+            >
+              <CloseIcon />
+            </IconButton>
+            <img 
+              src={previewImage} 
+              style={{ 
+                maxWidth: '100%', 
+                maxHeight: '80vh', 
+                objectFit: 'contain',
+                borderRadius: '8px' 
+              }} 
+              alt="Biometric Preview" 
+            />
+          </Box>
+        )}
+      </Dialog>
     </Box>
   );
 }
