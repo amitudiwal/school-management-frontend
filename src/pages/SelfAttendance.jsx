@@ -8,7 +8,8 @@ import {
 import { 
   CameraAlt as CameraIcon, CheckCircle as SuccessIcon, 
   Refresh as RetryIcon, AccountBox as ProfileIcon, 
-  Verified as VerifiedIcon, FiberManualRecord as StatusIndicatorIcon
+  Verified as VerifiedIcon, FiberManualRecord as StatusIndicatorIcon,
+  Place as LocationIcon
 } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import { GET_MY_ATTENDANCE_TODAY, MARK_SELF_ATTENDANCE } from '../graphql/operations';
@@ -31,11 +32,16 @@ function SelfAttendance() {
   const [isVerifying, setIsVerifying] = useState(false);
   const [verificationStep, setVerificationStep] = useState('');
   const [matchConfidence, setMatchConfidence] = useState(0);
+  const [userLocation, setUserLocation] = useState(null);
+  const [locationName, setLocationName] = useState('');
+  const [isLoadingLocationName, setIsLoadingLocationName] = useState(false);
 
   // Queries & Mutations
   const { loading: queryLoading, error: queryError, data: queryData, refetch } = useQuery(GET_MY_ATTENDANCE_TODAY, {
     fetchPolicy: 'network-only'
   });
+
+  const attendanceInfo = queryData?.getMyAttendanceToday;
 
   const [markSelfAttendanceMutation, { loading: mutationLoading }] = useMutation(MARK_SELF_ATTENDANCE, {
     onCompleted: () => {
@@ -48,10 +54,85 @@ function SelfAttendance() {
     }
   });
 
+  // Geolocation getter
+  const getGeoLocation = () => {
+    if (navigator.geolocation) {
+      navigator.geolocation.getCurrentPosition(
+        (position) => {
+          const lat = position.coords.latitude;
+          const lng = position.coords.longitude;
+          setUserLocation(`${lat.toFixed(6)},${lng.toFixed(6)}`);
+        },
+        (error) => {
+          console.error("Error getting location: ", error);
+          setUserLocation("Location Permission Denied");
+        },
+        { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
+      );
+    } else {
+      setUserLocation("Geolocation Not Supported");
+    }
+  };
+
+  const fetchLocationName = async (latLngStr) => {
+    if (!latLngStr) return;
+    if (latLngStr.includes("Denied") || latLngStr.includes("Supported") || latLngStr.includes("Error")) {
+      setLocationName(latLngStr);
+      return;
+    }
+    const parts = latLngStr.split(',');
+    if (parts.length !== 2) {
+      setLocationName(latLngStr);
+      return;
+    }
+    const lat = parseFloat(parts[0]);
+    const lng = parseFloat(parts[1]);
+    if (isNaN(lat) || isNaN(lng)) {
+      setLocationName(latLngStr);
+      return;
+    }
+
+    setIsLoadingLocationName(true);
+    try {
+      const response = await fetch(
+        `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&zoom=16`,
+        {
+          headers: {
+            'Accept-Language': 'en'
+          }
+        }
+      );
+      if (response.ok) {
+        const data = await response.json();
+        if (data && data.display_name) {
+          setLocationName(data.display_name);
+        } else {
+          setLocationName(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+        }
+      } else {
+        setLocationName(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+      }
+    } catch (error) {
+      console.error("Error reverse geocoding: ", error);
+      setLocationName(`${lat.toFixed(4)}, ${lng.toFixed(4)}`);
+    } finally {
+      setIsLoadingLocationName(false);
+    }
+  };
+
+  useEffect(() => {
+    if (attendanceInfo?.marked && attendanceInfo?.location) {
+      fetchLocationName(attendanceInfo.location);
+    } else if (userLocation) {
+      fetchLocationName(userLocation);
+    }
+  }, [userLocation, attendanceInfo?.marked, attendanceInfo?.location]);
+
   // Start webcam when requested
   const startCamera = async () => {
     setCameraError(null);
     setCapturedImage(null);
+    getGeoLocation();
     try {
       const constraints = { 
         video: { 
@@ -138,7 +219,7 @@ function SelfAttendance() {
         if (idx === steps.length - 1) {
           setTimeout(() => {
             setIsVerifying(false);
-            markSelfAttendanceMutation({ variables: { faceImage: dataUrl } });
+            markSelfAttendanceMutation({ variables: { faceImage: dataUrl, location: userLocation } });
           }, 600);
         }
       }, step.delay);
@@ -150,6 +231,8 @@ function SelfAttendance() {
     setIsVerifying(false);
     setVerificationStep('');
     setMatchConfidence(0);
+    setUserLocation(null);
+    setLocationName('');
     startCamera();
   };
 
@@ -161,7 +244,6 @@ function SelfAttendance() {
     );
   }
 
-  const attendanceInfo = queryData?.getMyAttendanceToday;
 
   return (
     <Box sx={{ maxWidth: 800, mx: 'auto', p: { xs: 1.5, sm: 3 } }}>
@@ -295,6 +377,36 @@ function SelfAttendance() {
                         <Typography variant="caption" color="text.secondary" display="block">ROLE DEPT</Typography>
                         <Typography variant="body2" sx={{ fontWeight: 600 }}>{user?.role?.replace('_', ' ')}</Typography>
                       </Grid>
+                      {attendanceInfo.location && (
+                        <Grid item xs={12}>
+                          <Typography variant="caption" color="text.secondary" display="block">LOCKED LOCATION</Typography>
+                          <Typography 
+                            variant="body2" 
+                            component="a"
+                            href={`https://www.google.com/maps?q=${attendanceInfo.location}`}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            sx={{ 
+                              fontWeight: 700, 
+                              color: 'primary.main', 
+                              textDecoration: 'none',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: 0.5,
+                              lineHeight: 1.4,
+                              '&:hover': { textDecoration: 'underline' }
+                            }}
+                          >
+                            <LocationIcon sx={{ fontSize: '1.1rem', verticalAlign: 'middle' }} />{' '}
+                            {isLoadingLocationName ? 'Resolving Address...' : locationName || attendanceInfo.location}
+                          </Typography>
+                          {!isLoadingLocationName && locationName && (
+                            <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+                              Coordinates: {attendanceInfo.location}
+                            </Typography>
+                          )}
+                        </Grid>
+                      )}
                     </Grid>
                   </Box>
                   
@@ -514,6 +626,47 @@ function SelfAttendance() {
                     </Box>
                   )}
                 </Box>
+
+                {userLocation && (
+                  <Box 
+                    component={Paper}
+                    elevation={0}
+                    sx={{ 
+                      mt: 2.5, 
+                      p: 2, 
+                      width: '100%',
+                      maxWidth: 400, 
+                      bgcolor: theme.palette.mode === 'dark' ? '#33415550' : '#f8fafc',
+                      border: `1px solid ${theme.palette.divider}`,
+                      borderRadius: 3,
+                      textAlign: 'center'
+                    }}
+                  >
+                    <Typography variant="caption" color="text.secondary" display="block" sx={{ fontWeight: 600, letterSpacing: 1, mb: 0.5 }}>
+                      VERIFIED CHECK-IN LOCATION
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        fontWeight: 700, 
+                        color: 'primary.main',
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        gap: 0.5,
+                        lineHeight: 1.4
+                      }}
+                    >
+                      <LocationIcon sx={{ fontSize: '1.1rem' }} />{' '}
+                      {isLoadingLocationName ? 'Resolving Address...' : locationName || userLocation}
+                    </Typography>
+                    {!isLoadingLocationName && locationName && (
+                      <Typography variant="caption" color="text.secondary" display="block" sx={{ mt: 0.5 }}>
+                        Coordinates: {userLocation}
+                      </Typography>
+                    )}
+                  </Box>
+                )}
 
                 {!isVerifying && !mutationLoading && (
                   <Stack direction="row" spacing={2} sx={{ mt: 4, width: '100%', maxWidth: 400 }}>

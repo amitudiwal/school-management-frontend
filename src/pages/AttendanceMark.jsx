@@ -20,6 +20,16 @@ function AttendanceMark() {
   const [remarksRecords, setRemarksRecords] = useState({});
   const [saveStatus, setSaveStatus] = useState('');
   const [page, setPage] = useState(0);
+  const [lastSavedTime, setLastSavedTime] = useState('');
+
+  useEffect(() => {
+    if (classId && sectionId && date) {
+      const stored = localStorage.getItem(`last_attendance_${classId}_${sectionId}_${date}`);
+      setLastSavedTime(stored || '');
+    } else {
+      setLastSavedTime('');
+    }
+  }, [classId, sectionId, date]);
 
   useEffect(() => {
     setPage(0);
@@ -54,6 +64,18 @@ function AttendanceMark() {
     awaitRefetchQueries: true,
     onCompleted: () => {
       setSaveStatus('Attendance saved successfully!');
+      
+      const now = new Date();
+      const timeStr = now.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+      const day = String(now.getDate()).padStart(2, '0');
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+      const year = now.getFullYear();
+      const dateStr = `${day}/${month}/${year}`;
+      
+      const infoStr = `${timeStr} on ${dateStr}`;
+      localStorage.setItem(`last_attendance_${classId}_${sectionId}_${date}`, infoStr);
+      setLastSavedTime(infoStr);
+
       setTimeout(() => setSaveStatus(''), 4000);
     },
     onError: (err) => {
@@ -230,10 +252,25 @@ function AttendanceMark() {
             />
           )}
 
-          <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 1, mt: 2 }}>
             <Button variant="contained" disabled={saveLoading} onClick={handleSave} sx={{ width: { xs: '100%', sm: 'auto' } }}>
               {saveLoading ? 'Saving Register...' : 'Save Attendance'}
             </Button>
+            {lastSavedTime && (
+              <Typography 
+                variant="caption" 
+                color="text.secondary" 
+                sx={{ 
+                  fontStyle: 'italic', 
+                  fontWeight: 600,
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: 0.5
+                }}
+              >
+                Last attendance taken on {lastSavedTime}
+              </Typography>
+            )}
           </Box>
         </Box>
       )}

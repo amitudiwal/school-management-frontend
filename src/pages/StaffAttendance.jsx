@@ -39,6 +39,10 @@ function StaffAttendance() {
   const [staffRemarks, setStaffRemarks] = useState({});
   const [staffFaceImages, setStaffFaceImages] = useState({});
   const [previewImage, setPreviewImage] = useState(null);
+  const [teacherLocations, setTeacherLocations] = useState({});
+  const [staffLocations, setStaffLocations] = useState({});
+  const [teacherCheckIns, setTeacherCheckIns] = useState({});
+  const [staffCheckIns, setStaffCheckIns] = useState({});
 
   // Queries
   const { loading: teachersLoading, error: teachersError, data: teachersData } = useQuery(GET_TEACHERS);
@@ -51,6 +55,8 @@ function StaffAttendance() {
       const att = {};
       const rem = {};
       const faces = {};
+      const locations = {};
+      const checkins = {};
       // First default everyone to ABSENT
       teachersData?.getTeachers.forEach(t => {
         att[t.id] = 'ABSENT';
@@ -64,11 +70,19 @@ function StaffAttendance() {
           if (rec.faceImage) {
             faces[rec.teacherId.id] = rec.faceImage;
           }
+          if (rec.location) {
+            locations[rec.teacherId.id] = rec.location;
+          }
+          if (rec.checkIn) {
+            checkins[rec.teacherId.id] = rec.checkIn;
+          }
         }
       });
       setTeacherAttendance(att);
       setTeacherRemarks(rem);
       setTeacherFaceImages(faces);
+      setTeacherLocations(locations);
+      setTeacherCheckIns(checkins);
     }
   });
 
@@ -79,6 +93,8 @@ function StaffAttendance() {
       const att = {};
       const rem = {};
       const faces = {};
+      const locations = {};
+      const checkins = {};
       // First default everyone to ABSENT
       staffData?.getStaff.forEach(s => {
         att[s.id] = 'ABSENT';
@@ -92,11 +108,19 @@ function StaffAttendance() {
           if (rec.faceImage) {
             faces[rec.staffId.id] = rec.faceImage;
           }
+          if (rec.location) {
+            locations[rec.staffId.id] = rec.location;
+          }
+          if (rec.checkIn) {
+            checkins[rec.staffId.id] = rec.checkIn;
+          }
         }
       });
       setStaffAttendance(att);
       setStaffRemarks(rem);
       setStaffFaceImages(faces);
+      setStaffLocations(locations);
+      setStaffCheckIns(checkins);
     }
   });
 
@@ -247,6 +271,47 @@ function StaffAttendance() {
                                 <Typography variant="caption" display="block" color="text.secondary">
                                   {teach.designation || 'Faculty'}
                                 </Typography>
+                                {(teacherCheckIns[teach.id] || teacherLocations[teach.id]) && (
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 0.25 }}>
+                                    {teacherCheckIns[teach.id] && (
+                                      <Typography 
+                                        variant="caption" 
+                                        sx={{ 
+                                          color: 'text.secondary', 
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: 0.5,
+                                          fontWeight: 600
+                                        }}
+                                      >
+                                        🕒 {teacherCheckIns[teach.id]}
+                                      </Typography>
+                                    )}
+                                    {teacherCheckIns[teach.id] && teacherLocations[teach.id] && (
+                                      <Typography variant="caption" color="text.secondary">|</Typography>
+                                    )}
+                                    {teacherLocations[teach.id] && (
+                                      <Typography 
+                                        variant="caption" 
+                                        component="a"
+                                        href={`https://www.google.com/maps?q=${teacherLocations[teach.id]}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        sx={{ 
+                                          color: 'primary.main', 
+                                          textDecoration: 'none', 
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: 0.5,
+                                          fontWeight: 600,
+                                          '&:hover': { textDecoration: 'underline' } 
+                                        }}
+                                      >
+                                        📍 Location
+                                      </Typography>
+                                    )}
+                                  </Box>
+                                )}
                               </Box>
                             </Box>
                           </TableCell>
@@ -358,6 +423,47 @@ function StaffAttendance() {
                                 <Typography variant="caption" display="block" color="text.secondary">
                                   {st.designation || 'Staff'}
                                 </Typography>
+                                {(staffCheckIns[st.id] || staffLocations[st.id]) && (
+                                  <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mt: 0.25 }}>
+                                    {staffCheckIns[st.id] && (
+                                      <Typography 
+                                        variant="caption" 
+                                        sx={{ 
+                                          color: 'text.secondary', 
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: 0.5,
+                                          fontWeight: 600
+                                        }}
+                                      >
+                                        🕒 {staffCheckIns[st.id]}
+                                      </Typography>
+                                    )}
+                                    {staffCheckIns[st.id] && staffLocations[st.id] && (
+                                      <Typography variant="caption" color="text.secondary">|</Typography>
+                                    )}
+                                    {staffLocations[st.id] && (
+                                      <Typography 
+                                        variant="caption" 
+                                        component="a"
+                                        href={`https://www.google.com/maps?q=${staffLocations[st.id]}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        sx={{ 
+                                          color: 'primary.main', 
+                                          textDecoration: 'none', 
+                                          display: 'inline-flex',
+                                          alignItems: 'center',
+                                          gap: 0.5,
+                                          fontWeight: 600,
+                                          '&:hover': { textDecoration: 'underline' } 
+                                        }}
+                                      >
+                                        📍 Location
+                                      </Typography>
+                                    )}
+                                  </Box>
+                                )}
                               </Box>
                             </Box>
                           </TableCell>

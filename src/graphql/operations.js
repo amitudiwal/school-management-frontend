@@ -1277,6 +1277,8 @@ export const GET_TEACHER_ATTENDANCE = gql`
       status
       remarks
       faceImage
+      location
+      checkIn
       teacherId {
         id
         firstName
@@ -1294,6 +1296,8 @@ export const GET_STAFF_ATTENDANCE = gql`
       status
       remarks
       faceImage
+      location
+      checkIn
       staffId {
         id
         firstName
@@ -2187,13 +2191,14 @@ export const GET_MY_ATTENDANCE_TODAY = gql`
       status
       checkIn
       faceImage
+      location
     }
   }
 `;
 
 export const MARK_SELF_ATTENDANCE = gql`
-  mutation MarkSelfAttendance($faceImage: String!) {
-    markSelfAttendance(faceImage: $faceImage)
+  mutation MarkSelfAttendance($faceImage: String!, $location: String) {
+    markSelfAttendance(faceImage: $faceImage, location: $location)
   }
 `;
 
