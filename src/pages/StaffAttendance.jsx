@@ -43,6 +43,8 @@ function StaffAttendance() {
   const [staffLocations, setStaffLocations] = useState({});
   const [teacherCheckIns, setTeacherCheckIns] = useState({});
   const [staffCheckIns, setStaffCheckIns] = useState({});
+  const [lastTeacherAttendanceTime, setLastTeacherAttendanceTime] = useState(null);
+  const [lastStaffAttendanceTime, setLastStaffAttendanceTime] = useState(null);
 
   // Queries
   const { loading: teachersLoading, error: teachersError, data: teachersData } = useQuery(GET_TEACHERS);
@@ -63,6 +65,7 @@ function StaffAttendance() {
         rem[t.id] = '';
       });
       // Then overlay actual database records
+      let latestTime = null;
       data.getTeacherAttendance.forEach(rec => {
         if (rec.teacherId?.id) {
           att[rec.teacherId.id] = rec.status;
@@ -76,6 +79,12 @@ function StaffAttendance() {
           if (rec.checkIn) {
             checkins[rec.teacherId.id] = rec.checkIn;
           }
+          if (rec.updatedAt) {
+            const upd = new Date(rec.updatedAt);
+            if (!latestTime || upd > latestTime) {
+              latestTime = upd;
+            }
+          }
         }
       });
       setTeacherAttendance(att);
@@ -83,6 +92,7 @@ function StaffAttendance() {
       setTeacherFaceImages(faces);
       setTeacherLocations(locations);
       setTeacherCheckIns(checkins);
+      setLastTeacherAttendanceTime(latestTime);
     }
   });
 
@@ -101,6 +111,7 @@ function StaffAttendance() {
         rem[s.id] = '';
       });
       // Then overlay actual database records
+      let latestTime = null;
       data.getStaffAttendance.forEach(rec => {
         if (rec.staffId?.id) {
           att[rec.staffId.id] = rec.status;
@@ -114,6 +125,12 @@ function StaffAttendance() {
           if (rec.checkIn) {
             checkins[rec.staffId.id] = rec.checkIn;
           }
+          if (rec.updatedAt) {
+            const upd = new Date(rec.updatedAt);
+            if (!latestTime || upd > latestTime) {
+              latestTime = upd;
+            }
+          }
         }
       });
       setStaffAttendance(att);
@@ -121,6 +138,7 @@ function StaffAttendance() {
       setStaffFaceImages(faces);
       setStaffLocations(locations);
       setStaffCheckIns(checkins);
+      setLastStaffAttendanceTime(latestTime);
     }
   });
 
@@ -130,6 +148,7 @@ function StaffAttendance() {
     awaitRefetchQueries: true,
     onCompleted: () => {
       dispatch(showToast({ message: 'Teacher attendance saved successfully!', severity: 'success' }));
+      setLastTeacherAttendanceTime(new Date());
     },
     onError: (err) => {
       dispatch(showToast({ message: 'Error saving: ' + err.message, severity: 'error' }));
@@ -141,6 +160,7 @@ function StaffAttendance() {
     awaitRefetchQueries: true,
     onCompleted: () => {
       dispatch(showToast({ message: 'Staff attendance saved successfully!', severity: 'success' }));
+      setLastStaffAttendanceTime(new Date());
     },
     onError: (err) => {
       dispatch(showToast({ message: 'Error saving: ' + err.message, severity: 'error' }));
@@ -360,10 +380,15 @@ function StaffAttendance() {
                 />
               )}
 
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', mt: 2 }}>
                 <Button variant="contained" disabled={saveTeacherLoading} onClick={handleSaveTeacher} sx={{ background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)', color: '#FFFFFF', px: 4, width: { xs: '100%', sm: 'auto' } }}>
                   {saveTeacherLoading ? 'Saving...' : 'Save Teacher Attendance'}
                 </Button>
+                {lastTeacherAttendanceTime && (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, fontWeight: 700, fontFamily: "'Outfit', sans-serif" }}>
+                    Last attendance taken at {lastTeacherAttendanceTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} on {lastTeacherAttendanceTime.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </Typography>
+                )}
               </Box>
             </Box>
           )}
@@ -512,10 +537,15 @@ function StaffAttendance() {
                 />
               )}
 
-              <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', mt: 2 }}>
                 <Button variant="contained" disabled={saveStaffLoading} onClick={handleSaveStaff} sx={{ background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)', color: '#FFFFFF', px: 4, width: { xs: '100%', sm: 'auto' } }}>
                   {saveStaffLoading ? 'Saving...' : 'Save Staff Attendance'}
                 </Button>
+                {lastStaffAttendanceTime && (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 1, fontWeight: 700, fontFamily: "'Outfit', sans-serif" }}>
+                    Last attendance taken at {lastStaffAttendanceTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })} on {lastStaffAttendanceTime.toLocaleDateString([], { month: 'short', day: 'numeric', year: 'numeric' })}
+                  </Typography>
+                )}
               </Box>
             </Box>
           )}

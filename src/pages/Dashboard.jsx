@@ -3,19 +3,19 @@ import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useSelector } from 'react-redux';
 import { useQuery, useLazyQuery } from '@apollo/client';
-import { 
-  Box, Grid, Card, CardContent, Typography, Avatar, 
-  Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
+import {
+  Box, Grid, Card, CardContent, Typography, Avatar,
+  Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, CircularProgress, Alert, Button, useTheme, LinearProgress, Chip,
   Tabs, Tab, TextField, TablePagination, Stack, MenuItem
 } from '@mui/material';
-import { 
+import {
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area 
+  ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area
 } from 'recharts';
-import { 
-  School as SchoolIcon, People as PeopleIcon, LocalLibrary as LibraryIcon, 
-  AttachMoney as FeesIcon, AssignmentTurnedIn as AttendanceIcon, 
+import {
+  School as SchoolIcon, People as PeopleIcon, LocalLibrary as LibraryIcon,
+  AttachMoney as FeesIcon, AssignmentTurnedIn as AttendanceIcon,
   Warning as AlertIcon, Security as AuditIcon, DateRange as LeaveIcon,
   Assignment as HomeworkIcon, CalendarMonth as CalendarIcon
 } from '@mui/icons-material';
@@ -34,8 +34,8 @@ const containerVariants = {
 
 const itemVariants = {
   hidden: { opacity: 0, y: 15 },
-  show: { 
-    opacity: 1, 
+  show: {
+    opacity: 1,
     y: 0,
     transition: { type: 'spring', stiffness: 100, damping: 15 }
   }
@@ -78,15 +78,15 @@ function Dashboard() {
     }
     setCopySectionId('');
   }, [copyClassId, getCopySections]);
-  
+
   const { loading: saLoading, error: saError, data: saData, refetch: refetchSuperDashboard } = useQuery(GET_SUPER_ADMIN_DASHBOARD, {
     skip: !isSuperAdmin
   });
-  
+
   const { loading: schoolLoading, error: schoolError, data: schoolData, refetch: refetchSchoolDashboard } = useQuery(GET_SCHOOL_ADMIN_DASHBOARD, {
     skip: isSuperAdmin,
-    variables: { 
-      startDate: new Date(startDate), 
+    variables: {
+      startDate: new Date(startDate),
       endDate: new Date(endDate)
     },
     fetchPolicy: 'network-only'
@@ -144,8 +144,8 @@ function Dashboard() {
     if (isSuperAdmin) {
       refetchSuperDashboard?.();
     } else {
-      refetchSchoolDashboard?.({ 
-        startDate: new Date(startDate), 
+      refetchSchoolDashboard?.({
+        startDate: new Date(startDate),
         endDate: new Date(endDate)
       });
       refetchJobs?.();
@@ -177,7 +177,7 @@ function Dashboard() {
   if (isSuperAdmin) {
     const stats = saData?.getSuperAdminDashboard;
     const cards = [
-      { title: 'Total Schools Onboarded', value: stats?.totalSchools ?? 0, icon: <SchoolIcon />, color: '#6366F1' },
+      { title: 'Total Schools Onboarded', value: stats?.totalSchools ?? 0, icon: <SchoolIcon />, color: '#6366F1', path: '/schools' },
       { title: 'Total Students Globally', value: stats?.totalStudents ?? 0, icon: <PeopleIcon />, color: '#D946EF' },
       { title: 'Total Active Teachers', value: stats?.totalTeachers ?? 0, icon: <LibraryIcon />, color: '#10B981' },
       { title: 'Monthly Revenue', value: `₹${(stats?.monthlyRevenue ?? 0).toLocaleString()}`, icon: <FeesIcon />, color: '#F59E0B' },
@@ -195,7 +195,18 @@ function Dashboard() {
         <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
           {cards.map((card, idx) => (
             <Grid item xs={12} sm={6} md={3} key={idx} component={motion.div} variants={itemVariants}>
-              <Card>
+              <Card
+                onClick={() => card.path && navigate(card.path)}
+                sx={{
+                  cursor: card.path ? 'pointer' : 'default',
+                  transition: 'all 0.2s ease-in-out',
+                  '&:hover': card.path ? {
+                    transform: 'translateY(-4px)',
+                    boxShadow: theme.shadows[4],
+                    border: `1px solid ${card.color}`
+                  } : {}
+                }}
+              >
                 <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                   <Avatar sx={{ bgcolor: `${card.color}20`, color: card.color, width: 56, height: 56 }}>
                     {card.icon}
@@ -226,8 +237,8 @@ function Dashboard() {
                   <AreaChart data={stats?.monthlyRevenueSeries || []}>
                     <defs>
                       <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#6366F1" stopOpacity={0.4}/>
-                        <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#6366F1" stopOpacity={0.4} />
+                        <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
@@ -272,53 +283,53 @@ function Dashboard() {
         </Typography>
         <motion.div initial={{ opacity: 0, y: 15 }} animate={{ opacity: 1, y: 0 }} transition={{ delay: 0.2 }}>
           <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
-          <Table sx={{ minWidth: 760 }}>
-            <TableHead>
-              <TableRow>
-                <TableCell>Audit User</TableCell>
-                <TableCell>Event Action</TableCell>
-                <TableCell>Details</TableCell>
-                <TableCell>Date Logged</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {(logsData?.getGlobalAuditLogs || [])
-                .slice(page * 10, (page + 1) * 10)
-                .map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                        <Avatar size="small" sx={{ width: 24, height: 24, fontSize: '0.75rem' }}>
-                          {log.userId?.name?.charAt(0) || 'A'}
-                        </Avatar>
-                        <Typography variant="body2">{log.userId?.name || 'System / Suspended User'}</Typography>
-                      </Box>
-                    </TableCell>
-                    <TableCell>
-                      <Chip size="small" label={log.action} color={log.action.includes('FAIL') ? 'error' : 'secondary'} sx={{ fontWeight: 700 }} />
-                    </TableCell>
-                    <TableCell>{log.details}</TableCell>
-                    <TableCell>{new Date(log.createdAt).toLocaleString()}</TableCell>
-                  </TableRow>
-                ))}
-              {(!logsData?.getGlobalAuditLogs || logsData.getGlobalAuditLogs.length === 0) && (
+            <Table sx={{ minWidth: 760 }}>
+              <TableHead>
                 <TableRow>
-                  <TableCell colSpan={4} align="center">No data</TableCell>
+                  <TableCell>Audit User</TableCell>
+                  <TableCell>Event Action</TableCell>
+                  <TableCell>Details</TableCell>
+                  <TableCell>Date Logged</TableCell>
                 </TableRow>
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-        {logsData?.getGlobalAuditLogs?.length > 0 && (
-          <TablePagination
-            rowsPerPageOptions={[10]}
-            component="div"
-            count={logsData.getGlobalAuditLogs.length}
-            rowsPerPage={10}
-            page={page}
-            onPageChange={(e, newPage) => setPage(newPage)}
-          />
-        )}
+              </TableHead>
+              <TableBody>
+                {(logsData?.getGlobalAuditLogs || [])
+                  .slice(page * 10, (page + 1) * 10)
+                  .map((log) => (
+                    <TableRow key={log.id}>
+                      <TableCell>
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <Avatar size="small" sx={{ width: 24, height: 24, fontSize: '0.75rem' }}>
+                            {log.userId?.name?.charAt(0) || 'A'}
+                          </Avatar>
+                          <Typography variant="body2">{log.userId?.name || 'System / Suspended User'}</Typography>
+                        </Box>
+                      </TableCell>
+                      <TableCell>
+                        <Chip size="small" label={log.action} color={log.action.includes('FAIL') ? 'error' : 'secondary'} sx={{ fontWeight: 700 }} />
+                      </TableCell>
+                      <TableCell>{log.details}</TableCell>
+                      <TableCell>{new Date(log.createdAt).toLocaleString()}</TableCell>
+                    </TableRow>
+                  ))}
+                {(!logsData?.getGlobalAuditLogs || logsData.getGlobalAuditLogs.length === 0) && (
+                  <TableRow>
+                    <TableCell colSpan={4} align="center">No data</TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          {logsData?.getGlobalAuditLogs?.length > 0 && (
+            <TablePagination
+              rowsPerPageOptions={[10]}
+              component="div"
+              count={logsData.getGlobalAuditLogs.length}
+              rowsPerPage={10}
+              page={page}
+              onPageChange={(e, newPage) => setPage(newPage)}
+            />
+          )}
         </motion.div>
       </Box>
     );
@@ -327,10 +338,10 @@ function Dashboard() {
   // --- RENDERING TENANT SCHOOL ADMIN PORTAL ---
   const stats = dashboardData || schoolData?.getSchoolAdminDashboard;
   const cards = [
-    { title: 'Total Enrolled Students', value: stats?.studentCount, icon: <PeopleIcon />, color: '#6366F1' },
-    { title: 'Academic Faculty Teachers', value: stats?.teacherCount, icon: <LibraryIcon />, color: '#D946EF' },
-    { title: 'Operational Staff Members', value: stats?.staffCount, icon: <SchoolIcon />, color: '#10B981' },
-    { title: 'Upcoming Examinations', value: stats?.upcomingExamsCount, icon: <AlertIcon />, color: '#F59E0B' },
+    { title: 'Total Enrolled Students', value: stats?.studentCount, icon: <PeopleIcon />, color: '#6366F1', path: '/students' },
+    { title: 'Academic Faculty Teachers', value: stats?.teacherCount, icon: <LibraryIcon />, color: '#D946EF', path: '/teachers' },
+    { title: 'Operational Staff Members', value: stats?.staffCount, icon: <SchoolIcon />, color: '#10B981', path: '/teachers?tab=staff' },
+    { title: 'Upcoming Examinations', value: stats?.upcomingExamsCount, icon: <AlertIcon />, color: '#F59E0B', path: '/exams' },
   ];
 
   // Attendance Data Formats
@@ -413,7 +424,18 @@ function Dashboard() {
       <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
         {cards.map((card, idx) => (
           <Grid item xs={12} sm={6} md={3} key={idx} component={motion.div} variants={itemVariants}>
-            <Card>
+            <Card
+              onClick={() => card.path && navigate(card.path)}
+              sx={{
+                cursor: card.path ? 'pointer' : 'default',
+                transition: 'all 0.2s ease-in-out',
+                '&:hover': card.path ? {
+                  transform: 'translateY(-4px)',
+                  boxShadow: theme.shadows[4],
+                  border: `1px solid ${card.color}`
+                } : {}
+              }}
+            >
               <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
                 <Avatar sx={{ bgcolor: `${card.color}20`, color: card.color, width: 56, height: 56 }}>
                   {card.icon}
@@ -461,11 +483,11 @@ function Dashboard() {
                   {stats?.libraryStats ? (stats.libraryStats.totalBooks - stats.libraryStats.totalIssuedBooks) : 0}
                 </Typography>
               </Box>
-              <LinearProgress 
-                variant="determinate" 
-                value={stats?.libraryStats?.totalBooks > 0 ? ((stats.libraryStats.totalBooks - stats.libraryStats.totalIssuedBooks) / stats.libraryStats.totalBooks) * 100 : 100} 
-                color="success" 
-                sx={{ height: 8, borderRadius: 4 }} 
+              <LinearProgress
+                variant="determinate"
+                value={stats?.libraryStats?.totalBooks > 0 ? ((stats.libraryStats.totalBooks - stats.libraryStats.totalIssuedBooks) / stats.libraryStats.totalBooks) * 100 : 100}
+                color="success"
+                sx={{ height: 8, borderRadius: 4 }}
               />
             </CardContent>
           </Card>
@@ -539,11 +561,11 @@ function Dashboard() {
                   {stats?.homeworkStats?.totalHomework > 0 ? Math.round((stats.homeworkStats.totalSubmissions / (stats.homeworkStats.totalHomework * 20)) * 100) : 0}%
                 </Typography>
               </Box>
-              <LinearProgress 
-                variant="determinate" 
-                value={stats?.homeworkStats?.totalHomework > 0 ? Math.min(100, Math.round((stats.homeworkStats.totalSubmissions / (stats.homeworkStats.totalHomework * 20)) * 100)) : 0} 
-                color="secondary" 
-                sx={{ height: 8, borderRadius: 4 }} 
+              <LinearProgress
+                variant="determinate"
+                value={stats?.homeworkStats?.totalHomework > 0 ? Math.min(100, Math.round((stats.homeworkStats.totalSubmissions / (stats.homeworkStats.totalHomework * 20)) * 100)) : 0}
+                color="secondary"
+                sx={{ height: 8, borderRadius: 4 }}
               />
             </CardContent>
           </Card>
@@ -574,7 +596,7 @@ function Dashboard() {
             </Box>
             <Box sx={{ textAlign: 'center', mt: 1 }}>
               <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.secondary' }}>
-                Total School Term Expected Dues: ₹${(stats?.feeCollectionSummary?.totalExpected ?? 0).toLocaleString()}
+                Total School Term Expected Dues: ₹{(stats?.feeCollectionSummary?.totalExpected ?? 0).toLocaleString()}
               </Typography>
             </Box>
           </Card>
@@ -587,8 +609,8 @@ function Dashboard() {
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
                 Attendance Ratios (Today)
               </Typography>
-              <Tabs 
-                value={activeAttendanceTab} 
+              <Tabs
+                value={activeAttendanceTab}
                 onChange={(e, val) => setActiveAttendanceTab(val)}
                 textColor="primary"
                 indicatorColor="primary"
@@ -601,7 +623,7 @@ function Dashboard() {
                 <Tab label="Staff" />
               </Tabs>
             </Box>
-            
+
             <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: 260 }}>
               {currentAttendanceData.reduce((acc, curr) => acc + curr.value, 0) === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 5 }}>
@@ -712,12 +734,12 @@ function Dashboard() {
                   <AreaChart data={trendData}>
                     <defs>
                       <linearGradient id="colorPresentTeachers" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#10B981" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
                       </linearGradient>
                       <linearGradient id="colorPresentStaff" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3}/>
-                        <stop offset="95%" stopColor="#6366F1" stopOpacity={0}/>
+                        <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3} />
+                        <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
                       </linearGradient>
                     </defs>
                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
@@ -751,18 +773,18 @@ function Dashboard() {
                 <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
                   Activity Type Breakdown
                 </Typography>
-                
+
                 {(() => {
                   const jobsList = jobsData?.getPendingJobs || [];
                   const studyCount = jobsList.filter(j => j.jobType === 'Study').length;
                   const othersCount = jobsList.filter(j => j.jobType === 'Others').length;
                   const runningCount = jobsList.filter(j => j.status === 'Running').length;
-                  
+
                   const chartData = [
                     { name: 'Lectures / Study', value: studyCount || 1, color: '#6366F1' },
                     { name: 'Other Activities', value: othersCount || 0, color: '#F59E0B' }
                   ];
-                  
+
                   if (jobsList.length === 0) {
                     return (
                       <Box sx={{ display: 'flex', flexGrow: 1, justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
@@ -770,7 +792,7 @@ function Dashboard() {
                       </Box>
                     );
                   }
-                  
+
                   return (
                     <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                       <Box sx={{ height: 220, position: 'relative' }}>
@@ -793,7 +815,7 @@ function Dashboard() {
                           </PieChart>
                         </ResponsiveContainer>
                       </Box>
-                      
+
                       <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 2 }}>
                         <Box sx={{ textAlign: 'center' }}>
                           <Typography variant="h6" sx={{ fontWeight: 800, color: '#6366F1' }}>{studyCount}</Typography>
@@ -820,7 +842,7 @@ function Dashboard() {
                 <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
                   Subject & Activity Tracker Graph
                 </Typography>
-                
+
                 {(() => {
                   const jobsList = jobsData?.getPendingJobs || [];
                   if (jobsList.length === 0) {
@@ -830,12 +852,12 @@ function Dashboard() {
                       </Box>
                     );
                   }
-                  
+
                   // Aggregate jobs by subjectName or remarks (if jobType is Others)
                   const aggregatedMap = {};
                   jobsList.forEach(job => {
-                    const name = job.jobType === 'Study' 
-                      ? job.subjectName 
+                    const name = job.jobType === 'Study'
+                      ? job.subjectName
                       : (job.remarks ? (job.remarks.length > 20 ? job.remarks.substring(0, 17) + '...' : job.remarks) : 'Others');
                     if (!aggregatedMap[name]) {
                       aggregatedMap[name] = { name, Running: 0, Complete: 0, Total: 0 };
@@ -847,9 +869,9 @@ function Dashboard() {
                     }
                     aggregatedMap[name].Total += 1;
                   });
-                  
+
                   const chartData = Object.values(aggregatedMap).sort((a, b) => b.Total - a.Total);
-                  
+
                   return (
                     <Box sx={{ flexGrow: 1, width: '100%', height: 320 }}>
                       <ResponsiveContainer width="100%" height="100%">
@@ -857,20 +879,20 @@ function Dashboard() {
                           <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} vertical={false} />
                           <XAxis dataKey="name" stroke={theme.palette.text.secondary} style={{ fontSize: '0.75rem', fontWeight: 600 }} />
                           <YAxis stroke={theme.palette.text.secondary} allowDecimals={false} style={{ fontSize: '0.75rem' }} />
-                          <Tooltip 
-                            contentStyle={{ 
-                              backgroundColor: theme.palette.background.paper, 
+                          <Tooltip
+                            contentStyle={{
+                              backgroundColor: theme.palette.background.paper,
                               borderColor: theme.palette.divider,
                               borderRadius: 8,
                               boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
                             }}
                           />
-                          <Legend 
-                            verticalAlign="top" 
-                            height={36} 
+                          <Legend
+                            verticalAlign="top"
+                            height={36}
                             iconType="circle"
                             iconSize={8}
-                            wrapperStyle={{ fontSize: '0.75rem', fontWeight: 600, paddingBottom: '10px' }} 
+                            wrapperStyle={{ fontSize: '0.75rem', fontWeight: 600, paddingBottom: '10px' }}
                           />
                           <Bar dataKey="Running" name="Running" fill="#10B981" stackId="a" radius={[0, 0, 0, 0]} />
                           <Bar dataKey="Complete" name="Completed" fill="#6366F1" stackId="a" radius={[4, 4, 0, 0]} />
@@ -1055,8 +1077,8 @@ function Dashboard() {
       {/* Events & Holidays Row */}
       <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
         <Grid item xs={12} component={motion.div} variants={itemVariants}>
-          <Card 
-            sx={{ 
+          <Card
+            sx={{
               p: 3,
               borderRadius: 4,
               border: theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.05)',
@@ -1074,14 +1096,14 @@ function Dashboard() {
                   Scheduled functions, parent-teacher meets, and festive holiday breaks.
                 </Typography>
               </Box>
-              <Button 
-                variant="outlined" 
-                size="small" 
+              <Button
+                variant="outlined"
+                size="small"
                 onClick={() => navigate('/events')}
-                sx={{ 
-                  borderRadius: 3, 
-                  fontWeight: 700, 
-                  px: 2.5, 
+                sx={{
+                  borderRadius: 3,
+                  fontWeight: 700,
+                  px: 2.5,
                   py: 0.8,
                   textTransform: 'none',
                   fontFamily: "'Outfit', sans-serif"
@@ -1113,11 +1135,11 @@ function Dashboard() {
 
                   return (
                     <Grid item xs={12} sm={6} md={3} key={evt.id}>
-                      <Paper 
+                      <Paper
                         elevation={0}
-                        sx={{ 
-                          p: 2.5, 
-                          borderRadius: 3.5, 
+                        sx={{
+                          p: 2.5,
+                          borderRadius: 3.5,
                           border: `1px solid ${theme.palette.divider}`,
                           bgcolor: theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.02)' : 'rgba(0, 0, 0, 0.01)',
                           height: '100%',
@@ -1145,16 +1167,16 @@ function Dashboard() {
                       >
                         <Box>
                           <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                            <Chip 
-                              label={evt.type} 
-                              size="small" 
-                              sx={{ 
-                                fontWeight: 800, 
-                                fontSize: '0.6rem', 
+                            <Chip
+                              label={evt.type}
+                              size="small"
+                              sx={{
+                                fontWeight: 800,
+                                fontSize: '0.6rem',
                                 height: 20,
                                 bgcolor: `${accentColor}15`,
                                 color: accentColor
-                              }} 
+                              }}
                             />
                             <Typography variant="caption" color="text.secondary" sx={{ fontWeight: 700 }}>
                               {formattedDate}

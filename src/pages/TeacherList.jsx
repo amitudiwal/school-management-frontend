@@ -1,4 +1,5 @@
 import React, { useState } from 'react';
+import { useLocation } from 'react-router-dom';
 import { useMutation, useQuery } from '@apollo/client';
 import {
   Alert, Box, Button, CircularProgress, Dialog, DialogActions,
@@ -25,7 +26,18 @@ const getAvatarUrl = (avatarPath) => {
 
 function TeacherList() {
   const dispatch = useDispatch();
-  const [activeTab, setActiveTab] = useState(0);
+  const location = useLocation();
+  const [activeTab, setActiveTab] = useState(() => {
+    if (location.state && typeof location.state.activeTab === 'number') {
+      return location.state.activeTab;
+    }
+    const params = new URLSearchParams(location.search);
+    const tabParam = params.get('tab');
+    if (tabParam === 'staff' || tabParam === '1') {
+      return 1;
+    }
+    return 0;
+  });
   const [pageTeachers, setPageTeachers] = useState(0);
   const [pageStaff, setPageStaff] = useState(0);
 

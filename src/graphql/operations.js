@@ -1286,6 +1286,7 @@ export const GET_TEACHER_ATTENDANCE = gql`
       faceImage
       location
       checkIn
+      updatedAt
       teacherId {
         id
         firstName
@@ -1305,6 +1306,7 @@ export const GET_STAFF_ATTENDANCE = gql`
       faceImage
       location
       checkIn
+      updatedAt
       staffId {
         id
         firstName
