@@ -552,6 +552,34 @@ function Dashboard() {
 
       {/* Analytics charts for School Admins */}
       <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
+        {/* Fees Collection chart */}
+        <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
+          <Card sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 420 }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+              Fee Collection Status
+            </Typography>
+            <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
+              <ResponsiveContainer width="100%" height={280}>
+                <BarChart data={feeData}>
+                  <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
+                  <XAxis dataKey="name" stroke={theme.palette.text.secondary} />
+                  <YAxis stroke={theme.palette.text.secondary} />
+                  <Tooltip formatter={(value) => `₹${value.toLocaleString()}`} />
+                  <Bar dataKey="value" fill="#6366F1" radius={[8, 8, 0, 0]}>
+                    <Cell fill="#10B981" />
+                    <Cell fill="#EF4444" />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </Box>
+            <Box sx={{ textAlign: 'center', mt: 1 }}>
+              <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.secondary' }}>
+                Total School Term Expected Dues: ₹${(stats?.feeCollectionSummary?.totalExpected ?? 0).toLocaleString()}
+              </Typography>
+            </Box>
+          </Card>
+        </Grid>
+
         {/* Attendance Pie Chart with Tabs */}
         <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
           <Card sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 420 }}>
@@ -617,31 +645,55 @@ function Dashboard() {
             </Box>
           </Card>
         </Grid>
+      </Grid>
 
-        {/* Fees Collection chart */}
+      {/* Absent / On-Leave Faculty Row */}
+      <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
         <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
-          <Card sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 420 }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-              Fee Collection Status
+          <Card sx={{ p: 2, height: 380, display: 'flex', flexDirection: 'column' }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <AlertIcon color="warning" /> Absent / On-Leave Faculty
             </Typography>
-            <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={feeData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                  <XAxis dataKey="name" stroke={theme.palette.text.secondary} />
-                  <YAxis stroke={theme.palette.text.secondary} />
-                  <Tooltip formatter={(value) => `₹${value.toLocaleString()}`} />
-                  <Bar dataKey="value" fill="#6366F1" radius={[8, 8, 0, 0]}>
-                    <Cell fill="#10B981" />
-                    <Cell fill="#EF4444" />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
-            </Box>
-            <Box sx={{ textAlign: 'center', mt: 1 }}>
-              <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.secondary' }}>
-                Total School Term Expected Dues: ₹${(stats?.feeCollectionSummary?.totalExpected ?? 0).toLocaleString()}
-              </Typography>
+            <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
+              {(!stats?.absentTeachers || stats.absentTeachers.length === 0) ? (
+                <Box sx={{ py: 8, textAlign: 'center' }}>
+                  <Typography variant="body1" sx={{ color: 'success.main', fontWeight: 700 }}>
+                    🎉 All teachers are present today!
+                  </Typography>
+                </Box>
+              ) : (
+                <TableContainer component={Paper} sx={{ maxHeight: 280 }}>
+                  <Table stickyHeader size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 700 }}>Teacher Name</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Remarks</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {stats.absentTeachers.map((teacher) => (
+                        <TableRow key={teacher.id} hover>
+                          <TableCell sx={{ fontWeight: 600 }}>
+                            {`Prof. ${teacher.firstName} ${teacher.lastName}`}
+                          </TableCell>
+                          <TableCell>
+                            <Chip
+                              size="small"
+                              label={teacher.status === 'LEAVE' ? 'ON LEAVE' : 'ABSENT'}
+                              color={teacher.status === 'LEAVE' ? 'info' : 'error'}
+                              sx={{ fontWeight: 700, fontSize: '0.75rem' }}
+                            />
+                          </TableCell>
+                          <TableCell sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
+                            {teacher.remarks || '-'}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
             </Box>
           </Card>
         </Grid>
@@ -685,9 +737,157 @@ function Dashboard() {
         </Grid>
       )}
 
+      {/* Live Class Activity Analytics (For Principal / Admin) */}
+      {['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) && (
+        <Box sx={{ mt: 4 }}>
+          <Typography variant="h5" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, mb: 3 }}>
+            Live Class Activity & Lecture Tracker
+          </Typography>
+
+          <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
+            {/* Activity Chart breakdown */}
+            <Grid item xs={12} md={4} component={motion.div} variants={itemVariants}>
+              <Card sx={{ p: 2, height: 420, display: 'flex', flexDirection: 'column' }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+                  Activity Type Breakdown
+                </Typography>
+                
+                {(() => {
+                  const jobsList = jobsData?.getPendingJobs || [];
+                  const studyCount = jobsList.filter(j => j.jobType === 'Study').length;
+                  const othersCount = jobsList.filter(j => j.jobType === 'Others').length;
+                  const runningCount = jobsList.filter(j => j.status === 'Running').length;
+                  
+                  const chartData = [
+                    { name: 'Lectures / Study', value: studyCount || 1, color: '#6366F1' },
+                    { name: 'Other Activities', value: othersCount || 0, color: '#F59E0B' }
+                  ];
+                  
+                  if (jobsList.length === 0) {
+                    return (
+                      <Box sx={{ display: 'flex', flexGrow: 1, justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
+                        <Typography color="text.secondary" variant="body2">No active sessions logged today.</Typography>
+                      </Box>
+                    );
+                  }
+                  
+                  return (
+                    <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                      <Box sx={{ height: 220, position: 'relative' }}>
+                        <ResponsiveContainer width="100%" height="100%">
+                          <PieChart>
+                            <Pie
+                              data={chartData}
+                              cx="50%"
+                              cy="50%"
+                              innerRadius={60}
+                              outerRadius={80}
+                              paddingAngle={5}
+                              dataKey="value"
+                            >
+                              {chartData.map((entry, index) => (
+                                <Cell key={`cell-${index}`} fill={entry.color} />
+                              ))}
+                            </Pie>
+                            <Tooltip />
+                          </PieChart>
+                        </ResponsiveContainer>
+                      </Box>
+                      
+                      <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 2 }}>
+                        <Box sx={{ textAlign: 'center' }}>
+                          <Typography variant="h6" sx={{ fontWeight: 800, color: '#6366F1' }}>{studyCount}</Typography>
+                          <Typography variant="caption" color="text.secondary">Study / Lectures</Typography>
+                        </Box>
+                        <Box sx={{ textAlign: 'center' }}>
+                          <Typography variant="h6" sx={{ fontWeight: 800, color: '#F59E0B' }}>{othersCount}</Typography>
+                          <Typography variant="caption" color="text.secondary">Others</Typography>
+                        </Box>
+                        <Box sx={{ textAlign: 'center' }}>
+                          <Typography variant="h6" sx={{ fontWeight: 800, color: '#10B981' }}>{runningCount}</Typography>
+                          <Typography variant="caption" color="text.secondary">Live Now</Typography>
+                        </Box>
+                      </Stack>
+                    </Box>
+                  );
+                })()}
+              </Card>
+            </Grid>
+
+            {/* Analytical Graph */}
+            <Grid item xs={12} md={8} component={motion.div} variants={itemVariants}>
+              <Card sx={{ p: 2, height: 420, display: 'flex', flexDirection: 'column' }}>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+                  Subject & Activity Tracker Graph
+                </Typography>
+                
+                {(() => {
+                  const jobsList = jobsData?.getPendingJobs || [];
+                  if (jobsList.length === 0) {
+                    return (
+                      <Box sx={{ display: 'flex', flexGrow: 1, justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
+                        <Typography color="text.secondary" variant="body2">No active sessions logged today.</Typography>
+                      </Box>
+                    );
+                  }
+                  
+                  // Aggregate jobs by subjectName or remarks (if jobType is Others)
+                  const aggregatedMap = {};
+                  jobsList.forEach(job => {
+                    const name = job.jobType === 'Study' 
+                      ? job.subjectName 
+                      : (job.remarks ? (job.remarks.length > 20 ? job.remarks.substring(0, 17) + '...' : job.remarks) : 'Others');
+                    if (!aggregatedMap[name]) {
+                      aggregatedMap[name] = { name, Running: 0, Complete: 0, Total: 0 };
+                    }
+                    if (job.status === 'Running') {
+                      aggregatedMap[name].Running += 1;
+                    } else if (job.status === 'Complete') {
+                      aggregatedMap[name].Complete += 1;
+                    }
+                    aggregatedMap[name].Total += 1;
+                  });
+                  
+                  const chartData = Object.values(aggregatedMap).sort((a, b) => b.Total - a.Total);
+                  
+                  return (
+                    <Box sx={{ flexGrow: 1, width: '100%', height: 320 }}>
+                      <ResponsiveContainer width="100%" height="100%">
+                        <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
+                          <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} vertical={false} />
+                          <XAxis dataKey="name" stroke={theme.palette.text.secondary} style={{ fontSize: '0.75rem', fontWeight: 600 }} />
+                          <YAxis stroke={theme.palette.text.secondary} allowDecimals={false} style={{ fontSize: '0.75rem' }} />
+                          <Tooltip 
+                            contentStyle={{ 
+                              backgroundColor: theme.palette.background.paper, 
+                              borderColor: theme.palette.divider,
+                              borderRadius: 8,
+                              boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                            }}
+                          />
+                          <Legend 
+                            verticalAlign="top" 
+                            height={36} 
+                            iconType="circle"
+                            iconSize={8}
+                            wrapperStyle={{ fontSize: '0.75rem', fontWeight: 600, paddingBottom: '10px' }} 
+                          />
+                          <Bar dataKey="Running" name="Running" fill="#10B981" stackId="a" radius={[0, 0, 0, 0]} />
+                          <Bar dataKey="Complete" name="Completed" fill="#6366F1" stackId="a" radius={[4, 4, 0, 0]} />
+                        </BarChart>
+                      </ResponsiveContainer>
+                    </Box>
+                  );
+                })()}
+              </Card>
+            </Grid>
+          </Grid>
+        </Box>
+      )}
+
       {/* Demographic & Performance Distribution */}
       <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
-        {/* Class-wise Enrollment Distribution */}
+        {/* Class-wise Student Enrollment */}
         {classEnrollmentData.length > 0 && (
           <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
             <Card sx={{ p: 2, height: 380, display: 'flex', flexDirection: 'column' }}>
@@ -780,58 +980,8 @@ function Dashboard() {
         </Grid>
       </Grid>
 
-      {/* Operations Row */}
+      {/* Fair Copy Completion Rates Row */}
       <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
-        {/* Left Column: Absent Faculty */}
-        <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
-          <Card sx={{ p: 2, height: 380, display: 'flex', flexDirection: 'column' }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
-              <AlertIcon color="warning" /> Absent / On-Leave Faculty
-            </Typography>
-            <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
-              {(!stats?.absentTeachers || stats.absentTeachers.length === 0) ? (
-                <Box sx={{ py: 8, textAlign: 'center' }}>
-                  <Typography variant="body1" sx={{ color: 'success.main', fontWeight: 700 }}>
-                    🎉 All teachers are present today!
-                  </Typography>
-                </Box>
-              ) : (
-                <TableContainer component={Paper} sx={{ maxHeight: 280 }}>
-                  <Table stickyHeader size="small">
-                    <TableHead>
-                      <TableRow>
-                        <TableCell sx={{ fontWeight: 700 }}>Teacher Name</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                        <TableCell sx={{ fontWeight: 700 }}>Remarks</TableCell>
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {stats.absentTeachers.map((teacher) => (
-                        <TableRow key={teacher.id} hover>
-                          <TableCell sx={{ fontWeight: 600 }}>
-                            {`Prof. ${teacher.firstName} ${teacher.lastName}`}
-                          </TableCell>
-                          <TableCell>
-                            <Chip
-                              size="small"
-                              label={teacher.status === 'LEAVE' ? 'ON LEAVE' : 'ABSENT'}
-                              color={teacher.status === 'LEAVE' ? 'info' : 'error'}
-                              sx={{ fontWeight: 700, fontSize: '0.75rem' }}
-                            />
-                          </TableCell>
-                          <TableCell sx={{ color: 'text.secondary', fontSize: '0.875rem' }}>
-                            {teacher.remarks || '-'}
-                          </TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-              )}
-            </Box>
-          </Card>
-        </Grid>
-
         {/* Right Column: Copy Completion Analytics */}
         <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
           <Card sx={{ p: 2, height: 420, display: 'flex', flexDirection: 'column' }}>
@@ -1028,154 +1178,6 @@ function Dashboard() {
           </Card>
         </Grid>
       </Grid>
-
-      {/* Live Class Activity Analytics (For Principal / Admin) */}
-      {['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) && (
-        <Box sx={{ mt: 4 }}>
-          <Typography variant="h5" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, mb: 3 }}>
-            Live Class Activity & Lecture Tracker
-          </Typography>
-
-          <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
-            {/* Activity Chart breakdown */}
-            <Grid item xs={12} md={4} component={motion.div} variants={itemVariants}>
-              <Card sx={{ p: 2, height: 420, display: 'flex', flexDirection: 'column' }}>
-                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-                  Activity Type Breakdown
-                </Typography>
-                
-                {(() => {
-                  const jobsList = jobsData?.getPendingJobs || [];
-                  const studyCount = jobsList.filter(j => j.jobType === 'Study').length;
-                  const othersCount = jobsList.filter(j => j.jobType === 'Others').length;
-                  const runningCount = jobsList.filter(j => j.status === 'Running').length;
-                  
-                  const chartData = [
-                    { name: 'Lectures / Study', value: studyCount || 1, color: '#6366F1' },
-                    { name: 'Other Activities', value: othersCount || 0, color: '#F59E0B' }
-                  ];
-                  
-                  if (jobsList.length === 0) {
-                    return (
-                      <Box sx={{ display: 'flex', flexGrow: 1, justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
-                        <Typography color="text.secondary" variant="body2">No active sessions logged today.</Typography>
-                      </Box>
-                    );
-                  }
-                  
-                  return (
-                    <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                      <Box sx={{ height: 220, position: 'relative' }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={chartData}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={60}
-                              outerRadius={80}
-                              paddingAngle={5}
-                              dataKey="value"
-                            >
-                              {chartData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
-                              ))}
-                            </Pie>
-                            <Tooltip />
-                          </PieChart>
-                        </ResponsiveContainer>
-                      </Box>
-                      
-                      <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 2 }}>
-                        <Box sx={{ textAlign: 'center' }}>
-                          <Typography variant="h6" sx={{ fontWeight: 800, color: '#6366F1' }}>{studyCount}</Typography>
-                          <Typography variant="caption" color="text.secondary">Study / Lectures</Typography>
-                        </Box>
-                        <Box sx={{ textAlign: 'center' }}>
-                          <Typography variant="h6" sx={{ fontWeight: 800, color: '#F59E0B' }}>{othersCount}</Typography>
-                          <Typography variant="caption" color="text.secondary">Others</Typography>
-                        </Box>
-                        <Box sx={{ textAlign: 'center' }}>
-                          <Typography variant="h6" sx={{ fontWeight: 800, color: '#10B981' }}>{runningCount}</Typography>
-                          <Typography variant="caption" color="text.secondary">Live Now</Typography>
-                        </Box>
-                      </Stack>
-                    </Box>
-                  );
-                })()}
-              </Card>
-            </Grid>
-
-            {/* Analytical Graph */}
-            <Grid item xs={12} md={8} component={motion.div} variants={itemVariants}>
-              <Card sx={{ p: 2, height: 420, display: 'flex', flexDirection: 'column' }}>
-                <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-                  Subject & Activity Tracker Graph
-                </Typography>
-                
-                {(() => {
-                  const jobsList = jobsData?.getPendingJobs || [];
-                  if (jobsList.length === 0) {
-                    return (
-                      <Box sx={{ display: 'flex', flexGrow: 1, justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
-                        <Typography color="text.secondary" variant="body2">No active sessions logged today.</Typography>
-                      </Box>
-                    );
-                  }
-                  
-                  // Aggregate jobs by subjectName or remarks (if jobType is Others)
-                  const aggregatedMap = {};
-                  jobsList.forEach(job => {
-                    const name = job.jobType === 'Study' 
-                      ? job.subjectName 
-                      : (job.remarks ? (job.remarks.length > 20 ? job.remarks.substring(0, 17) + '...' : job.remarks) : 'Others');
-                    if (!aggregatedMap[name]) {
-                      aggregatedMap[name] = { name, Running: 0, Complete: 0, Total: 0 };
-                    }
-                    if (job.status === 'Running') {
-                      aggregatedMap[name].Running += 1;
-                    } else if (job.status === 'Complete') {
-                      aggregatedMap[name].Complete += 1;
-                    }
-                    aggregatedMap[name].Total += 1;
-                  });
-                  
-                  const chartData = Object.values(aggregatedMap).sort((a, b) => b.Total - a.Total);
-                  
-                  return (
-                    <Box sx={{ flexGrow: 1, width: '100%', height: 320 }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} vertical={false} />
-                          <XAxis dataKey="name" stroke={theme.palette.text.secondary} style={{ fontSize: '0.75rem', fontWeight: 600 }} />
-                          <YAxis stroke={theme.palette.text.secondary} allowDecimals={false} style={{ fontSize: '0.75rem' }} />
-                          <Tooltip 
-                            contentStyle={{ 
-                              backgroundColor: theme.palette.background.paper, 
-                              borderColor: theme.palette.divider,
-                              borderRadius: 8,
-                              boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                            }}
-                          />
-                          <Legend 
-                            verticalAlign="top" 
-                            height={36} 
-                            iconType="circle"
-                            iconSize={8}
-                            wrapperStyle={{ fontSize: '0.75rem', fontWeight: 600, paddingBottom: '10px' }} 
-                          />
-                          <Bar dataKey="Running" name="Running" fill="#10B981" stackId="a" radius={[0, 0, 0, 0]} />
-                          <Bar dataKey="Complete" name="Completed" fill="#6366F1" stackId="a" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
-                    </Box>
-                  );
-                })()}
-              </Card>
-            </Grid>
-          </Grid>
-        </Box>
-      )}
     </Box>
   );
 }
