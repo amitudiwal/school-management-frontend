@@ -2209,5 +2209,26 @@ export const MARK_SELF_ATTENDANCE = gql`
   }
 `;
 
+export const GET_GRADE_DISTRIBUTION = gql`
+  query GetGradeDistribution($classId: ID, $sectionId: ID) {
+    getGradeDistribution(classId: $classId, sectionId: $sectionId) {
+      grade
+      count
+    }
+  }
+`;
+
+export const GET_COPY_SUBMISSION_ANALYTICS = gql`
+  query GetCopySubmissionAnalytics($classId: ID, $sectionId: ID) {
+    getCopySubmissionAnalytics(classId: $classId, sectionId: $sectionId) {
+      className
+      subjectName
+      completedCount
+      totalCount
+      completionRate
+    }
+  }
+`;
+
 
 

@@ -2,12 +2,12 @@ import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
 import { useSelector } from 'react-redux';
-import { useQuery } from '@apollo/client';
+import { useQuery, useLazyQuery } from '@apollo/client';
 import { 
   Box, Grid, Card, CardContent, Typography, Avatar, 
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow, 
   Paper, CircularProgress, Alert, Button, useTheme, LinearProgress, Chip,
-  Tabs, Tab, TextField, TablePagination, Stack
+  Tabs, Tab, TextField, TablePagination, Stack, MenuItem
 } from '@mui/material';
 import { 
   BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
@@ -19,7 +19,7 @@ import {
   Warning as AlertIcon, Security as AuditIcon, DateRange as LeaveIcon,
   Assignment as HomeworkIcon, CalendarMonth as CalendarIcon
 } from '@mui/icons-material';
-import { GET_SUPER_ADMIN_DASHBOARD, GET_SCHOOL_ADMIN_DASHBOARD, GET_AUDIT_LOGS, GET_PENDING_JOBS, GET_EVENTS } from '../graphql/operations';
+import { GET_SUPER_ADMIN_DASHBOARD, GET_SCHOOL_ADMIN_DASHBOARD, GET_AUDIT_LOGS, GET_PENDING_JOBS, GET_EVENTS, GET_CLASSES, GET_SECTIONS, GET_GRADE_DISTRIBUTION, GET_COPY_SUBMISSION_ANALYTICS } from '../graphql/operations';
 import CustomDatePicker from '../components/CustomDatePicker';
 
 const containerVariants = {
@@ -51,8 +51,33 @@ function Dashboard() {
   const [endDate, setEndDate] = useState(todayStr);
   const [page, setPage] = useState(0);
 
+  // Filter States for dashboard blocks
+  const [gradeClassId, setGradeClassId] = useState('');
+  const [gradeSectionId, setGradeSectionId] = useState('');
+  const [copyClassId, setCopyClassId] = useState('');
+  const [copySectionId, setCopySectionId] = useState('');
+  const [dashboardData, setDashboardData] = useState(null);
+
   // Load appropriate dashboard queries based on user role
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+
+  const { data: classesData } = useQuery(GET_CLASSES, { skip: isSuperAdmin });
+  const [getGradeSections, { data: gradeSectionsData }] = useLazyQuery(GET_SECTIONS);
+  const [getCopySections, { data: copySectionsData }] = useLazyQuery(GET_SECTIONS);
+
+  React.useEffect(() => {
+    if (gradeClassId) {
+      getGradeSections({ variables: { classId: gradeClassId } });
+    }
+    setGradeSectionId('');
+  }, [gradeClassId, getGradeSections]);
+
+  React.useEffect(() => {
+    if (copyClassId) {
+      getCopySections({ variables: { classId: copyClassId } });
+    }
+    setCopySectionId('');
+  }, [copyClassId, getCopySections]);
   
   const { loading: saLoading, error: saError, data: saData, refetch: refetchSuperDashboard } = useQuery(GET_SUPER_ADMIN_DASHBOARD, {
     skip: !isSuperAdmin
@@ -62,10 +87,49 @@ function Dashboard() {
     skip: isSuperAdmin,
     variables: { 
       startDate: new Date(startDate), 
-      endDate: new Date(endDate) 
+      endDate: new Date(endDate)
     },
     fetchPolicy: 'network-only'
   });
+
+  const { loading: gradeLoading, data: gradeData } = useQuery(GET_GRADE_DISTRIBUTION, {
+    skip: isSuperAdmin,
+    variables: {
+      classId: gradeClassId || undefined,
+      sectionId: gradeSectionId || undefined
+    },
+    fetchPolicy: 'network-only'
+  });
+
+  const { loading: copyLoading, data: copyData } = useQuery(GET_COPY_SUBMISSION_ANALYTICS, {
+    skip: isSuperAdmin,
+    variables: {
+      classId: copyClassId || undefined,
+      sectionId: copySectionId || undefined
+    },
+    fetchPolicy: 'network-only'
+  });
+
+  const [persistentGradeData, setPersistentGradeData] = useState([]);
+  const [persistentCopyData, setPersistentCopyData] = useState([]);
+
+  React.useEffect(() => {
+    if (gradeData?.getGradeDistribution) {
+      setPersistentGradeData(gradeData.getGradeDistribution);
+    }
+  }, [gradeData]);
+
+  React.useEffect(() => {
+    if (copyData?.getCopySubmissionAnalytics) {
+      setPersistentCopyData(copyData.getCopySubmissionAnalytics);
+    }
+  }, [copyData]);
+
+  React.useEffect(() => {
+    if (schoolData?.getSchoolAdminDashboard) {
+      setDashboardData(schoolData.getSchoolAdminDashboard);
+    }
+  }, [schoolData]);
 
   const { data: jobsData, refetch: refetchJobs } = useQuery(GET_PENDING_JOBS, {
     skip: isSuperAdmin || !['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role)
@@ -82,7 +146,7 @@ function Dashboard() {
     } else {
       refetchSchoolDashboard?.({ 
         startDate: new Date(startDate), 
-        endDate: new Date(endDate) 
+        endDate: new Date(endDate)
       });
       refetchJobs?.();
       refetchEvents?.();
@@ -93,7 +157,7 @@ function Dashboard() {
     skip: !['SUPER_ADMIN', 'SCHOOL_ADMIN'].includes(user?.role)
   });
 
-  if (saLoading || schoolLoading) {
+  if ((saLoading && !saData) || (schoolLoading && !dashboardData && !schoolData)) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '80vh' }}>
         <CircularProgress size={60} />
@@ -261,7 +325,7 @@ function Dashboard() {
   }
 
   // --- RENDERING TENANT SCHOOL ADMIN PORTAL ---
-  const stats = schoolData?.getSchoolAdminDashboard;
+  const stats = dashboardData || schoolData?.getSchoolAdminDashboard;
   const cards = [
     { title: 'Total Enrolled Students', value: stats?.studentCount, icon: <PeopleIcon />, color: '#6366F1' },
     { title: 'Academic Faculty Teachers', value: stats?.teacherCount, icon: <LibraryIcon />, color: '#D946EF' },
@@ -316,10 +380,10 @@ function Dashboard() {
   })) || [];
 
   // Grade Distribution Data Formatting
-  const gradeDistributionData = stats?.gradeDistribution?.map(g => ({
+  const gradeDistributionData = (persistentGradeData || []).map(g => ({
     name: g.grade,
     count: g.count
-  })) || [];
+  }));
 
   const trendData = stats?.facultyAttendanceTrend || [];
 
@@ -650,13 +714,53 @@ function Dashboard() {
         )}
 
         {/* Academic Grade Distribution */}
-        {gradeDistributionData.length > 0 && (
-          <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
-            <Card sx={{ p: 2, height: 380, display: 'flex', flexDirection: 'column' }}>
-              <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
+        <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
+          <Card sx={{ p: 2, height: 420, display: 'flex', flexDirection: 'column' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, gap: 1.5, flexWrap: 'wrap' }}>
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>
                 Academic Grade Distribution
               </Typography>
-              <Box sx={{ width: '100%', height: 280, flexGrow: 1 }}>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <TextField
+                  select
+                  size="small"
+                  label="Class"
+                  value={gradeClassId}
+                  onChange={(e) => setGradeClassId(e.target.value)}
+                  sx={{ minWidth: 100 }}
+                >
+                  <MenuItem value="">All</MenuItem>
+                  {classesData?.getClasses?.map((cls) => (
+                    <MenuItem key={cls.id} value={cls.id}>{cls.name}</MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  select
+                  size="small"
+                  label="Section"
+                  value={gradeSectionId}
+                  disabled={!gradeClassId}
+                  onChange={(e) => setGradeSectionId(e.target.value)}
+                  sx={{ minWidth: 100 }}
+                >
+                  <MenuItem value="">All</MenuItem>
+                  {gradeSectionsData?.getSections?.map((sec) => (
+                    <MenuItem key={sec.id} value={sec.id}>{sec.name}</MenuItem>
+                  ))}
+                </TextField>
+              </Box>
+            </Box>
+            <Box sx={{ width: '100%', height: 280, flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+              {gradeLoading && (
+                <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, bgcolor: theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10, backdropFilter: 'blur(2px)', borderRadius: 2 }}>
+                  <CircularProgress size={40} />
+                </Box>
+              )}
+              {gradeDistributionData.length === 0 ? (
+                <Typography variant="body2" color="text.secondary">
+                  No grading data found for the selected filters.
+                </Typography>
+              ) : (
                 <ResponsiveContainer>
                   <BarChart data={gradeDistributionData}>
                     <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
@@ -670,10 +774,10 @@ function Dashboard() {
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
-              </Box>
-            </Card>
-          </Grid>
-        )}
+              )}
+            </Box>
+          </Card>
+        </Grid>
       </Grid>
 
       {/* Operations Row */}
@@ -730,18 +834,54 @@ function Dashboard() {
 
         {/* Right Column: Copy Completion Analytics */}
         <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
-          <Card sx={{ p: 2, height: 380, display: 'flex', flexDirection: 'column' }}>
-            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
-              Fair Copy Completion Rates (%)
-            </Typography>
-            <Box sx={{ width: '100%', height: 280, flexGrow: 1 }}>
-              {(!stats?.copySubmissionSummary || stats.copySubmissionSummary.length === 0) ? (
-                <Box sx={{ py: 8, textAlign: 'center' }}>
-                  <Typography variant="body2" color="text.secondary">No copy records found.</Typography>
+          <Card sx={{ p: 2, height: 420, display: 'flex', flexDirection: 'column' }}>
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, gap: 1.5, flexWrap: 'wrap' }}>
+              <Typography variant="h6" sx={{ fontWeight: 700 }}>
+                Fair Copy Completion Rates (%)
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 1 }}>
+                <TextField
+                  select
+                  size="small"
+                  label="Class"
+                  value={copyClassId}
+                  onChange={(e) => setCopyClassId(e.target.value)}
+                  sx={{ minWidth: 100 }}
+                >
+                  <MenuItem value="">All</MenuItem>
+                  {classesData?.getClasses?.map((cls) => (
+                    <MenuItem key={cls.id} value={cls.id}>{cls.name}</MenuItem>
+                  ))}
+                </TextField>
+                <TextField
+                  select
+                  size="small"
+                  label="Section"
+                  value={copySectionId}
+                  disabled={!copyClassId}
+                  onChange={(e) => setCopySectionId(e.target.value)}
+                  sx={{ minWidth: 100 }}
+                >
+                  <MenuItem value="">All</MenuItem>
+                  {copySectionsData?.getSections?.map((sec) => (
+                    <MenuItem key={sec.id} value={sec.id}>{sec.name}</MenuItem>
+                  ))}
+                </TextField>
+              </Box>
+            </Box>
+            <Box sx={{ width: '100%', height: 280, flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'relative' }}>
+              {copyLoading && (
+                <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, bgcolor: theme.palette.mode === 'dark' ? 'rgba(0,0,0,0.5)' : 'rgba(255,255,255,0.5)', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 10, backdropFilter: 'blur(2px)', borderRadius: 2 }}>
+                  <CircularProgress size={40} />
                 </Box>
+              )}
+              {(!persistentCopyData || persistentCopyData.length === 0) ? (
+                <Typography variant="body2" color="text.secondary">
+                  No copy records found for the selected filters.
+                </Typography>
               ) : (
                 <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={stats.copySubmissionSummary.map(item => ({
+                  <BarChart data={persistentCopyData.map(item => ({
                     name: `${item.subjectName} (${item.className})`,
                     rate: item.completionRate
                   }))} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
@@ -750,7 +890,7 @@ function Dashboard() {
                     <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: '0.75rem' }} domain={[0, 100]} unit="%" />
                     <Tooltip formatter={(value) => [`${value}% Completed`, 'Rate']} />
                     <Bar dataKey="rate" fill="#D946EF" radius={[6, 6, 0, 0]}>
-                      {stats.copySubmissionSummary.map((entry, index) => (
+                      {persistentCopyData.map((entry, index) => (
                         <Cell key={`cell-${index}`} fill="#D946EF" />
                       ))}
                     </Bar>
