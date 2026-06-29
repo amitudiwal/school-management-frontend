@@ -6,12 +6,17 @@ import {
   DialogTitle, Grid, TextField, MenuItem, Table, TableBody, TableCell,
   TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress,
   Alert, IconButton, InputAdornment, Avatar, TablePagination, Tabs, Tab,
-  Switch, FormControlLabel, Accordion, AccordionSummary, AccordionDetails
+  Switch, FormControlLabel, Accordion, AccordionSummary, AccordionDetails,
+  Chip
 } from '@mui/material';
 import {
   Search as SearchIcon, Add as AddIcon, FileDownload as ExportIcon,
   Edit as EditIcon, Delete as DeleteIcon, Visibility, VisibilityOff,
-  ExpandMore as ExpandMoreIcon
+  ExpandMore as ExpandMoreIcon,
+  Close as CloseIcon, Person as PersonIcon, Email as EmailIcon, Phone as PhoneIcon,
+  CalendarToday as CalendarIcon, School as SchoolIcon, Home as HomeIcon,
+  LocationOn as LocationIcon, AttachMoney as MoneyIcon, Description as DocumentIcon,
+  Group as GroupIcon, Info as InfoIcon, Badge as BadgeIcon
 } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { showToast } from '../store/slices/uiSlice';
@@ -53,6 +58,55 @@ function FormSectionHeader({ title, color }) {
   );
 }
 
+function DetailField({ label, value, icon }) {
+  return (
+    <Grid item xs={12} sm={6} md={4}>
+      <Box sx={{ 
+        display: 'flex', 
+        alignItems: 'center', 
+        gap: 1.5, 
+        p: 1.5, 
+        borderRadius: 2, 
+        bgcolor: 'action.hover',
+        border: '1px solid',
+        borderColor: 'divider',
+        height: '100%',
+        boxSizing: 'border-box'
+      }}>
+        {icon && <Box sx={{ color: 'primary.main', display: 'flex', alignItems: 'center' }}>{icon}</Box>}
+        <Box sx={{ overflow: 'hidden' }}>
+          <Typography 
+            variant="caption" 
+            color="text.secondary" 
+            sx={{ 
+              display: 'block', 
+              textTransform: 'uppercase', 
+              fontWeight: 700, 
+              fontSize: '0.65rem', 
+              letterSpacing: '0.5px',
+              textOverflow: 'ellipsis',
+              overflow: 'hidden',
+              whiteSpace: 'nowrap'
+            }}
+          >
+            {label}
+          </Typography>
+          <Typography 
+            variant="body2" 
+            sx={{ 
+              fontWeight: 600, 
+              fontFamily: "'Outfit', sans-serif",
+              wordBreak: 'break-word'
+            }}
+          >
+            {value || '-'}
+          </Typography>
+        </Box>
+      </Box>
+    </Grid>
+  );
+}
+
 function StudentList() {
   const dispatch = useDispatch();
   const { token, user } = useSelector((state) => state.auth);
@@ -68,7 +122,20 @@ function StudentList() {
   const [sectionId, setSectionId] = useState('');
   const [selectedStudent, setSelectedStudent] = useState(null);
   const [studentToDelete, setStudentToDelete] = useState(null);
+  const [viewingStudent, setViewingStudent] = useState(null);
+  const [detailTab, setDetailTab] = useState(0);
   const [page, setPage] = useState(0);
+
+  // Bulk import states
+  const [uploadingExcel, setUploadingExcel] = useState(false);
+  const [confirmingImport, setConfirmingImport] = useState(false);
+  const [importPreviewRows, setImportPreviewRows] = useState([]);
+  const [importSummary, setImportSummary] = useState(null);
+
+  const handleOpenView = (student) => {
+    setViewingStudent(student);
+    setDetailTab(0);
+  };
 
   // Reset page on filter changes
   useEffect(() => {
@@ -572,6 +639,104 @@ function StudentList() {
     }
   };
 
+  const downloadTemplate = async () => {
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/import/students/template`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) throw new Error('Failed to download template');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'student_import_template.xlsx';
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      dispatch(showToast({ message: 'Template downloaded successfully!', severity: 'success' }));
+    } catch (err) {
+      console.error(err);
+      dispatch(showToast({ message: 'Error downloading template: ' + err.message, severity: 'error' }));
+    }
+  };
+
+  const handleExcelUpload = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    setUploadingExcel(true);
+    setImportPreviewRows([]);
+    setImportSummary(null);
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/import/students/validate`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+      const result = await response.json();
+      if (response.ok) {
+        setImportPreviewRows(result.rows || []);
+        setImportSummary(result.summary || null);
+        dispatch(showToast({ message: 'Excel file validated successfully! Check the preview below.', severity: 'success' }));
+      } else {
+        dispatch(showToast({ message: result.error || 'Excel validation failed', severity: 'error' }));
+      }
+    } catch (err) {
+      console.error(err);
+      dispatch(showToast({ message: 'Error processing Excel file', severity: 'error' }));
+    } finally {
+      setUploadingExcel(false);
+      e.target.value = '';
+    }
+  };
+
+  const handleConfirmImport = async () => {
+    const validRows = importPreviewRows.filter(r => r.status === 'VALID').map(r => r.data);
+    if (validRows.length === 0) {
+      dispatch(showToast({ message: 'No valid records to import.', severity: 'warning' }));
+      return;
+    }
+
+    setConfirmingImport(true);
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/import/students/confirm`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ students: validRows })
+      });
+      const result = await response.json();
+      if (response.ok) {
+        dispatch(showToast({ 
+          message: `Successfully imported ${result.successCount} of ${result.total} students!`, 
+          severity: 'success' 
+        }));
+        
+        setImportPreviewRows([]);
+        setImportSummary(null);
+        refetch();
+        setTabValue(1);
+      } else {
+        dispatch(showToast({ message: result.error || 'Import failed', severity: 'error' }));
+      }
+    } catch (err) {
+      console.error(err);
+      dispatch(showToast({ message: 'Error completing import', severity: 'error' }));
+    } finally {
+      setConfirmingImport(false);
+    }
+  };
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 3 }}>
@@ -603,6 +768,7 @@ function StudentList() {
         <Tabs value={tabValue} onChange={(e, val) => setTabValue(val)} aria-label="student register tabs">
           <Tab label="Student Admission Form" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700 }} />
           <Tab label="Registered Student List" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700 }} />
+          <Tab label="Bulk Upload" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700 }} />
         </Tabs>
       </Box>
 
@@ -1242,6 +1408,9 @@ function StudentList() {
                           <TableCell>{st.parentId ? `${st.parentId.firstName} ${st.parentId.lastName}` : '-'}</TableCell>
                           {canManageStudent && (
                             <TableCell align="right">
+                              <IconButton aria-label="View student details" color="info" onClick={() => handleOpenView(st)}>
+                                <Visibility />
+                              </IconButton>
                               <IconButton aria-label="Edit student" color="primary" onClick={() => handleOpenEdit(st)}>
                                 <EditIcon />
                               </IconButton>
@@ -1275,6 +1444,208 @@ function StudentList() {
         </>
       )}
 
+      {/* Tab 2: Bulk Upload Students */}
+      {tabValue === 2 && (
+        <Box>
+          <Card sx={{ mb: 3 }}>
+            <CardContent sx={{ p: 3 }}>
+              <Grid container spacing={3} alignItems="center">
+                <Grid item xs={12} md={8}>
+                  <Typography variant="h6" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, mb: 1 }}>
+                    Bulk Import Students via Excel Sheet (.xlsx)
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Quickly add multiple student profiles at once. To ensure smooth importing, download the template below, enter your students' details strictly matching the spreadsheet columns, and upload it back here.
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1.5, flexWrap: 'wrap' }}>
+                    <Button 
+                      variant="contained" 
+                      onClick={downloadTemplate}
+                      sx={{ 
+                        background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)',
+                        color: '#FFFFFF',
+                        fontWeight: 700,
+                        fontFamily: "'Outfit', sans-serif"
+                      }}
+                    >
+                      Download Excel Template
+                    </Button>
+                  </Box>
+                </Grid>
+                <Grid item xs={12} md={4} sx={{ textAlign: 'center' }}>
+                  <Paper 
+                    component="label"
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      border: '2px dashed',
+                      borderColor: uploadingExcel ? 'text.disabled' : 'primary.main',
+                      borderRadius: 3,
+                      p: 3,
+                      cursor: uploadingExcel ? 'not-allowed' : 'pointer',
+                      bgcolor: 'action.hover',
+                      transition: 'all 0.2s ease-in-out',
+                      '&:hover': {
+                        bgcolor: 'action.selected',
+                        borderColor: 'secondary.main'
+                      }
+                    }}
+                  >
+                    <input 
+                      type="file" 
+                      hidden 
+                      accept=".xlsx" 
+                      onChange={handleExcelUpload}
+                      disabled={uploadingExcel}
+                    />
+                    {uploadingExcel ? (
+                      <>
+                        <CircularProgress size={36} sx={{ mb: 1.5 }} />
+                        <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.secondary' }}>
+                          Analyzing spreadsheet...
+                        </Typography>
+                      </>
+                    ) : (
+                      <>
+                        <ExportIcon sx={{ fontSize: 44, color: 'primary.main', transform: 'rotate(180deg)', mb: 1 }} />
+                        <Typography variant="body2" sx={{ fontWeight: 700, fontFamily: "'Outfit', sans-serif" }}>
+                          Choose Excel file (.xlsx)
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary">
+                          or drag & drop it here
+                        </Typography>
+                      </>
+                    )}
+                  </Paper>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+
+          {/* Validation preview container */}
+          {importPreviewRows.length > 0 && (
+            <Card>
+              <CardContent sx={{ p: 3 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: 2, mb: 3 }}>
+                  <Box>
+                    <Typography variant="h6" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800 }}>
+                      Spreadsheet Rows Preview & Verification
+                    </Typography>
+                    <Typography variant="body2" color="text.secondary">
+                      Verify entries below. Valid rows are ready to import, while invalid rows must be resolved.
+                    </Typography>
+                  </Box>
+                  
+                  {/* Summary Stats */}
+                  <Box sx={{ display: 'flex', gap: 2 }}>
+                    <Box sx={{ px: 2, py: 1, borderRadius: 2, bgcolor: 'primary.light', color: 'primary.contrastText', textAlign: 'center' }}>
+                      <Typography variant="caption" sx={{ fontWeight: 700 }}>TOTAL ROWS</Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 800 }}>{importSummary?.total}</Typography>
+                    </Box>
+                    <Box sx={{ px: 2, py: 1, borderRadius: 2, bgcolor: 'success.light', color: 'success.contrastText', textAlign: 'center' }}>
+                      <Typography variant="caption" sx={{ fontWeight: 700 }}>VALID</Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 800 }}>{importSummary?.valid}</Typography>
+                    </Box>
+                    <Box sx={{ px: 2, py: 1, borderRadius: 2, bgcolor: 'error.light', color: 'error.contrastText', textAlign: 'center' }}>
+                      <Typography variant="caption" sx={{ fontWeight: 700 }}>INVALID</Typography>
+                      <Typography variant="h6" sx={{ fontWeight: 800 }}>{importSummary?.invalid}</Typography>
+                    </Box>
+                  </Box>
+                </Box>
+
+                {importSummary?.invalid > 0 && (
+                  <Alert severity="warning" sx={{ mb: 3 }}>
+                    There are {importSummary.invalid} row(s) containing errors. You can still import the {importSummary.valid} valid records, or fix your spreadsheet and upload again.
+                  </Alert>
+                )}
+
+                {/* Rows Table */}
+                <TableContainer component={Paper} sx={{ border: '1px solid', borderColor: 'divider', borderRadius: 2, overflowX: 'auto', maxHeight: '400px', mb: 3 }}>
+                  <Table stickyHeader size="small">
+                    <TableHead>
+                      <TableRow>
+                        <TableCell width="60px" align="center">Row</TableCell>
+                        <TableCell width="100px">Status</TableCell>
+                        <TableCell width="120px">Admission No</TableCell>
+                        <TableCell width="180px">Student Name</TableCell>
+                        <TableCell width="140px">Class & Section</TableCell>
+                        <TableCell width="200px">Email</TableCell>
+                        <TableCell>Validation Messages / Errors</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {importPreviewRows.map((row) => (
+                        <TableRow key={row.rowNumber} hover sx={{ bgcolor: row.status === 'INVALID' ? '#FFF5F5' : 'inherit' }}>
+                          <TableCell align="center" sx={{ fontWeight: 700 }}>{row.rowNumber}</TableCell>
+                          <TableCell>
+                            <Chip 
+                              label={row.status} 
+                              color={row.status === 'VALID' ? 'success' : 'error'} 
+                              size="small" 
+                              sx={{ fontWeight: 700, fontSize: '0.7rem' }} 
+                            />
+                          </TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>{row.data.admissionNo || '-'}</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>{row.data.firstName ? `${row.data.firstName} ${row.data.lastName || ''}`.trim() : '-'}</TableCell>
+                          <TableCell>{row.data.className ? `${row.data.className} - ${row.data.sectionName || '-'}` : '-'}</TableCell>
+                          <TableCell>{row.data.email || '-'}</TableCell>
+                          <TableCell sx={{ color: row.status === 'INVALID' ? 'error.main' : 'success.main', fontWeight: 500 }}>
+                            {row.status === 'INVALID' ? (
+                              <Box component="ul" sx={{ m: 0, pl: 2 }}>
+                                {row.errors.map((err, i) => <Box component="li" key={i}>{err}</Box>)}
+                              </Box>
+                            ) : (
+                              'Ready for import ✓'
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+
+                {/* Import Submission Control */}
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 2 }}>
+                  <Button 
+                    variant="outlined" 
+                    color="secondary" 
+                    onClick={() => {
+                      setImportPreviewRows([]);
+                      setImportSummary(null);
+                    }}
+                    disabled={confirmingImport}
+                  >
+                    Clear Preview
+                  </Button>
+                  <Button 
+                    variant="contained"
+                    disabled={importSummary?.valid === 0 || confirmingImport}
+                    onClick={handleConfirmImport}
+                    sx={{ 
+                      minWidth: 180,
+                      background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)',
+                      color: '#FFFFFF',
+                      fontWeight: 700
+                    }}
+                  >
+                    {confirmingImport ? (
+                      <>
+                        <CircularProgress size={20} sx={{ mr: 1, color: '#FFF' }} />
+                        Importing...
+                      </>
+                    ) : (
+                      `Import ${importSummary?.valid} Student(s)`
+                    )}
+                  </Button>
+                </Box>
+              </CardContent>
+            </Card>
+          )}
+        </Box>
+      )}
+
       {/* Delete Confirmation Dialog */}
       <Dialog open={Boolean(studentToDelete)} onClose={() => setStudentToDelete(null)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontWeight: 800 }}>Delete Student</DialogTitle>
@@ -1287,6 +1658,236 @@ function StudentList() {
           <Button onClick={() => setStudentToDelete(null)} variant="outlined">Cancel</Button>
           <Button onClick={handleConfirmDelete} variant="contained" color="error" disabled={deleteLoading}>
             {deleteLoading ? 'Deleting...' : 'Delete'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Student Details Dialog */}
+      <Dialog 
+        open={Boolean(viewingStudent)} 
+        onClose={() => setViewingStudent(null)} 
+        maxWidth="md" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            p: 0.5
+          }
+        }}
+      >
+        <DialogTitle sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'space-between',
+          borderBottom: '1px solid',
+          borderColor: 'divider',
+          pb: 2,
+          pt: 2.5,
+          px: 3
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2.5 }}>
+            <Avatar 
+              src={getAvatarUrl(viewingStudent?.userId?.avatar)} 
+              sx={{ width: 64, height: 64, border: '2px solid', borderColor: 'primary.main' }}
+            >
+              {viewingStudent?.firstName?.charAt(0) || ''}
+            </Avatar>
+            <Box>
+              <Typography variant="h5" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800 }}>
+                {viewingStudent ? `${viewingStudent.firstName} ${viewingStudent.lastName}` : ''}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 500 }}>
+                Admission No: <Box component="span" sx={{ fontWeight: 700, color: 'text.primary' }}>{viewingStudent?.admissionNo}</Box> | Roll No: <Box component="span" sx={{ fontWeight: 700, color: 'text.primary' }}>{viewingStudent?.rollNo || '-'}</Box>
+              </Typography>
+            </Box>
+          </Box>
+          <IconButton onClick={() => setViewingStudent(null)} sx={{ color: 'text.secondary' }}>
+            <CloseIcon />
+          </IconButton>
+        </DialogTitle>
+
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', px: 2 }}>
+          <Tabs 
+            value={detailTab} 
+            onChange={(e, val) => setDetailTab(val)} 
+            aria-label="student detail tabs"
+            sx={{
+              '& .MuiTab-root': {
+                fontFamily: "'Outfit', sans-serif",
+                fontWeight: 700,
+                fontSize: '0.9rem'
+              }
+            }}
+          >
+            <Tab label="Personal & Academic" />
+            <Tab label="Parents & Address" />
+            <Tab label="Fees & Documents" />
+          </Tabs>
+        </Box>
+
+        <DialogContent sx={{ p: 3, maxHeight: '60vh', overflowY: 'auto' }}>
+          {viewingStudent && (
+            <>
+              {/* Tab 0: Personal & Academic */}
+              {detailTab === 0 && (
+                <Grid container spacing={2}>
+                  <DetailField label="First Name" value={viewingStudent.firstName} icon={<PersonIcon />} />
+                  <DetailField label="Last Name" value={viewingStudent.lastName} icon={<PersonIcon />} />
+                  <DetailField label="Admission No" value={viewingStudent.admissionNo} icon={<BadgeIcon />} />
+                  <DetailField label="Admission Date" value={viewingStudent.admissionDate ? new Date(viewingStudent.admissionDate).toLocaleDateString() : '-'} icon={<CalendarIcon />} />
+                  <DetailField label="Roll Number" value={viewingStudent.rollNo} icon={<BadgeIcon />} />
+                  <DetailField label="Class / Grade" value={viewingStudent.classId?.name} icon={<SchoolIcon />} />
+                  <DetailField label="Section" value={viewingStudent.sectionId?.name} icon={<SchoolIcon />} />
+                  <DetailField label="Branch" value={viewingStudent.branch} icon={<LocationIcon />} />
+                  <DetailField label="Email Address" value={viewingStudent.userId?.email} icon={<EmailIcon />} />
+                  <DetailField label="Mobile Number" value={viewingStudent.mobileNumber} icon={<PhoneIcon />} />
+                  <DetailField label="Gender" value={viewingStudent.gender} icon={<PersonIcon />} />
+                  <DetailField label="Date of Birth" value={viewingStudent.dateOfBirth ? new Date(viewingStudent.dateOfBirth).toLocaleDateString() : '-'} icon={<CalendarIcon />} />
+                  <DetailField label="Blood Group" value={viewingStudent.bloodGroup} icon={<InfoIcon />} />
+                  <DetailField label="Category" value={viewingStudent.category} icon={<InfoIcon />} />
+                  <DetailField label="House" value={viewingStudent.house} icon={<HomeIcon />} />
+                  <DetailField label="Height" value={viewingStudent.height ? `${viewingStudent.height} cm` : '-'} icon={<InfoIcon />} />
+                  <DetailField label="Weight" value={viewingStudent.weight ? `${viewingStudent.weight} kg` : '-'} icon={<InfoIcon />} />
+                </Grid>
+              )}
+
+              {/* Tab 1: Parents & Address */}
+              {detailTab === 1 && (
+                <Grid container spacing={2}>
+                  <DetailField label="Linked Parent Profile" value={viewingStudent.parentId ? `${viewingStudent.parentId.firstName} ${viewingStudent.parentId.lastName}` : 'No Profile Linked'} icon={<GroupIcon />} />
+                  <DetailField label="Father's Occupation" value={viewingStudent.fatherOccupation} icon={<PersonIcon />} />
+                  <DetailField label="Mother's Name" value={viewingStudent.motherName} icon={<PersonIcon />} />
+                  <DetailField label="Mother's Occupation" value={viewingStudent.motherOccupation} icon={<PersonIcon />} />
+                  <DetailField label="Mother's Phone" value={viewingStudent.motherPhone} icon={<PhoneIcon />} />
+                  <DetailField label="Guardian's Name" value={viewingStudent.guardianName} icon={<PersonIcon />} />
+                  <DetailField label="Guardian's Phone" value={viewingStudent.guardianPhone} icon={<PhoneIcon />} />
+                  <DetailField 
+                    label="Current Address" 
+                    value={viewingStudent.address ? `${viewingStudent.address.street || ''} ${viewingStudent.address.city || ''} ${viewingStudent.address.state || ''} ${viewingStudent.address.zipCode || ''} ${viewingStudent.address.country || ''}`.trim() : '-'} 
+                    icon={<HomeIcon />} 
+                  />
+                  <DetailField label="Permanent Address" value={viewingStudent.permanentAddress} icon={<HomeIcon />} />
+                </Grid>
+              )}
+
+              {/* Tab 2: Fees, Documents & Previous School */}
+              {detailTab === 2 && (
+                <Box>
+                  <Typography variant="subtitle1" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, mb: 1.5, color: 'text.secondary' }}>
+                    FEES & DISCOUNTS
+                  </Typography>
+                  <Grid container spacing={2} sx={{ mb: 4 }}>
+                    <DetailField label="Admission Fee" value={viewingStudent.admissionFee ? `₹${viewingStudent.admissionFee}` : '₹0'} icon={<MoneyIcon />} />
+                    <DetailField label="Tuition Fee" value={viewingStudent.tuitionFee ? `₹${viewingStudent.tuitionFee}` : '₹0'} icon={<MoneyIcon />} />
+                    <DetailField label="Transport Fee" value={viewingStudent.transportFee ? `₹${viewingStudent.transportFee}` : '₹0'} icon={<MoneyIcon />} />
+                    <DetailField label="Hostel Fee" value={viewingStudent.hostelFee ? `₹${viewingStudent.hostelFee}` : '₹0'} icon={<MoneyIcon />} />
+                    <DetailField label="Other Fee" value={viewingStudent.otherFee ? `₹${viewingStudent.otherFee}` : '₹0'} icon={<MoneyIcon />} />
+                    <DetailField label="Installment Plan" value={viewingStudent.installmentPlan ? `${viewingStudent.installmentPlan} Installment(s)` : '-'} icon={<InfoIcon />} />
+                    <DetailField label="Discount Type" value={viewingStudent.discountType || 'None'} icon={<InfoIcon />} />
+                    <DetailField label="Total Discount (%)" value={viewingStudent.totalDiscount ? `${viewingStudent.totalDiscount}%` : '0%'} icon={<InfoIcon />} />
+                    <DetailField label="Due Date" value={viewingStudent.dueDate ? new Date(viewingStudent.dueDate).toLocaleDateString() : '-'} icon={<CalendarIcon />} />
+                    
+                    {/* Calculated Fee Summary */}
+                    <Grid item xs={12}>
+                      <Box sx={{ p: 2, borderRadius: 2, bgcolor: 'primary.light', color: 'primary.contrastText', border: '1px solid', borderColor: 'primary.main', display: 'flex', flexWrap: 'wrap', justifyContent: 'space-between', alignItems: 'center', gap: 2 }}>
+                        <Box>
+                          <Typography variant="body2" sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '0.75rem', opacity: 0.9 }}>
+                            Total Fee Summary
+                          </Typography>
+                          <Typography variant="body1" sx={{ fontWeight: 500, fontSize: '0.9rem' }}>
+                            Base Total: ₹{(viewingStudent.admissionFee || 0) + (viewingStudent.tuitionFee || 0) + (viewingStudent.transportFee || 0) + (viewingStudent.hostelFee || 0) + (viewingStudent.otherFee || 0)}
+                          </Typography>
+                        </Box>
+                        <Box sx={{ textAlign: { xs: 'left', sm: 'right' } }}>
+                          <Typography variant="caption" sx={{ display: 'block', fontWeight: 700, textTransform: 'uppercase', fontSize: '0.65rem', opacity: 0.9 }}>
+                            Final Payable Fees (Discount Applied)
+                          </Typography>
+                          <Typography variant="h6" sx={{ fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
+                            ₹{
+                              ((viewingStudent.admissionFee || 0) + (viewingStudent.tuitionFee || 0) + (viewingStudent.transportFee || 0) + (viewingStudent.hostelFee || 0) + (viewingStudent.otherFee || 0)) * 
+                              (1 - (viewingStudent.totalDiscount || 0) / 100)
+                            }
+                          </Typography>
+                        </Box>
+                      </Box>
+                    </Grid>
+                  </Grid>
+
+                  <Typography variant="subtitle1" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, mb: 1.5, color: 'text.secondary' }}>
+                    DOCUMENTS & IDENTIFIERS
+                  </Typography>
+                  <Grid container spacing={2} sx={{ mb: 4 }}>
+                    <DetailField label="APAAR ID" value={viewingStudent.apaarId} icon={<BadgeIcon />} />
+                    <DetailField label="RTE Number" value={viewingStudent.rteNumber} icon={<BadgeIcon />} />
+                    <DetailField label="PEN Number" value={viewingStudent.penNumber} icon={<BadgeIcon />} />
+                    
+                    <Grid item xs={12} sm={6}>
+                      <Box sx={{ p: 2, borderRadius: 2, bgcolor: 'action.hover', border: '1px dashed', borderColor: 'divider', display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '0.65rem', color: 'text.secondary' }}>
+                          Aadhaar Card Front
+                        </Typography>
+                        {viewingStudent.aadhaarFront ? (
+                          <Button 
+                            variant="outlined" 
+                            size="small"
+                            startIcon={<DocumentIcon />} 
+                            href={getAvatarUrl(viewingStudent.aadhaarFront)} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            sx={{ alignSelf: 'flex-start' }}
+                          >
+                            View Document
+                          </Button>
+                        ) : (
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.disabled' }}>
+                            Not Uploaded
+                          </Typography>
+                        )}
+                      </Box>
+                    </Grid>
+
+                    <Grid item xs={12} sm={6}>
+                      <Box sx={{ p: 2, borderRadius: 2, bgcolor: 'action.hover', border: '1px dashed', borderColor: 'divider', display: 'flex', flexDirection: 'column', gap: 1 }}>
+                        <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '0.65rem', color: 'text.secondary' }}>
+                          Aadhaar Card Back
+                        </Typography>
+                        {viewingStudent.aadhaarBack ? (
+                          <Button 
+                            variant="outlined" 
+                            size="small"
+                            startIcon={<DocumentIcon />} 
+                            href={getAvatarUrl(viewingStudent.aadhaarBack)} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            sx={{ alignSelf: 'flex-start' }}
+                          >
+                            View Document
+                          </Button>
+                        ) : (
+                          <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.disabled' }}>
+                            Not Uploaded
+                          </Typography>
+                        )}
+                      </Box>
+                    </Grid>
+                  </Grid>
+
+                  <Typography variant="subtitle1" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, mb: 1.5, color: 'text.secondary' }}>
+                    PREVIOUS SCHOOL HISTORY
+                  </Typography>
+                  <Grid container spacing={2}>
+                    <DetailField label="Previous School Name" value={viewingStudent.prevSchoolName} icon={<SchoolIcon />} />
+                    <DetailField label="Previous Class" value={viewingStudent.prevClass} icon={<SchoolIcon />} />
+                    <DetailField label="Passing Year" value={viewingStudent.passingYear} icon={<CalendarIcon />} />
+                  </Grid>
+                </Box>
+              )}
+            </>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+          <Button onClick={() => setViewingStudent(null)} variant="contained" sx={{ minWidth: 100 }}>
+            Close
           </Button>
         </DialogActions>
       </Dialog>

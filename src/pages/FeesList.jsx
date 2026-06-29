@@ -373,7 +373,8 @@ function FeesList() {
 
   const handleExport = async (format) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/export/${format}/fees`, {
+      const moduleName = activeTab === 0 ? 'fees' : 'fees-ledger';
+      const response = await fetch(`http://localhost:5000/api/export/${format}/${moduleName}?classId=${classId || ''}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -383,7 +384,7 @@ function FeesList() {
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = `fees-ledger.${format === 'excel' ? 'xlsx' : format}`;
+      a.download = `${moduleName === 'fees' ? 'fee-structures' : 'fees-ledger'}.${format === 'excel' ? 'xlsx' : format}`;
       document.body.appendChild(a);
       a.click();
       a.remove();

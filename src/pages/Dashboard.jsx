@@ -113,10 +113,10 @@ function Dashboard() {
   if (isSuperAdmin) {
     const stats = saData?.getSuperAdminDashboard;
     const cards = [
-      { title: 'Total Schools Onboarded', value: stats?.totalSchools, icon: <SchoolIcon />, color: '#6366F1' },
-      { title: 'Total Students Globally', value: stats?.totalStudents, icon: <PeopleIcon />, color: '#D946EF' },
-      { title: 'Total Active Teachers', value: stats?.totalTeachers, icon: <LibraryIcon />, color: '#10B981' },
-      { title: 'Monthly Revenue', value: `₹${stats?.monthlyRevenue?.toLocaleString()}`, icon: <FeesIcon />, color: '#F59E0B' },
+      { title: 'Total Schools Onboarded', value: stats?.totalSchools ?? 0, icon: <SchoolIcon />, color: '#6366F1' },
+      { title: 'Total Students Globally', value: stats?.totalStudents ?? 0, icon: <PeopleIcon />, color: '#D946EF' },
+      { title: 'Total Active Teachers', value: stats?.totalTeachers ?? 0, icon: <LibraryIcon />, color: '#10B981' },
+      { title: 'Monthly Revenue', value: `₹${(stats?.monthlyRevenue ?? 0).toLocaleString()}`, icon: <FeesIcon />, color: '#F59E0B' },
     ];
 
     console.log('Global Audit Logs:', logsData?.getGlobalAuditLogs);
@@ -305,8 +305,8 @@ function Dashboard() {
 
   // Fees Data Formatting
   const feeData = [
-    { name: 'Collected', value: stats?.feeCollectionSummary?.totalCollected || 32000 },
-    { name: 'Outstanding', value: stats?.feeCollectionSummary?.totalOutstanding || 18000 },
+    { name: 'Collected', value: stats?.feeCollectionSummary?.totalCollected ?? 0 },
+    { name: 'Outstanding', value: stats?.feeCollectionSummary?.totalOutstanding ?? 0 },
   ];
 
   // Class Enrollment Data Formatting
@@ -576,7 +576,7 @@ function Dashboard() {
             </Box>
             <Box sx={{ textAlign: 'center', mt: 1 }}>
               <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.secondary' }}>
-                Total School Term Expected Dues: ₹${stats?.feeCollectionSummary?.totalExpected?.toLocaleString()}
+                Total School Term Expected Dues: ₹${(stats?.feeCollectionSummary?.totalExpected ?? 0).toLocaleString()}
               </Typography>
             </Box>
           </Card>

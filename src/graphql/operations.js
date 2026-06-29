@@ -294,6 +294,13 @@ export const GET_STUDENTS = gql`
       prevClass
       passingYear
       bloodGroup
+      address {
+        street
+        city
+        state
+        zipCode
+        country
+      }
     }
   }
 `;

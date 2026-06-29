@@ -76,8 +76,8 @@ function HomeworkList() {
   // Students Query for the class & section of the active homework
   const { data: studentsData, loading: studentsLoading } = useQuery(GET_STUDENTS, {
     variables: { 
-      classId: classId, 
-      sectionId: sectionId 
+      classId: activeHomeworkForSubmissions?.classId?.id, 
+      sectionId: activeHomeworkForSubmissions?.sectionId?.id 
     },
     skip: !activeHomeworkForSubmissions
   });
