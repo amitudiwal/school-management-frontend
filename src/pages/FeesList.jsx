@@ -5,10 +5,11 @@ import {
   Box, Button, Card, CardContent, Dialog, DialogActions, DialogContent, 
   DialogTitle, Grid, TextField, MenuItem, Table, TableBody, TableCell, 
   TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress, 
-  Alert, IconButton, TablePagination, Tabs, Tab, Chip, Tooltip, Checkbox
+  Alert, IconButton, TablePagination, Tabs, Tab, Chip, Tooltip, Checkbox,
+  Stack
 } from '@mui/material';
 import { useDispatch } from 'react-redux';
-import { Add as AddIcon, FileDownload as ExportIcon, Settings as SettingsIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Add as AddIcon, FileDownload as ExportIcon, Settings as SettingsIcon, Edit as EditIcon, Delete as DeleteIcon, FilterList as FilterListIcon } from '@mui/icons-material';
 import { GET_FEES_LIST, GET_STUDENT_FEE_LEDGER, GET_CLASSES, GET_STUDENTS, COLLECT_STUDENT_FEE, CREATE_FEE_STRUCTURE, UPDATE_FEE_STRUCTURE, DELETE_FEE_STRUCTURE, GET_STUDENT_FEE_STRUCTURE, SAVE_STUDENT_FEE_STRUCTURE } from '../graphql/operations';
 import { showToast } from '../store/slices/uiSlice';
 import CustomDatePicker from '../components/CustomDatePicker';
@@ -32,6 +33,24 @@ function FeesList() {
   const [openCustomizeModal, setOpenCustomizeModal] = useState(false);
   const [selectedStudentForCustomize, setSelectedStudentForCustomize] = useState(null);
   const [customizeComponents, setCustomizeComponents] = useState([]);
+
+  // Filter States for Student Ledger
+  const [openFilterModal, setOpenFilterModal] = useState(false);
+  const [filterName, setFilterName] = useState('');
+  const [filterAdmissionNo, setFilterAdmissionNo] = useState('');
+  const [filterClassId, setFilterClassId] = useState('');
+  const [filterStatus, setFilterStatus] = useState('');
+  const [filterMinOutstanding, setFilterMinOutstanding] = useState('');
+  const [filterMaxOutstanding, setFilterMaxOutstanding] = useState('');
+
+  const [appliedFilters, setAppliedFilters] = useState({
+    name: '',
+    admissionNo: '',
+    classId: '',
+    status: '',
+    minOutstanding: '',
+    maxOutstanding: ''
+  });
 
   // Reset page when class filter changes
   React.useEffect(() => {
@@ -187,6 +206,88 @@ function FeesList() {
       dispatch(showToast({ message: err.message, severity: 'error' }));
     }
   });
+
+  const hasActiveFilters = Boolean(
+    appliedFilters.name || 
+    appliedFilters.admissionNo || 
+    appliedFilters.classId || 
+    appliedFilters.status || 
+    appliedFilters.minOutstanding || 
+    appliedFilters.maxOutstanding
+  );
+
+  const clearAllFilters = () => {
+    const defaultFilters = {
+      name: '',
+      admissionNo: '',
+      classId: '',
+      status: '',
+      minOutstanding: '',
+      maxOutstanding: ''
+    };
+    setAppliedFilters(defaultFilters);
+    setFilterName('');
+    setFilterAdmissionNo('');
+    setFilterClassId('');
+    setFilterStatus('');
+    setFilterMinOutstanding('');
+    setFilterMaxOutstanding('');
+  };
+
+  const handleApplyFilters = () => {
+    setAppliedFilters({
+      name: filterName,
+      admissionNo: filterAdmissionNo,
+      classId: filterClassId,
+      status: filterStatus,
+      minOutstanding: filterMinOutstanding,
+      maxOutstanding: filterMaxOutstanding
+    });
+    setOpenFilterModal(false);
+    setPageLedger(0);
+  };
+
+  const filteredLedger = React.useMemo(() => {
+    return (ledgerData?.getStudentFeeLedger || []).filter(item => {
+      if (appliedFilters.name && !item.studentName.toLowerCase().includes(appliedFilters.name.toLowerCase())) {
+        return false;
+      }
+      if (appliedFilters.admissionNo && !item.admissionNo.toLowerCase().includes(appliedFilters.admissionNo.toLowerCase())) {
+        return false;
+      }
+      if (appliedFilters.classId) {
+        const selectedClass = classesData?.getClasses.find(c => c.id === appliedFilters.classId);
+        if (selectedClass && item.className !== selectedClass.name) {
+          return false;
+        }
+      }
+      if (appliedFilters.status) {
+        const payable = item.totalPayable;
+        const outstanding = item.outstanding;
+        const paid = item.totalPaid;
+        let itemStatus = 'NO FEES';
+        if (payable > 0) {
+          if (outstanding === 0) {
+            itemStatus = 'PAID';
+          } else if (paid > 0) {
+            itemStatus = 'PARTIAL';
+          } else {
+            itemStatus = 'UNPAID';
+          }
+        }
+        if (appliedFilters.status !== itemStatus) {
+          return false;
+        }
+      }
+      if (appliedFilters.minOutstanding && item.outstanding < parseFloat(appliedFilters.minOutstanding)) {
+        return false;
+      }
+      if (appliedFilters.maxOutstanding && item.outstanding > parseFloat(appliedFilters.maxOutstanding)) {
+        return false;
+      }
+      return true;
+    });
+  }, [ledgerData, appliedFilters, classesData]);
 
   const clearStructureForm = () => {
     setStructTitle('');
@@ -524,6 +625,97 @@ function FeesList() {
           <Alert severity="error">{ledgerError.message}</Alert>
         ) : (
           <>
+            {/* Header with Filter Button */}
+            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+              <Typography variant="h6" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700 }}>
+                Student Ledger Records
+              </Typography>
+              <Button 
+                variant="outlined" 
+                startIcon={<FilterListIcon />} 
+                onClick={() => setOpenFilterModal(true)}
+                sx={{ borderRadius: 2, fontWeight: 700 }}
+              >
+                Filter Ledger
+              </Button>
+            </Box>
+
+            {/* Active Filters Chips */}
+            {hasActiveFilters && (
+              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2, alignItems: 'center' }}>
+                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 650 }}>
+                  Active Filters:
+                </Typography>
+                {appliedFilters.name && (
+                  <Chip 
+                    label={`Name: ${appliedFilters.name}`} 
+                    onDelete={() => {
+                      setAppliedFilters(prev => ({ ...prev, name: '' }));
+                      setFilterName('');
+                    }} 
+                    size="small"
+                  />
+                )}
+                {appliedFilters.admissionNo && (
+                  <Chip 
+                    label={`Adm No: ${appliedFilters.admissionNo}`} 
+                    onDelete={() => {
+                      setAppliedFilters(prev => ({ ...prev, admissionNo: '' }));
+                      setFilterAdmissionNo('');
+                    }} 
+                    size="small"
+                  />
+                )}
+                {appliedFilters.classId && (
+                  <Chip 
+                    label={`Class: ${classesData?.getClasses.find(c => c.id === appliedFilters.classId)?.name}`} 
+                    onDelete={() => {
+                      setAppliedFilters(prev => ({ ...prev, classId: '' }));
+                      setFilterClassId('');
+                    }} 
+                    size="small"
+                  />
+                )}
+                {appliedFilters.status && (
+                  <Chip 
+                    label={`Status: ${appliedFilters.status}`} 
+                    onDelete={() => {
+                      setAppliedFilters(prev => ({ ...prev, status: '' }));
+                      setFilterStatus('');
+                    }} 
+                    size="small"
+                  />
+                )}
+                {appliedFilters.minOutstanding && (
+                  <Chip 
+                    label={`Min Bal: ₹${appliedFilters.minOutstanding}`} 
+                    onDelete={() => {
+                      setAppliedFilters(prev => ({ ...prev, minOutstanding: '' }));
+                      setFilterMinOutstanding('');
+                    }} 
+                    size="small"
+                  />
+                )}
+                {appliedFilters.maxOutstanding && (
+                  <Chip 
+                    label={`Max Bal: ₹${appliedFilters.maxOutstanding}`} 
+                    onDelete={() => {
+                      setAppliedFilters(prev => ({ ...prev, maxOutstanding: '' }));
+                      setFilterMaxOutstanding('');
+                    }} 
+                    size="small"
+                  />
+                )}
+                <Button 
+                  size="small" 
+                  onClick={clearAllFilters}
+                  sx={{ textTransform: 'none', fontWeight: 700 }}
+                >
+                  Clear All
+                </Button>
+              </Box>
+            )}
+
             <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
               <Table sx={{ minWidth: 760 }}>
                 <TableHead>
@@ -539,7 +731,7 @@ function FeesList() {
                   </TableRow>
                 </TableHead>
                 <TableBody>
-                  {(ledgerData?.getStudentFeeLedger || [])
+                  {filteredLedger
                     .slice(pageLedger * 10, (pageLedger + 1) * 10)
                     .map((ledgerItem) => {
                       const outstanding = ledgerItem.outstanding;
@@ -609,7 +801,7 @@ function FeesList() {
                         </TableRow>
                       );
                     })}
-                  {(!ledgerData?.getStudentFeeLedger || ledgerData.getStudentFeeLedger.length === 0) && (
+                  {filteredLedger.length === 0 && (
                     <TableRow>
                       <TableCell colSpan={isAdmin ? 8 : 7} align="center">No student ledger data found</TableCell>
                     </TableRow>
@@ -617,11 +809,11 @@ function FeesList() {
                 </TableBody>
               </Table>
             </TableContainer>
-            {ledgerData?.getStudentFeeLedger?.length > 0 && (
+            {filteredLedger.length > 0 && (
               <TablePagination
                 rowsPerPageOptions={[10]}
                 component="div"
-                count={ledgerData.getStudentFeeLedger.length}
+                count={filteredLedger.length}
                 rowsPerPage={10}
                 page={pageLedger}
                 onPageChange={(e, newPage) => setPageLedger(newPage)}
@@ -1045,6 +1237,82 @@ function FeesList() {
             sx={{ background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)', color: '#FFFFFF' }}
           >
             {saveStructureLoading ? 'Saving Changes...' : 'Save Structure'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Ledger Filter Modal */}
+      <Dialog open={openFilterModal} onClose={() => setOpenFilterModal(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800 }}>Filter Student Ledger</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1.5 }}>
+            <TextField
+              fullWidth
+              label="Student Name"
+              value={filterName}
+              onChange={(e) => setFilterName(e.target.value)}
+              placeholder="Search by student name..."
+            />
+            <TextField
+              fullWidth
+              label="Admission Number"
+              value={filterAdmissionNo}
+              onChange={(e) => setFilterAdmissionNo(e.target.value)}
+              placeholder="Search by admission number..."
+            />
+            <TextField
+              fullWidth
+              select
+              label="Class"
+              value={filterClassId}
+              onChange={(e) => setFilterClassId(e.target.value)}
+            >
+              <MenuItem value="">All Classes</MenuItem>
+              {classesData?.getClasses.map((cls) => (
+                <MenuItem key={cls.id} value={cls.id}>{cls.name}</MenuItem>
+              ))}
+            </TextField>
+            <TextField
+              fullWidth
+              select
+              label="Payment Status"
+              value={filterStatus}
+              onChange={(e) => setFilterStatus(e.target.value)}
+            >
+              <MenuItem value="">All Statuses</MenuItem>
+              <MenuItem value="PAID">PAID</MenuItem>
+              <MenuItem value="PARTIAL">PARTIAL</MenuItem>
+              <MenuItem value="UNPAID">UNPAID</MenuItem>
+              <MenuItem value="NO FEES">NO FEES</MenuItem>
+            </TextField>
+            <Stack direction="row" spacing={2}>
+              <TextField
+                fullWidth
+                type="number"
+                label="Min Outstanding (₹)"
+                value={filterMinOutstanding}
+                onChange={(e) => setFilterMinOutstanding(e.target.value)}
+              />
+              <TextField
+                fullWidth
+                type="number"
+                label="Max Outstanding (₹)"
+                value={filterMaxOutstanding}
+                onChange={(e) => setFilterMaxOutstanding(e.target.value)}
+              />
+            </Stack>
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ p: 2.5, borderTop: '1px solid', borderColor: 'divider' }}>
+          <Button onClick={clearAllFilters} variant="outlined" color="secondary">
+            Reset All
+          </Button>
+          <Button 
+            onClick={handleApplyFilters} 
+            variant="contained"
+            sx={{ background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)', color: '#FFFFFF' }}
+          >
+            Apply Filters
           </Button>
         </DialogActions>
       </Dialog>
