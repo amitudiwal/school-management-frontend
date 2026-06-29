@@ -54,19 +54,56 @@ function ClassAnalytics() {
     }
   );
 
-  const handleDownloadReportCard = (studentId) => {
+  const handleDownloadReportCard = async (studentId, studentName) => {
     const token = localStorage.getItem('token');
-    const downloadUrl = `${BACKEND_URL}/api/report-cards/student/${studentId}/exam/${examId}?token=${token}`;
-    window.open(downloadUrl, '_blank');
+    const downloadUrl = `${BACKEND_URL}/api/report-cards/student/${studentId}/exam/${examId}`;
+    try {
+      const response = await fetch(downloadUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) throw new Error('Download failed');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      const safeName = (studentName || `student-${studentId}`).replace(/\s+/g, '_');
+      a.download = `report_card_${safeName}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to download report card:', err);
+    }
   };
 
-  const handleDownloadAllClassReportCards = () => {
+  const handleDownloadAllClassReportCards = async () => {
     const token = localStorage.getItem('token');
-    let downloadUrl = `${BACKEND_URL}/api/report-cards/class/${classId}/exam/${examId}?token=${token}`;
+    let downloadUrl = `${BACKEND_URL}/api/report-cards/class/${classId}/exam/${examId}`;
     if (sectionId) {
-      downloadUrl += `&sectionId=${sectionId}`;
+      downloadUrl += `?sectionId=${sectionId}`;
     }
-    window.open(downloadUrl, '_blank');
+    try {
+      const response = await fetch(downloadUrl, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+      if (!response.ok) throw new Error('Download failed');
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `class_report_cards_${classId}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      console.error('Failed to download class report cards:', err);
+    }
   };
 
   const analytics = analyticsData?.getClassPerformanceAnalytics;
@@ -461,7 +498,7 @@ function ClassAnalytics() {
                             <Tooltip title="Download PDF Report Card">
                               <IconButton 
                                 color="primary" 
-                                onClick={() => handleDownloadReportCard(st.studentId)}
+                                onClick={() => handleDownloadReportCard(st.studentId, st.name)}
                                 sx={{ 
                                   bgcolor: `${theme.palette.primary.main}08`,
                                   '&:hover': { bgcolor: `${theme.palette.primary.main}15` }
