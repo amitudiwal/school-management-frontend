@@ -2240,5 +2240,18 @@ export const GET_COPY_SUBMISSION_ANALYTICS = gql`
   }
 `;
 
+export const GET_TEACHER_ATTENDANCE_SUMMARY = gql`
+  query GetTeacherAttendanceSummary($month: Int!, $year: Int!) {
+    getTeacherAttendanceSummary(month: $month, year: $year) {
+      teacherId
+      name
+      email
+      phone
+      absentCount
+      leaveCount
+    }
+  }
+`;
+
 
 

@@ -4,6 +4,7 @@ import { useQuery, useMutation } from '@apollo/client';
 import {
   Box, Button, Card, CardContent, Grid, TextField, MenuItem,
   Table, TableBody, TableCell, TableContainer, TableRow, TableHead,
+  TablePagination,
   Paper, Typography, CircularProgress, Alert, Tabs, Tab,
   Dialog, DialogTitle, DialogContent, DialogActions, Chip, LinearProgress,
   IconButton, useTheme, Tooltip, FormControl, InputLabel, Select
@@ -21,7 +22,8 @@ import {
   UPDATE_LEAVE_STATUS,
   GET_TEACHER_LEAVE_BALANCE,
   GET_LEAVE_LIMIT,
-  UPDATE_LEAVE_LIMIT
+  UPDATE_LEAVE_LIMIT,
+  GET_TEACHER_ATTENDANCE_SUMMARY
 } from '../graphql/operations';
 import { showToast } from '../store/slices/uiSlice';
 import CustomDatePicker from '../components/CustomDatePicker';
@@ -41,6 +43,11 @@ function LeaveManagement() {
   const [maternityLimit, setMaternityLimit] = useState(90);
   const [paternityLimit, setPaternityLimit] = useState(15);
   const [sabbaticalLimit, setSabbaticalLimit] = useState(30);
+
+  // Teacher Attendance Summary States
+  const [summaryMonth, setSummaryMonth] = useState(new Date().getMonth() + 1);
+  const [summaryYear, setSummaryYear] = useState(new Date().getFullYear());
+  const [summaryPage, setSummaryPage] = useState(0);
 
   // Leave Request Form Dialog State
   const [requestOpen, setRequestOpen] = useState(false);
@@ -84,6 +91,11 @@ function LeaveManagement() {
         setSabbaticalLimit(data.getLeaveLimit.sabbatical);
       }
     }
+  });
+
+  const { data: summaryData, loading: summaryLoading } = useQuery(GET_TEACHER_ATTENDANCE_SUMMARY, {
+    skip: !isAdmin || activeTab !== 3,
+    variables: { month: summaryMonth, year: summaryYear }
   });
 
   // Mutations
@@ -242,6 +254,7 @@ function LeaveManagement() {
           <Tab label="My Portal" sx={{ fontWeight: 700, px: 3 }} />
           <Tab label="Pending Approvals" sx={{ fontWeight: 700, px: 3 }} />
           <Tab label="Configure Allotments" sx={{ fontWeight: 700, px: 3 }} />
+          <Tab label="Teacher Summary" sx={{ fontWeight: 700, px: 3 }} />
         </Tabs>
       )}
 
@@ -601,6 +614,131 @@ function LeaveManagement() {
               </Box>
             </CardContent>
           </Card>
+        </Box>
+      )}
+
+      {/* TAB 3: TEACHER ATTENDANCE & LEAVES SUMMARY */}
+      {activeTab === 3 && (
+        <Box>
+          <Card sx={{ mb: 3, borderRadius: 3 }}>
+            <CardContent>
+              <Typography variant="h6" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, mb: 2 }}>
+                Select Period for Teacher Attendance Summary
+              </Typography>
+              <Grid container spacing={2}>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    select
+                    label="Month"
+                    value={summaryMonth}
+                    onChange={(e) => {
+                      setSummaryMonth(parseInt(e.target.value));
+                      setSummaryPage(0);
+                    }}
+                  >
+                    {[
+                      { val: 1, label: 'January' },
+                      { val: 2, label: 'February' },
+                      { val: 3, label: 'March' },
+                      { val: 4, label: 'April' },
+                      { val: 5, label: 'May' },
+                      { val: 6, label: 'June' },
+                      { val: 7, label: 'July' },
+                      { val: 8, label: 'August' },
+                      { val: 9, label: 'September' },
+                      { val: 10, label: 'October' },
+                      { val: 11, label: 'November' },
+                      { val: 12, label: 'December' }
+                    ].map((m) => (
+                      <MenuItem key={m.val} value={m.val}>{m.label}</MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <TextField
+                    fullWidth
+                    select
+                    label="Year"
+                    value={summaryYear}
+                    onChange={(e) => {
+                      setSummaryYear(parseInt(e.target.value));
+                      setSummaryPage(0);
+                    }}
+                  >
+                    {[2025, 2026, 2027, 2028].map((y) => (
+                      <MenuItem key={y} value={y}>{y}</MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+              </Grid>
+            </CardContent>
+          </Card>
+
+          {summaryLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 5 }}><CircularProgress /></Box>
+          ) : !summaryData?.getTeacherAttendanceSummary || summaryData.getTeacherAttendanceSummary.length === 0 ? (
+            <Alert severity="info">No teacher attendance or leave records found for the selected period.</Alert>
+          ) : (
+            <>
+              <TableContainer component={Paper} sx={{ borderRadius: 3, overflow: 'hidden' }}>
+                <Table sx={{ minWidth: 600 }}>
+                  <TableHead sx={{ bgcolor: 'action.hover' }}>
+                    <TableRow>
+                      <TableCell sx={{ fontWeight: 700 }}>Teacher Name</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Email Address</TableCell>
+                      <TableCell sx={{ fontWeight: 700 }}>Phone Number</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 700 }}>Absents marked</TableCell>
+                      <TableCell align="center" sx={{ fontWeight: 700 }}>Leaves taken</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {summaryData.getTeacherAttendanceSummary
+                      .slice(summaryPage * 10, (summaryPage + 1) * 10)
+                      .map((row) => (
+                        <TableRow key={row.teacherId} hover>
+                          <TableCell sx={{ fontWeight: 600 }}>{row.name}</TableCell>
+                          <TableCell>{row.email}</TableCell>
+                          <TableCell>{row.phone}</TableCell>
+                          <TableCell align="center">
+                            {row.absentCount > 0 ? (
+                              <Chip
+                                size="small"
+                                label={`${row.absentCount} Days`}
+                                color="error"
+                                sx={{ fontWeight: 700 }}
+                              />
+                            ) : (
+                              <Typography variant="body2" color="text.secondary">0 Days</Typography>
+                            )}
+                          </TableCell>
+                          <TableCell align="center">
+                            {row.leaveCount > 0 ? (
+                              <Chip
+                                size="small"
+                                label={`${row.leaveCount} Days`}
+                                color="primary"
+                                sx={{ fontWeight: 700 }}
+                              />
+                            ) : (
+                              <Typography variant="body2" color="text.secondary">0 Days</Typography>
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+              <TablePagination
+                rowsPerPageOptions={[10]}
+                component="div"
+                count={summaryData.getTeacherAttendanceSummary.length}
+                rowsPerPage={10}
+                page={summaryPage}
+                onPageChange={(e, newPage) => setSummaryPage(newPage)}
+              />
+            </>
+          )}
         </Box>
       )}
 
