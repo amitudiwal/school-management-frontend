@@ -112,7 +112,7 @@ function AccountantRegister() {
     const newErrors = {};
     if (!firstName.trim()) newErrors.firstName = 'First Name is required.';
     if (!lastName.trim()) newErrors.lastName = 'Last Name is required.';
-    
+
     if (!email.trim()) {
       newErrors.email = 'Email Address is required.';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email.trim())) {
@@ -176,9 +176,9 @@ function AccountantRegister() {
         <Typography variant="h4" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
           School Accountant Registration
         </Typography>
-        <Button 
-          variant="contained" 
-          startIcon={<AddIcon />} 
+        <Button
+          variant="contained"
+          startIcon={<AddIcon />}
           onClick={() => { clearForm(); setOpenModal(true); }}
           sx={{ width: { xs: '100%', sm: 'auto' }, background: 'linear-gradient(135deg, #10B981 0%, #059669 100%)', color: '#FFFFFF' }}
         >
@@ -198,7 +198,7 @@ function AccountantRegister() {
                 <TableRow>
                   <TableCell sx={{ fontWeight: 700 }}>Accountant Name</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Email</TableCell>
-                  <TableCell sx={{ fontWeight: 700 }}>Phone</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Phone No.</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Department</TableCell>
                   <TableCell sx={{ fontWeight: 700 }}>Designation</TableCell>
                   <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
@@ -249,44 +249,44 @@ function AccountantRegister() {
             {formError && <Alert severity="error" sx={{ mb: 2 }}>{formError}</Alert>}
             <Grid container spacing={2}>
               <Grid item xs={12} sm={6}>
-                <TextField 
-                  fullWidth 
-                  required 
-                  label="First Name" 
-                  value={firstName} 
+                <TextField
+                  fullWidth
+                  required
+                  label="First Name"
+                  value={firstName}
                   onChange={(e) => {
                     setFirstName(e.target.value);
                     if (errors.firstName) setErrors(prev => ({ ...prev, firstName: '' }));
-                  }} 
+                  }}
                   error={Boolean(errors.firstName)}
                   helperText={errors.firstName}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField 
-                  fullWidth 
-                  required 
-                  label="Last Name" 
-                  value={lastName} 
+                <TextField
+                  fullWidth
+                  required
+                  label="Last Name"
+                  value={lastName}
                   onChange={(e) => {
                     setLastName(e.target.value);
                     if (errors.lastName) setErrors(prev => ({ ...prev, lastName: '' }));
-                  }} 
+                  }}
                   error={Boolean(errors.lastName)}
                   helperText={errors.lastName}
                 />
               </Grid>
               <Grid item xs={12}>
-                <TextField 
-                  fullWidth 
-                  required 
-                  type="email" 
-                  label="Email Address" 
-                  value={email} 
+                <TextField
+                  fullWidth
+                  required
+                  type="email"
+                  label="Email Address"
+                  value={email}
                   onChange={(e) => {
                     setEmail(e.target.value);
                     if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
-                  }} 
+                  }}
                   error={Boolean(errors.email)}
                   helperText={errors.email}
                 />
@@ -299,45 +299,45 @@ function AccountantRegister() {
                 </TextField>
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField 
-                  fullWidth 
-                  required 
-                  label="Phone" 
-                  value={phone} 
+                <TextField
+                  fullWidth
+                  required
+                  label="Phone"
+                  value={phone}
                   onChange={(e) => {
                     setPhone(e.target.value);
                     if (errors.phone) setErrors(prev => ({ ...prev, phone: '' }));
-                  }} 
+                  }}
                   error={Boolean(errors.phone)}
                   helperText={errors.phone}
                 />
               </Grid>
               <Grid item xs={12} sm={6}>
-                <TextField 
-                  fullWidth 
-                  required 
-                  label="Designation" 
-                  value={designation} 
+                <TextField
+                  fullWidth
+                  required
+                  label="Designation"
+                  value={designation}
                   onChange={(e) => {
                     setDesignation(e.target.value);
                     if (errors.designation) setErrors(prev => ({ ...prev, designation: '' }));
-                  }} 
+                  }}
                   error={Boolean(errors.designation)}
                   helperText={errors.designation}
                 />
               </Grid>
               {!selectedStaff && (
                 <Grid item xs={12} sm={6}>
-                  <TextField 
-                    fullWidth 
-                    required={!selectedStaff} 
-                    type={showPassword ? 'text' : 'password'} 
-                    label="Accountant Login Password" 
-                    value={password} 
+                  <TextField
+                    fullWidth
+                    required={!selectedStaff}
+                    type={showPassword ? 'text' : 'password'}
+                    label="Accountant Login Password"
+                    value={password}
                     onChange={(e) => {
                       setPassword(e.target.value);
                       if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
-                    }} 
+                    }}
                     error={Boolean(errors.password)}
                     helperText={errors.password}
                     InputProps={{
