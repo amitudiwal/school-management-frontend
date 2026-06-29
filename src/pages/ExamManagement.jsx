@@ -24,7 +24,8 @@ import {
   GET_SUBJECTS,
   GET_EXAM_SCHEDULES,
   CREATE_EXAM_SCHEDULE,
-  DELETE_EXAM_SCHEDULE
+  DELETE_EXAM_SCHEDULE,
+  GET_SECTIONS
 } from '../graphql/operations';
 
 function ExamManagement() {
@@ -46,8 +47,10 @@ function ExamManagement() {
   // Exam Schedule States
   const [filterExamId, setFilterExamId] = useState('');
   const [filterClassId, setFilterClassId] = useState('');
+  const [filterSectionId, setFilterSectionId] = useState('');
   const [openScheduleModal, setOpenScheduleModal] = useState(false);
   const [schedSubjectId, setSchedSubjectId] = useState('');
+  const [schedSectionId, setSchedSectionId] = useState('');
   const [schedDate, setSchedDate] = useState('');
   const [schedStartTime, setSchedStartTime] = useState('');
   const [schedEndTime, setSchedEndTime] = useState('');
@@ -60,11 +63,15 @@ function ExamManagement() {
   // Reset pageSchedules when filters change
   React.useEffect(() => {
     setPageSchedules(0);
-  }, [filterExamId, filterClassId]);
+  }, [filterExamId, filterClassId, filterSectionId]);
 
   // Dropdown Queries
   const { data: examsData, loading: examsLoading, refetch: refetchExams } = useQuery(GET_EXAMS);
   const { data: classesData } = useQuery(GET_CLASSES);
+  const { data: sectionsData } = useQuery(GET_SECTIONS, {
+    variables: { classId: filterClassId || undefined },
+    skip: !filterClassId
+  });
   const { data: subjectsData } = useQuery(GET_SUBJECTS, {
     variables: { classId: filterClassId || undefined },
     skip: !filterClassId
@@ -72,8 +79,12 @@ function ExamManagement() {
 
   // Schedule Query
   const { data: schedulesData, loading: schedulesLoading, refetch: refetchSchedules } = useQuery(GET_EXAM_SCHEDULES, {
-    variables: { examId: filterExamId || undefined, classId: filterClassId || undefined },
-    skip: !filterExamId || !filterClassId
+    variables: { 
+      examId: filterExamId || undefined, 
+      classId: filterClassId || undefined,
+      sectionId: filterSectionId || undefined
+    },
+    skip: !filterExamId || !filterClassId || !filterSectionId
   });
 
   // Mutations
@@ -137,6 +148,7 @@ function ExamManagement() {
 
   const clearScheduleForm = () => {
     setSchedSubjectId('');
+    setSchedSectionId('');
     setSchedDate('');
     setSchedStartTime('');
     setSchedEndTime('');
@@ -187,7 +199,8 @@ function ExamManagement() {
         endTime: schedEndTime,
         maxMarks: max,
         passMarks: pass,
-        roomNo: schedRoomNo || undefined
+        roomNo: schedRoomNo || undefined,
+        sectionId: schedSectionId || undefined
       }
     });
   };
@@ -212,8 +225,12 @@ function ExamManagement() {
             <Button
               variant="contained"
               startIcon={<AddIcon />}
-              disabled={!filterExamId || !filterClassId}
-              onClick={() => { clearScheduleForm(); setOpenScheduleModal(true); }}
+              disabled={!filterExamId || !filterClassId || !filterSectionId}
+              onClick={() => {
+                clearScheduleForm();
+                setSchedSectionId(filterSectionId);
+                setOpenScheduleModal(true);
+              }}
               sx={{ background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)', color: '#FFFFFF', fontWeight: 700 }}
             >
               Schedule Subject Exam
@@ -312,7 +329,7 @@ function ExamManagement() {
           <Card sx={{ mb: 3 }}>
             <CardContent>
               <Grid container spacing={2}>
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} sm={4}>
                   <TextField
                     fullWidth
                     select
@@ -320,30 +337,47 @@ function ExamManagement() {
                     value={filterExamId}
                     onChange={(e) => setFilterExamId(e.target.value)}
                   >
-                    {examsData?.getExams.map((ex) => (
+                    {examsData?.getExams?.map((ex) => (
                       <MenuItem key={ex.id} value={ex.id}>{ex.name}</MenuItem>
                     ))}
                   </TextField>
                 </Grid>
-                <Grid item xs={12} sm={6}>
+                <Grid item xs={12} sm={4}>
                   <TextField
                     fullWidth
                     select
                     label="Select Class"
                     value={filterClassId}
-                    onChange={(e) => setFilterClassId(e.target.value)}
+                    onChange={(e) => {
+                      setFilterClassId(e.target.value);
+                      setFilterSectionId('');
+                    }}
                   >
-                    {classesData?.getClasses.map((cls) => (
+                    {classesData?.getClasses?.map((cls) => (
                       <MenuItem key={cls.id} value={cls.id}>{cls.name}</MenuItem>
+                    ))}
+                  </TextField>
+                </Grid>
+                <Grid item xs={12} sm={4}>
+                  <TextField
+                    fullWidth
+                    select
+                    label="Select Section"
+                    value={filterSectionId}
+                    disabled={!filterClassId}
+                    onChange={(e) => setFilterSectionId(e.target.value)}
+                  >
+                    {sectionsData?.getSections?.map((sec) => (
+                      <MenuItem key={sec.id} value={sec.id}>{sec.name}</MenuItem>
                     ))}
                   </TextField>
                 </Grid>
               </Grid>
             </CardContent>
           </Card>
-
-          {!filterExamId || !filterClassId ? (
-            <Alert severity="info">Please select both an Exam Term and a Class to view and manage exam schedules.</Alert>
+ 
+          {!filterExamId || !filterClassId || !filterSectionId ? (
+            <Alert severity="info">Please select an Exam Term, a Class, and a Section to view and manage exam schedules.</Alert>
           ) : schedulesLoading ? (
             <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}><CircularProgress /></Box>
           ) : (
@@ -354,6 +388,7 @@ function ExamManagement() {
                     <TableRow>
                       <TableCell>Subject Name</TableCell>
                       <TableCell>Subject Code</TableCell>
+                      <TableCell>Section</TableCell>
                       <TableCell>Exam Date</TableCell>
                       <TableCell>Time Slot</TableCell>
                       <TableCell>Room No</TableCell>
@@ -369,6 +404,7 @@ function ExamManagement() {
                         <TableRow key={sc.id} hover>
                           <TableCell sx={{ fontWeight: 700 }}>{sc.subjectId?.name || '-'}</TableCell>
                           <TableCell>{sc.subjectId?.code || '-'}</TableCell>
+                          <TableCell sx={{ fontWeight: 600 }}>{sc.sectionId?.name || 'All Sections'}</TableCell>
                           <TableCell>{sc.date ? new Date(sc.date).toLocaleDateString() : '-'}</TableCell>
                           <TableCell>{`${sc.startTime} - ${sc.endTime}`}</TableCell>
                           <TableCell>{sc.roomNo || '-'}</TableCell>
@@ -381,7 +417,7 @@ function ExamManagement() {
                       ))}
                     {(!schedulesData?.getExamSchedules || schedulesData.getExamSchedules.length === 0) && (
                       <TableRow>
-                        <TableCell colSpan={8} align="center">No data</TableCell>
+                        <TableCell colSpan={9} align="center">No data</TableCell>
                       </TableRow>
                     )}
                   </TableBody>
@@ -453,8 +489,22 @@ function ExamManagement() {
                   value={schedSubjectId}
                   onChange={(e) => setSchedSubjectId(e.target.value)}
                 >
-                  {subjectsData?.getSubjects.map((sub) => (
+                  {subjectsData?.getSubjects?.map((sub) => (
                     <MenuItem key={sub.id} value={sub.id}>{sub.name} ({sub.code})</MenuItem>
+                  ))}
+                </TextField>
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Select Section (Optional - leaves as All Sections if blank)"
+                  value={schedSectionId}
+                  onChange={(e) => setSchedSectionId(e.target.value)}
+                >
+                  <MenuItem value="">All Sections</MenuItem>
+                  {sectionsData?.getSections?.map((sec) => (
+                    <MenuItem key={sec.id} value={sec.id}>{sec.name}</MenuItem>
                   ))}
                 </TextField>
               </Grid>

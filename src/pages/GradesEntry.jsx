@@ -8,7 +8,7 @@ import {
 import { Save as SaveIcon, CheckCircle as SuccessIcon } from '@mui/icons-material';
 import { 
   GET_CLASSES, GET_SECTIONS, GET_STUDENTS, GET_EXAMS, GET_SUBJECTS, 
-  ENTER_STUDENT_MARKS 
+  ENTER_STUDENT_MARKS, GET_EXAM_SCHEDULES
 } from '../graphql/operations';
 
 const GRADE_OPTIONS = ['A+', 'A', 'B+', 'B', 'C+', 'C', 'D', 'F'];
@@ -35,9 +35,24 @@ function GradesEntry() {
     variables: { classId: classId || undefined }
   });
 
-  const { data: subjectsData } = useQuery(GET_SUBJECTS, {
-    variables: { classId: classId || undefined }
+  const { data: schedulesData } = useQuery(GET_EXAM_SCHEDULES, {
+    skip: !examId || !classId,
+    variables: { examId, classId }
   });
+
+  const scheduledSubjects = React.useMemo(() => {
+    if (!schedulesData?.getExamSchedules) return [];
+    
+    // Extract subjectId objects and filter out duplicates
+    const subjectsMap = {};
+    schedulesData.getExamSchedules.forEach(schedule => {
+      if (schedule.subjectId) {
+        subjectsMap[schedule.subjectId.id] = schedule.subjectId;
+      }
+    });
+    
+    return Object.values(subjectsMap);
+  }, [schedulesData]);
 
   const { loading: studentsLoading, error: studentsError, data: studentsData } = useQuery(GET_STUDENTS, {
     skip: !classId || !sectionId,
@@ -155,12 +170,12 @@ function GradesEntry() {
                 value={examId}
                 onChange={(e) => setExamId(e.target.value)}
               >
-                {examsData?.getExams.map((ex) => (
+                {examsData?.getExams?.map((ex) => (
                   <MenuItem key={ex.id} value={ex.id}>{ex.name}</MenuItem>
                 ))}
               </TextField>
             </Grid>
-
+ 
             <Grid item xs={12} sm={3}>
               <TextField
                 fullWidth
@@ -173,12 +188,12 @@ function GradesEntry() {
                   setSubjectId('');
                 }}
               >
-                {classesData?.getClasses.map((cls) => (
+                {classesData?.getClasses?.map((cls) => (
                   <MenuItem key={cls.id} value={cls.id}>{cls.name}</MenuItem>
                 ))}
               </TextField>
             </Grid>
-
+ 
             <Grid item xs={12} sm={3}>
               <TextField
                 fullWidth
@@ -188,24 +203,30 @@ function GradesEntry() {
                 disabled={!classId}
                 onChange={(e) => setSectionId(e.target.value)}
               >
-                {sectionsData?.getSections.map((sec) => (
+                {sectionsData?.getSections?.map((sec) => (
                   <MenuItem key={sec.id} value={sec.id}>{sec.name}</MenuItem>
                 ))}
               </TextField>
             </Grid>
-
+ 
             <Grid item xs={12} sm={3}>
               <TextField
                 fullWidth
                 select
                 label="Select Subject"
                 value={subjectId}
-                disabled={!classId}
+                disabled={!classId || !examId}
                 onChange={(e) => setSubjectId(e.target.value)}
               >
-                {subjectsData?.getSubjects.map((sub) => (
-                  <MenuItem key={sub.id} value={sub.id}>{sub.name}</MenuItem>
-                ))}
+                {scheduledSubjects.length === 0 ? (
+                  <MenuItem disabled value="">
+                    {(!examId || !classId) ? 'Select Exam & Class first' : 'No scheduled subjects'}
+                  </MenuItem>
+                ) : (
+                  scheduledSubjects.map((sub) => (
+                    <MenuItem key={sub.id} value={sub.id}>{sub.name}</MenuItem>
+                  ))
+                )}
               </TextField>
             </Grid>
           </Grid>

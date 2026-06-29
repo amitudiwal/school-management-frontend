@@ -1631,8 +1631,8 @@ export const DELETE_EXAM = gql`
 `;
 
 export const GET_EXAM_SCHEDULES = gql`
-  query GetExamSchedules($examId: ID, $classId: ID) {
-    getExamSchedules(examId: $examId, classId: $classId) {
+  query GetExamSchedules($examId: ID, $classId: ID, $sectionId: ID) {
+    getExamSchedules(examId: $examId, classId: $classId, sectionId: $sectionId) {
       id
       examId {
         id
@@ -1644,6 +1644,10 @@ export const GET_EXAM_SCHEDULES = gql`
         code
       }
       classId {
+        id
+        name
+      }
+      sectionId {
         id
         name
       }
@@ -1668,6 +1672,7 @@ export const CREATE_EXAM_SCHEDULE = gql`
     $maxMarks: Float!
     $passMarks: Float!
     $roomNo: String
+    $sectionId: ID
   ) {
     createExamSchedule(
       examId: $examId
@@ -1679,6 +1684,7 @@ export const CREATE_EXAM_SCHEDULE = gql`
       maxMarks: $maxMarks
       passMarks: $passMarks
       roomNo: $roomNo
+      sectionId: $sectionId
     ) {
       id
       date
@@ -1687,6 +1693,10 @@ export const CREATE_EXAM_SCHEDULE = gql`
       maxMarks
       passMarks
       roomNo
+      sectionId {
+        id
+        name
+      }
     }
   }
 `;
