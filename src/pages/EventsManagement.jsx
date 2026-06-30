@@ -212,7 +212,7 @@ function EventsManagement() {
 
             // Colorful styling based on type
             const isHoliday = event.type === 'HOLIDAY';
-            const accentColor = isHoliday ? '#EF4444' : '#6366F1';
+            const accentColor = isHoliday ? theme.palette.secondary.main : theme.palette.primary.main;
             
             return (
               <Grid item xs={12} sm={6} md={4} key={event.id} component={motion.div} variants={itemVariants}>

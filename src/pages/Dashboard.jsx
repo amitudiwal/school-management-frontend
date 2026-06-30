@@ -1126,7 +1126,7 @@ function Dashboard() {
                 {eventsData.getEvents.slice(0, 4).map((evt) => {
                   const evtDate = new Date(evt.date);
                   const isHoliday = evt.type === 'HOLIDAY';
-                  const accentColor = isHoliday ? '#EF4444' : '#6366F1';
+                  const accentColor = isHoliday ? theme.palette.secondary.main : theme.palette.primary.main;
                   const formattedDate = evtDate.toLocaleDateString('en-US', {
                     month: 'short',
                     day: 'numeric',

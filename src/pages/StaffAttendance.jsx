@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@apollo/client';
 import { motion, AnimatePresence } from 'framer-motion';
 import { 
@@ -65,7 +65,6 @@ function StaffAttendance() {
         rem[t.id] = '';
       });
       // Then overlay actual database records
-      let latestTime = null;
       data.getTeacherAttendance.forEach(rec => {
         if (rec.teacherId?.id) {
           att[rec.teacherId.id] = rec.status;
@@ -79,12 +78,6 @@ function StaffAttendance() {
           if (rec.checkIn) {
             checkins[rec.teacherId.id] = rec.checkIn;
           }
-          if (rec.updatedAt) {
-            const upd = new Date(rec.updatedAt);
-            if (!latestTime || upd > latestTime) {
-              latestTime = upd;
-            }
-          }
         }
       });
       setTeacherAttendance(att);
@@ -92,7 +85,6 @@ function StaffAttendance() {
       setTeacherFaceImages(faces);
       setTeacherLocations(locations);
       setTeacherCheckIns(checkins);
-      setLastTeacherAttendanceTime(latestTime);
     }
   });
 
@@ -111,7 +103,6 @@ function StaffAttendance() {
         rem[s.id] = '';
       });
       // Then overlay actual database records
-      let latestTime = null;
       data.getStaffAttendance.forEach(rec => {
         if (rec.staffId?.id) {
           att[rec.staffId.id] = rec.status;
@@ -125,12 +116,6 @@ function StaffAttendance() {
           if (rec.checkIn) {
             checkins[rec.staffId.id] = rec.checkIn;
           }
-          if (rec.updatedAt) {
-            const upd = new Date(rec.updatedAt);
-            if (!latestTime || upd > latestTime) {
-              latestTime = upd;
-            }
-          }
         }
       });
       setStaffAttendance(att);
@@ -138,7 +123,6 @@ function StaffAttendance() {
       setStaffFaceImages(faces);
       setStaffLocations(locations);
       setStaffCheckIns(checkins);
-      setLastStaffAttendanceTime(latestTime);
     }
   });
 
@@ -148,7 +132,9 @@ function StaffAttendance() {
     awaitRefetchQueries: true,
     onCompleted: () => {
       dispatch(showToast({ message: 'Teacher attendance saved successfully!', severity: 'success' }));
-      setLastTeacherAttendanceTime(new Date());
+      const now = new Date();
+      setLastTeacherAttendanceTime(now);
+      localStorage.setItem(`lastSaveTime_teacher_${date}`, now.toISOString());
     },
     onError: (err) => {
       dispatch(showToast({ message: 'Error saving: ' + err.message, severity: 'error' }));
@@ -160,12 +146,30 @@ function StaffAttendance() {
     awaitRefetchQueries: true,
     onCompleted: () => {
       dispatch(showToast({ message: 'Staff attendance saved successfully!', severity: 'success' }));
-      setLastStaffAttendanceTime(new Date());
+      const now = new Date();
+      setLastStaffAttendanceTime(now);
+      localStorage.setItem(`lastSaveTime_staff_${date}`, now.toISOString());
     },
     onError: (err) => {
       dispatch(showToast({ message: 'Error saving: ' + err.message, severity: 'error' }));
     }
   });
+
+  useEffect(() => {
+    const savedTeacherTime = localStorage.getItem(`lastSaveTime_teacher_${date}`);
+    if (savedTeacherTime) {
+      setLastTeacherAttendanceTime(new Date(savedTeacherTime));
+    } else {
+      setLastTeacherAttendanceTime(null);
+    }
+
+    const savedStaffTime = localStorage.getItem(`lastSaveTime_staff_${date}`);
+    if (savedStaffTime) {
+      setLastStaffAttendanceTime(new Date(savedStaffTime));
+    } else {
+      setLastStaffAttendanceTime(null);
+    }
+  }, [date]);
 
   const handleTeacherStatusChange = (teacherId, nextStatus) => {
     if (!nextStatus) return;

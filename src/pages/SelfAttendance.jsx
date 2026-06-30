@@ -33,6 +33,7 @@ function SelfAttendance() {
   const [verificationStep, setVerificationStep] = useState('');
   const [matchConfidence, setMatchConfidence] = useState(0);
   const [userLocation, setUserLocation] = useState(null);
+  const userLocationRef = useRef(null);
   const [locationName, setLocationName] = useState('');
   const [isLoadingLocationName, setIsLoadingLocationName] = useState(false);
 
@@ -61,16 +62,22 @@ function SelfAttendance() {
         (position) => {
           const lat = position.coords.latitude;
           const lng = position.coords.longitude;
-          setUserLocation(`${lat.toFixed(6)},${lng.toFixed(6)}`);
+          const locStr = `${lat.toFixed(6)},${lng.toFixed(6)}`;
+          setUserLocation(locStr);
+          userLocationRef.current = locStr;
         },
         (error) => {
           console.error("Error getting location: ", error);
-          setUserLocation("Location Permission Denied");
+          const errStr = "Location Permission Denied";
+          setUserLocation(errStr);
+          userLocationRef.current = errStr;
         },
         { enableHighAccuracy: true, timeout: 5000, maximumAge: 0 }
       );
     } else {
-      setUserLocation("Geolocation Not Supported");
+      const errStr = "Geolocation Not Supported";
+      setUserLocation(errStr);
+      userLocationRef.current = errStr;
     }
   };
 
@@ -127,6 +134,12 @@ function SelfAttendance() {
       fetchLocationName(userLocation);
     }
   }, [userLocation, attendanceInfo?.marked, attendanceInfo?.location]);
+
+  useEffect(() => {
+    if (!attendanceInfo?.marked) {
+      getGeoLocation();
+    }
+  }, [attendanceInfo?.marked]);
 
   // Start webcam when requested
   const startCamera = async () => {
@@ -219,7 +232,7 @@ function SelfAttendance() {
         if (idx === steps.length - 1) {
           setTimeout(() => {
             setIsVerifying(false);
-            markSelfAttendanceMutation({ variables: { faceImage: dataUrl, location: userLocation } });
+            markSelfAttendanceMutation({ variables: { faceImage: dataUrl, location: userLocationRef.current } });
           }, 600);
         }
       }, step.delay);
@@ -232,6 +245,7 @@ function SelfAttendance() {
     setVerificationStep('');
     setMatchConfidence(0);
     setUserLocation(null);
+    userLocationRef.current = null;
     setLocationName('');
     startCamera();
   };
