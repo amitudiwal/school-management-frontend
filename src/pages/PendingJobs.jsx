@@ -614,7 +614,7 @@ function PendingJobs() {
             <Grid item xs={12} md={5}>
               <Card sx={{ borderRadius: 3, boxShadow: '0 4px 16px rgba(0,0,0,0.06)' }}>
                 <CardHeader
-                  title="Add Grade Subject Chapter"
+                  title="Add Class Subject Chapter"
                   titleTypographyProps={{ variant: 'h6', fontWeight: 700, fontFamily: "'Outfit', sans-serif" }}
                   sx={{ borderBottom: '1px solid', borderColor: 'divider', pb: 2 }}
                 />
@@ -624,7 +624,7 @@ function PendingJobs() {
                       <TextField
                         select
                         fullWidth
-                        label="Select Subject & Grade"
+                        label="Select Subject & Class"
                         value={mgmtSubjectId}
                         onChange={(e) => setMgmtSubjectId(e.target.value)}
                         variant="outlined"

@@ -1334,7 +1334,7 @@ function StudentList() {
                   <TextField
                     fullWidth
                     select
-                    label="Filter by Grade Level"
+                    label="Filter by Class"
                     value={classId}
                     onChange={(e) => {
                       setClassId(e.target.value);
@@ -1383,7 +1383,7 @@ function StudentList() {
                       <TableCell>Roll No</TableCell>
                       <TableCell>Student Name</TableCell>
                       <TableCell>Gender</TableCell>
-                      <TableCell>Grade Level</TableCell>
+                      <TableCell>Class</TableCell>
                       <TableCell>Assigned Section</TableCell>
                       <TableCell>Parent / Guardian</TableCell>
                       {canManageStudent && <TableCell align="right">Actions</TableCell>}
@@ -1736,7 +1736,7 @@ function StudentList() {
                   <DetailField label="Admission No" value={viewingStudent.admissionNo} icon={<BadgeIcon />} />
                   <DetailField label="Admission Date" value={viewingStudent.admissionDate ? new Date(viewingStudent.admissionDate).toLocaleDateString() : '-'} icon={<CalendarIcon />} />
                   <DetailField label="Roll Number" value={viewingStudent.rollNo} icon={<BadgeIcon />} />
-                  <DetailField label="Class / Grade" value={viewingStudent.classId?.name} icon={<SchoolIcon />} />
+                  <DetailField label="Class" value={viewingStudent.classId?.name} icon={<SchoolIcon />} />
                   <DetailField label="Section" value={viewingStudent.sectionId?.name} icon={<SchoolIcon />} />
                   <DetailField label="Branch" value={viewingStudent.branch} icon={<LocationIcon />} />
                   <DetailField label="Email Address" value={viewingStudent.userId?.email} icon={<EmailIcon />} />
