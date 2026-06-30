@@ -24,7 +24,8 @@ import {
   PendingActions as PendingJobsIcon,
   DirectionsBus as BusIcon,
   Security as SettingsIcon,
-  EventNote as EventsIcon
+  EventNote as EventsIcon,
+  Inventory as InventoryIcon
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
 import { toggleTheme } from '../store/slices/uiSlice';
@@ -112,7 +113,8 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
       { text: 'Bus Tracker', icon: <BusIcon />, path: '/bus-tracker' },
       { text: 'Leave Management', icon: <LeaveIcon />, path: '/leaves' },
       { text: 'Weekly Timetable', icon: <GradesIcon />, path: '/timetable' },
-      { text: 'Events & Holidays', icon: <EventsIcon />, path: '/events' }
+      { text: 'Events & Holidays', icon: <EventsIcon />, path: '/events' },
+      { text: 'School Inventory', icon: <InventoryIcon />, path: '/inventory' }
     ] : []),
 
     // SUPER_TEACHER
@@ -124,7 +126,8 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
       { text: 'Exam Schedule', icon: <GradesIcon />, path: '/exams', feature: 'exams' },
       { text: 'Staff Attendance', icon: <AttendanceIcon />, path: '/staff-attendance', feature: 'staff-attendance' },
       { text: 'Leave Management', icon: <LeaveIcon />, path: '/leaves', feature: 'leaves' },
-      { text: 'Events & Holidays', icon: <EventsIcon />, path: '/events', feature: 'events' }
+      { text: 'Events & Holidays', icon: <EventsIcon />, path: '/events', feature: 'events' },
+      { text: 'School Inventory', icon: <InventoryIcon />, path: '/inventory', feature: 'inventory' }
     ].filter(item => !item.feature || hasPermission('SUPER_TEACHER', item.feature)) : []),
 
     // ACCOUNTANT

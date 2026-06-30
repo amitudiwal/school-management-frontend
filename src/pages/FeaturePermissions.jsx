@@ -25,7 +25,8 @@ const ROLE_FEATURES = {
     { key: 'staff-attendance', label: 'Staff Attendance', desc: 'Allows marking and monitoring teacher and staff logs.' },
     { key: 'leaves', label: 'Leave Management', desc: 'Allows approving or requesting teacher leave of absence.' },
     { key: 'copy-submission', label: 'Copy Submission', desc: 'Enables teachers to track fair copy submission for students.' },
-    { key: 'events', label: 'Events & Holidays', desc: 'Allows managing and adding school events and holidays.' }
+    { key: 'events', label: 'Events & Holidays', desc: 'Allows managing and adding school events and holidays.' },
+    { key: 'inventory', label: 'School Inventory', desc: 'Allows managing and adding school assets like sports kits and furniture.' }
   ],
   ACCOUNTANT: [
     { key: 'students', label: 'Student Registration', desc: 'Allows onboarding new students and modifying records.' },

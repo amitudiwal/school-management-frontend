@@ -2255,5 +2255,89 @@ export const GET_TEACHER_ATTENDANCE_SUMMARY = gql`
   }
 `;
 
+export const GET_INVENTORY_LIST = gql`
+  query GetInventoryList {
+    getInventoryList {
+      id
+      itemName
+      category
+      quantity
+      availableQuantity
+      unitPrice
+      vendorName
+      purchaseDate
+      status
+    }
+  }
+`;
+
+export const ADD_INVENTORY_ITEM = gql`
+  mutation AddInventoryItem(
+    $itemName: String!
+    $category: String!
+    $quantity: Int!
+    $unitPrice: Float
+    $vendorName: String
+    $purchaseDate: Date
+  ) {
+    addInventoryItem(
+      itemName: $itemName
+      category: $category
+      quantity: $quantity
+      unitPrice: $unitPrice
+      vendorName: $vendorName
+      purchaseDate: $purchaseDate
+    ) {
+      id
+      itemName
+      category
+      quantity
+      availableQuantity
+      unitPrice
+      vendorName
+      purchaseDate
+      status
+    }
+  }
+`;
+
+export const UPDATE_INVENTORY_ITEM = gql`
+  mutation UpdateInventoryItem(
+    $id: ID!
+    $itemName: String
+    $category: String
+    $quantity: Int
+    $unitPrice: Float
+    $vendorName: String
+    $purchaseDate: Date
+  ) {
+    updateInventoryItem(
+      id: $id
+      itemName: $itemName
+      category: $category
+      quantity: $quantity
+      unitPrice: $unitPrice
+      vendorName: $vendorName
+      purchaseDate: $purchaseDate
+    ) {
+      id
+      itemName
+      category
+      quantity
+      availableQuantity
+      unitPrice
+      vendorName
+      purchaseDate
+      status
+    }
+  }
+`;
+
+export const DELETE_INVENTORY_ITEM = gql`
+  mutation DeleteInventoryItem($id: ID!) {
+    deleteInventoryItem(id: $id)
+  }
+`;
+
 
 
