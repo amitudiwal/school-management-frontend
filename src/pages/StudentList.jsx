@@ -7,7 +7,7 @@ import {
   TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress,
   Alert, IconButton, InputAdornment, Avatar, TablePagination, Tabs, Tab,
   Switch, FormControlLabel, Accordion, AccordionSummary, AccordionDetails,
-  Chip, Stack
+  Chip, Stack, Menu
 } from '@mui/material';
 import {
   Search as SearchIcon, Add as AddIcon, FileDownload as ExportIcon,
@@ -28,7 +28,8 @@ import {
   REGISTER_STUDENT,
   UPDATE_STUDENT,
   DELETE_STUDENT,
-  GET_PARENTS
+  GET_PARENTS,
+  GET_EXAMS
 } from '../graphql/operations';
 import { BACKEND_URL } from '../graphql/client';
 
@@ -125,6 +126,24 @@ function StudentList() {
   const [viewingStudent, setViewingStudent] = useState(null);
   const [detailTab, setDetailTab] = useState(0);
   const [page, setPage] = useState(0);
+
+  const [reportCardAnchorEl, setReportCardAnchorEl] = useState(null);
+  const openReportCardMenu = Boolean(reportCardAnchorEl);
+
+  const handleReportCardClick = (event) => {
+    setReportCardAnchorEl(event.currentTarget);
+  };
+
+  const handleReportCardClose = () => {
+    setReportCardAnchorEl(null);
+  };
+
+  const handleSelectExamForReportCard = (examId) => {
+    handleReportCardClose();
+    if (viewingStudent) {
+      window.open(`${BACKEND_URL}/api/report-cards/student/${viewingStudent.id}/exam/${examId}?token=${token}`, '_blank');
+    }
+  };
 
   // Bulk import states
   const [uploadingExcel, setUploadingExcel] = useState(false);
@@ -317,6 +336,7 @@ function StudentList() {
     variables: { classId: formClassId || undefined }
   });
   const { data: parentsData } = useQuery(GET_PARENTS);
+  const { data: examsData } = useQuery(GET_EXAMS);
 
   // Mutations
   const [registerStudentMutation, { loading: addLoading }] = useMutation(REGISTER_STUDENT, {
@@ -1901,11 +1921,29 @@ function StudentList() {
               <Button
                 variant="outlined"
                 color="primary"
-                onClick={() => window.open(`/print/report-card?studentId=${viewingStudent.id}`, '_blank')}
+                onClick={handleReportCardClick}
                 sx={{ textTransform: 'none', fontWeight: 700 }}
               >
                 Print Report Card
               </Button>
+              <Menu
+                anchorEl={reportCardAnchorEl}
+                open={openReportCardMenu}
+                onClose={handleReportCardClose}
+                MenuListProps={{
+                  'aria-labelledby': 'basic-button',
+                }}
+              >
+                {examsData?.getExams && examsData.getExams.length > 0 ? (
+                  examsData.getExams.map((exam) => (
+                    <MenuItem key={exam.id} onClick={() => handleSelectExamForReportCard(exam.id)}>
+                      {exam.name} ({exam.academicYear})
+                    </MenuItem>
+                  ))
+                ) : (
+                  <MenuItem disabled>No exams available</MenuItem>
+                )}
+              </Menu>
               <Button
                 variant="outlined"
                 color="secondary"
