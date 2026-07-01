@@ -7,7 +7,7 @@ import {
   TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress,
   Alert, IconButton, InputAdornment, Avatar, TablePagination, Tabs, Tab,
   Switch, FormControlLabel, Accordion, AccordionSummary, AccordionDetails,
-  Chip
+  Chip, Stack
 } from '@mui/material';
 import {
   Search as SearchIcon, Add as AddIcon, FileDownload as ExportIcon,
@@ -619,16 +619,22 @@ function StudentList() {
 
   const handleExport = async (format) => {
     try {
-      const response = await fetch(`http://localhost:5000/api/export/${format}/students`, {
+      const params = new URLSearchParams();
+      if (classId) params.append('classId', classId);
+      if (sectionId) params.append('sectionId', sectionId);
+      if (search) params.append('search', search);
+
+      const url = `${BACKEND_URL}/api/export/${format}/students?${params.toString()}`;
+      const response = await fetch(url, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
       });
       if (!response.ok) throw new Error('Export failed');
       const blob = await response.blob();
-      const url = window.URL.createObjectURL(blob);
+      const urlBlob = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
-      a.href = url;
+      a.href = urlBlob;
       a.download = `student-directory.${format === 'excel' ? 'xlsx' : format}`;
       document.body.appendChild(a);
       a.click();
@@ -744,12 +750,16 @@ function StudentList() {
           Student Admission & Intake
         </Typography>
         <Box sx={{ display: 'flex', gap: 1.5, flexDirection: { xs: 'column', sm: 'row' }, width: { xs: '100%', sm: 'auto' } }}>
-          <Button variant="outlined" startIcon={<ExportIcon />} onClick={() => handleExport('pdf')} sx={{ width: { xs: '100%', sm: 'auto' } }}>
-            PDF Report
-          </Button>
-          <Button variant="outlined" startIcon={<ExportIcon />} onClick={() => handleExport('excel')} sx={{ width: { xs: '100%', sm: 'auto' } }}>
-            Excel Sheet
-          </Button>
+          {tabValue === 1 && (
+            <>
+              <Button variant="outlined" startIcon={<ExportIcon />} onClick={() => handleExport('pdf')} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+                PDF Report
+              </Button>
+              <Button variant="outlined" startIcon={<ExportIcon />} onClick={() => handleExport('excel')} sx={{ width: { xs: '100%', sm: 'auto' } }}>
+                Excel Sheet
+              </Button>
+            </>
+          )}
           {canAddStudent && (
             <Button
               variant="contained"
@@ -1886,6 +1896,34 @@ function StudentList() {
           )}
         </DialogContent>
         <DialogActions sx={{ p: 2, borderTop: '1px solid', borderColor: 'divider' }}>
+          {viewingStudent && (
+            <Stack direction="row" spacing={1} sx={{ mr: 'auto' }}>
+              <Button
+                variant="outlined"
+                color="primary"
+                onClick={() => window.open(`/print/report-card?studentId=${viewingStudent.id}`, '_blank')}
+                sx={{ textTransform: 'none', fontWeight: 700 }}
+              >
+                Print Report Card
+              </Button>
+              <Button
+                variant="outlined"
+                color="secondary"
+                onClick={() => window.open(`/print/certificate?studentId=${viewingStudent.id}&type=excellence`, '_blank')}
+                sx={{ textTransform: 'none', fontWeight: 700 }}
+              >
+                Academic Certificate
+              </Button>
+              <Button
+                variant="outlined"
+                color="warning"
+                onClick={() => window.open(`/print/certificate?studentId=${viewingStudent.id}&type=transfer`, '_blank')}
+                sx={{ textTransform: 'none', fontWeight: 700 }}
+              >
+                Transfer Certificate (TC)
+              </Button>
+            </Stack>
+          )}
           <Button onClick={() => setViewingStudent(null)} variant="contained" sx={{ minWidth: 100 }}>
             Close
           </Button>

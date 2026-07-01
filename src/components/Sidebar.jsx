@@ -25,7 +25,9 @@ import {
   DirectionsBus as BusIcon,
   Security as SettingsIcon,
   EventNote as EventsIcon,
-  Inventory as InventoryIcon
+  Inventory as InventoryIcon,
+  Book as LibraryIcon,
+  Campaign as AnnouncementIcon
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
 import { toggleTheme } from '../store/slices/uiSlice';
@@ -75,9 +77,9 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
     if (!schoolData?.getSchool?.settings?.featurePermissions) {
       // Default fallback
       return {
-        SUPER_TEACHER: ['teachers', 'classes', 'timetable', 'exams', 'staff-attendance', 'leaves', 'copy-submission', 'events'],
+        SUPER_TEACHER: ['teachers', 'classes', 'timetable', 'exams', 'staff-attendance', 'leaves', 'copy-submission', 'events', 'inventory', 'library', 'announcements'],
         ACCOUNTANT: ['students', 'fees', 'payroll'],
-        TEACHER: ['pending-jobs', 'timetable', 'bus-tracker', 'attendance', 'leaves', 'homework', 'grades', 'analytics', 'payroll', 'copy-submission'],
+        TEACHER: ['pending-jobs', 'timetable', 'bus-tracker', 'attendance', 'leaves', 'homework', 'grades', 'analytics', 'payroll', 'copy-submission', 'library', 'announcements'],
         PARENT: ['parent-portal', 'bus-tracker']
       }[roleName] || [];
     }
@@ -114,7 +116,9 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
       { text: 'Leave Management', icon: <LeaveIcon />, path: '/leaves' },
       { text: 'Weekly Timetable', icon: <GradesIcon />, path: '/timetable' },
       { text: 'Events & Holidays', icon: <EventsIcon />, path: '/events' },
-      { text: 'School Inventory', icon: <InventoryIcon />, path: '/inventory' }
+      { text: 'School Inventory', icon: <InventoryIcon />, path: '/inventory' },
+      { text: 'Library Bookshelf', icon: <LibraryIcon />, path: '/library' },
+      { text: 'Circular Portal', icon: <AnnouncementIcon />, path: '/announcements' }
     ] : []),
 
     // SUPER_TEACHER
@@ -127,7 +131,9 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
       { text: 'Staff Attendance', icon: <AttendanceIcon />, path: '/staff-attendance', feature: 'staff-attendance' },
       { text: 'Leave Management', icon: <LeaveIcon />, path: '/leaves', feature: 'leaves' },
       { text: 'Events & Holidays', icon: <EventsIcon />, path: '/events', feature: 'events' },
-      { text: 'School Inventory', icon: <InventoryIcon />, path: '/inventory', feature: 'inventory' }
+      { text: 'School Inventory', icon: <InventoryIcon />, path: '/inventory', feature: 'inventory' },
+      { text: 'Library Bookshelf', icon: <LibraryIcon />, path: '/library', feature: 'library' },
+      { text: 'Circular Portal', icon: <AnnouncementIcon />, path: '/announcements', feature: 'announcements' }
     ].filter(item => !item.feature || hasPermission('SUPER_TEACHER', item.feature)) : []),
 
     // ACCOUNTANT
@@ -150,7 +156,9 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
       { text: 'Homework Board', icon: <HomeworkIcon />, path: '/homework', feature: 'homework' },
       { text: 'Grades Entry', icon: <GradesIcon />, path: '/grades', feature: 'grades' },
       { text: 'Performance Analytics', icon: <DashboardIcon />, path: '/analytics', feature: 'analytics' },
-      { text: 'Payroll & Payslips', icon: <PayrollIcon />, path: '/payroll', feature: 'payroll' }
+      { text: 'Payroll & Payslips', icon: <PayrollIcon />, path: '/payroll', feature: 'payroll' },
+      { text: 'Library Bookshelf', icon: <LibraryIcon />, path: '/library', feature: 'library' },
+      { text: 'Circular Portal', icon: <AnnouncementIcon />, path: '/announcements', feature: 'announcements' }
     ].filter(item => !item.feature || hasPermission(user.role, item.feature)) : []),
 
     // PARENT

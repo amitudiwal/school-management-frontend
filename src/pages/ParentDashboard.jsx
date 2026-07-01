@@ -25,7 +25,8 @@ import {
   Cake as CakeIcon,
   Transgender as GenderIcon,
   FamilyRestroom as ParentIcon,
-  AccountBox as ProfileIcon
+  AccountBox as ProfileIcon,
+  Campaign as AnnouncementIcon
 } from '@mui/icons-material';
 import {
   GET_PARENT_PROFILE,
@@ -33,7 +34,8 @@ import {
   GET_STUDENT_MARKS,
   GET_HOMEWORK,
   GET_STUDENT_FEE_STATUS,
-  GET_TRANSPORT_ROUTES
+  GET_TRANSPORT_ROUTES,
+  GET_NOTIFICATIONS
 } from '../graphql/operations';
 
 function ParentDashboard() {
@@ -79,6 +81,10 @@ function ParentDashboard() {
 
   const { data: transportData, loading: transportLoading, error: transportError } = useQuery(GET_TRANSPORT_ROUTES, {
     skip: !activeChild?.id
+  });
+
+  const { data: noticesData } = useQuery(GET_NOTIFICATIONS, {
+    variables: { role: 'PARENT' }
   });
 
   // Handle Tab Switch
@@ -399,15 +405,88 @@ function ParentDashboard() {
                       </Card>
                     </Grid>
                   </Grid>
+
+                  {/* Notice Board & Announcements */}
+                  <Box sx={{ mt: 3 }}>
+                    <Card variant="outlined" sx={{ borderRadius: 3 }}>
+                      <CardContent>
+                        <Typography variant="h6" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                          <AnnouncementIcon color="primary" /> School Notice Board & Announcements
+                        </Typography>
+                        <Divider sx={{ mb: 2 }} />
+                        <List>
+                          {(noticesData?.getNotifications || []).slice(0, 5).map((notice) => (
+                            <ListItem key={notice.id} sx={{ px: 0, py: 1.5, alignItems: 'flex-start', borderBottom: '1px solid', borderColor: 'divider', '&:last-child': { borderBottom: 0 } }}>
+                              <ListItemIcon sx={{ minWidth: 40, mt: 0.5 }}>
+                                <Box sx={{
+                                  p: 1,
+                                  borderRadius: 2,
+                                  bgcolor: notice.type === 'ALERT' ? 'error.light' : notice.type === 'NOTICE' ? 'secondary.light' : 'primary.light',
+                                  color: notice.type === 'ALERT' ? 'error.main' : notice.type === 'NOTICE' ? 'secondary.main' : 'primary.main',
+                                  display: 'flex',
+                                  justifyContent: 'center',
+                                  alignItems: 'center'
+                                }}>
+                                  <AnnouncementIcon sx={{ fontSize: '1.2rem' }} />
+                                </Box>
+                              </ListItemIcon>
+                              <ListItemText
+                                primary={
+                                  <Stack direction="row" alignItems="center" spacing={1}>
+                                    <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                                      {notice.title}
+                                    </Typography>
+                                    <Chip
+                                      label={notice.type}
+                                      size="small"
+                                      color={notice.type === 'ALERT' ? 'error' : notice.type === 'NOTICE' ? 'secondary' : 'default'}
+                                      sx={{ fontWeight: 700, fontSize: '0.55rem', height: 16 }}
+                                    />
+                                  </Stack>
+                                }
+                                secondary={
+                                  <Box sx={{ mt: 0.5 }}>
+                                    <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+                                      {notice.message}
+                                    </Typography>
+                                    <Typography variant="caption" color="text.disabled" sx={{ display: 'block', mt: 0.5 }}>
+                                      Published: {new Date(notice.createdAt).toLocaleString()}
+                                    </Typography>
+                                  </Box>
+                                }
+                              />
+                            </ListItem>
+                          ))}
+                          {(!noticesData?.getNotifications || noticesData.getNotifications.length === 0) && (
+                            <Typography variant="body2" color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+                              No announcements on the notice board.
+                            </Typography>
+                          )}
+                        </List>
+                      </CardContent>
+                    </Card>
+                  </Box>
                 </Box>
               )}
 
               {/* Tab 1: Academic Progress */}
               {activeTab === 1 && (
                 <Box>
-                  <Typography variant="h6" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700, mb: 2 }}>
-                    Report Card & Subject Marks
-                  </Typography>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="h6" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700 }}>
+                      Report Card & Subject Marks
+                    </Typography>
+                    {marksData?.getStudentMarks?.length > 0 && (
+                      <Button
+                        variant="outlined"
+                        color="primary"
+                        onClick={() => window.open(`/print/report-card?studentId=${activeChild.id}&examId=${marksData.getStudentMarks[0].examId?.id}`, '_blank')}
+                        sx={{ borderRadius: 2, fontWeight: 700, textTransform: 'none' }}
+                      >
+                        Print/Save Report Card (PDF)
+                      </Button>
+                    )}
+                  </Box>
                   {marksLoading ? (
                     <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
                       <CircularProgress />

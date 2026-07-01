@@ -36,6 +36,10 @@ import BusTracker from './pages/BusTracker';
 import FeaturePermissions from './pages/FeaturePermissions';
 import EventsManagement from './pages/EventsManagement';
 import InventoryManagement from './pages/InventoryManagement';
+import LibraryManagement from './pages/LibraryManagement';
+import AnnouncementPortal from './pages/AnnouncementPortal';
+import PrintReportCard from './pages/PrintReportCard';
+import PrintCertificate from './pages/PrintCertificate';
 import { useQuery } from '@apollo/client';
 import { GET_SCHOOL } from './graphql/operations';
 
@@ -47,6 +51,7 @@ function App() {
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
   const canViewDashboard = ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role);
+  const isPrintRoute = location.pathname.startsWith('/print');
 
   // Generate MUI Theme dynamically based on dark/light setting
   const theme = useMemo(() => createMuiTheme(themeMode), [themeMode]);
@@ -90,7 +95,7 @@ function App() {
     <ThemeProvider theme={theme}>
       <CssBaseline />
       <Box sx={{ display: 'flex', minHeight: '100vh', bgcolor: 'background.default' }}>
-        {isAuthenticated && isMobile && (
+        {isAuthenticated && isMobile && !isPrintRoute && (
           <AppBar
             position="fixed"
             color="inherit"
@@ -108,7 +113,7 @@ function App() {
           </AppBar>
         )}
 
-        {isAuthenticated && (
+        {isAuthenticated && !isPrintRoute && (
           <Sidebar
             mobileOpen={mobileOpen}
             onMobileClose={() => setMobileOpen(false)}
@@ -123,9 +128,9 @@ function App() {
             width: '100%',
             minWidth: 0,
             overflowX: 'hidden',
-            px: isAuthenticated ? { xs: 2, sm: 3 } : 0,
-            py: isAuthenticated ? { xs: 2, sm: 3 } : 0,
-            pt: isAuthenticated ? { xs: 10, md: 3 } : 0
+            px: isAuthenticated && !isPrintRoute ? { xs: 2, sm: 3 } : 0,
+            py: isAuthenticated && !isPrintRoute ? { xs: 2, sm: 3 } : 0,
+            pt: isAuthenticated && !isPrintRoute ? { xs: 10, md: 3 } : 0
           }}
         >
           <AnimatePresence mode="wait">
@@ -284,6 +289,26 @@ function App() {
             <Route 
               path="/inventory" 
               element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'inventory'))) ? <InventoryManagement /> : <Navigate to="/" />} 
+            />
+
+            <Route 
+              path="/library" 
+              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'LIBRARIAN'].includes(user?.role) || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'library')) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'library'))) ? <LibraryManagement /> : <Navigate to="/" />} 
+            />
+
+            <Route 
+              path="/announcements" 
+              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'announcements')) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'announcements'))) ? <AnnouncementPortal /> : <Navigate to="/" />} 
+            />
+
+            <Route 
+              path="/print/report-card" 
+              element={<PrintReportCard />} 
+            />
+
+            <Route 
+              path="/print/certificate" 
+              element={<PrintCertificate />} 
             />
 
             <Route 

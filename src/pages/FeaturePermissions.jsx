@@ -26,7 +26,9 @@ const ROLE_FEATURES = {
     { key: 'leaves', label: 'Leave Management', desc: 'Allows approving or requesting teacher leave of absence.' },
     { key: 'copy-submission', label: 'Copy Submission', desc: 'Enables teachers to track fair copy submission for students.' },
     { key: 'events', label: 'Events & Holidays', desc: 'Allows managing and adding school events and holidays.' },
-    { key: 'inventory', label: 'School Inventory', desc: 'Allows managing and adding school assets like sports kits and furniture.' }
+    { key: 'inventory', label: 'School Inventory', desc: 'Allows managing and adding school assets like sports kits and furniture.' },
+    { key: 'library', label: 'Library Bookshelf', desc: 'Allows managing library catalogs, search tags, checkout lists, and returns.' },
+    { key: 'announcements', label: 'Circular Portal', desc: 'Allows broadcasting notice board updates, announcements, and SMS alerts.' }
   ],
   ACCOUNTANT: [
     { key: 'students', label: 'Student Registration', desc: 'Allows onboarding new students and modifying records.' },
@@ -43,7 +45,9 @@ const ROLE_FEATURES = {
     { key: 'homework', label: 'Homework Board', desc: 'Enables assigning homework assignments to classes.' },
     { key: 'grades', label: 'Grades Entry', desc: 'Allows inputting marks and grades for exams.' },
     { key: 'analytics', label: 'Performance Analytics', desc: 'Provides analytical graphs of student grade trends.' },
-    { key: 'payroll', label: 'Payroll & Payslips', desc: 'Provides view access to teacher salary payslips.' }
+    { key: 'payroll', label: 'Payroll & Payslips', desc: 'Provides view access to teacher salary payslips.' },
+    { key: 'library', label: 'Library Bookshelf', desc: 'Allows managing library catalogs, search tags, checkout lists, and returns.' },
+    { key: 'announcements', label: 'Circular Portal', desc: 'Allows broadcasting notice board updates, announcements, and SMS alerts.' }
   ],
   PARENT: [
     { key: 'parent-portal', label: 'Parent Portal', desc: 'Dashboard with kid reports, grades, and fee records.' },
@@ -52,9 +56,9 @@ const ROLE_FEATURES = {
 };
 
 const DEFAULT_PERMISSIONS = {
-  SUPER_TEACHER: ['teachers', 'classes', 'timetable', 'exams', 'staff-attendance', 'leaves', 'copy-submission', 'events'],
+  SUPER_TEACHER: ['teachers', 'classes', 'timetable', 'exams', 'staff-attendance', 'leaves', 'copy-submission', 'events', 'inventory', 'library', 'announcements'],
   ACCOUNTANT: ['students', 'fees', 'payroll'],
-  TEACHER: ['pending-jobs', 'timetable', 'bus-tracker', 'attendance', 'leaves', 'homework', 'grades', 'analytics', 'payroll', 'copy-submission'],
+  TEACHER: ['pending-jobs', 'timetable', 'bus-tracker', 'attendance', 'leaves', 'homework', 'grades', 'analytics', 'payroll', 'copy-submission', 'library', 'announcements'],
   PARENT: ['parent-portal', 'bus-tracker']
 };
 

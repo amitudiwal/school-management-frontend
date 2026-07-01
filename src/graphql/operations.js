@@ -1074,6 +1074,40 @@ export const GET_STUDENT_MARKS = gql`
   }
 `;
 
+export const GET_STUDENT = gql`
+  query GetStudent($id: ID!) {
+    getStudent(id: $id) {
+      id
+      userId {
+        id
+        email
+        avatar
+      }
+      admissionNo
+      rollNo
+      firstName
+      lastName
+      gender
+      dateOfBirth
+      bloodGroup
+      admissionDate
+      classId {
+        id
+        name
+      }
+      sectionId {
+        id
+        name
+      }
+      parentId {
+        id
+        firstName
+        lastName
+      }
+    }
+  }
+`;
+
 export const GET_STUDENT_FEE_STATUS = gql`
   query GetStudentFeeStatus($studentId: ID!) {
     getStudentFeeStatus(studentId: $studentId) {
@@ -2336,6 +2370,139 @@ export const UPDATE_INVENTORY_ITEM = gql`
 export const DELETE_INVENTORY_ITEM = gql`
   mutation DeleteInventoryItem($id: ID!) {
     deleteInventoryItem(id: $id)
+  }
+`;
+
+export const GET_LIBRARY_BOOKS = gql`
+  query GetLibraryBooks($search: String) {
+    getLibraryBooks(search: $search) {
+      id
+      title
+      author
+      isbn
+      publisher
+      category
+      totalCopies
+      availableCopies
+      rackNo
+    }
+  }
+`;
+
+export const GET_BOOK_ISSUES = gql`
+  query GetBookIssues {
+    getBookIssues {
+      id
+      bookId {
+        id
+        title
+        author
+        isbn
+        category
+      }
+      userId {
+        id
+        name
+        role
+      }
+      issueDate
+      dueDate
+      returnDate
+      status
+      fineAmount
+      finePaidStatus
+    }
+  }
+`;
+
+export const CREATE_LIBRARY_BOOK = gql`
+  mutation CreateLibraryBook($title: String!, $author: String!, $isbn: String!, $category: String!, $totalCopies: Int!, $rackNo: String) {
+    createLibraryBook(title: $title, author: $author, isbn: $isbn, category: $category, totalCopies: $totalCopies, rackNo: $rackNo) {
+      id
+      title
+      author
+      isbn
+      category
+      totalCopies
+      availableCopies
+      rackNo
+    }
+  }
+`;
+
+export const UPDATE_LIBRARY_BOOK = gql`
+  mutation UpdateLibraryBook($id: ID!, $title: String, $author: String, $isbn: String, $category: String, $totalCopies: Int, $rackNo: String) {
+    updateLibraryBook(id: $id, title: $title, author: $author, isbn: $isbn, category: $category, totalCopies: $totalCopies, rackNo: $rackNo) {
+      id
+      title
+      author
+      isbn
+      category
+      totalCopies
+      availableCopies
+      rackNo
+    }
+  }
+`;
+
+export const DELETE_LIBRARY_BOOK = gql`
+  mutation DeleteLibraryBook($id: ID!) {
+    deleteLibraryBook(id: $id)
+  }
+`;
+
+export const ISSUE_LIBRARY_BOOK = gql`
+  mutation IssueLibraryBook($bookId: ID!, $userId: ID!, $dueDate: Date!) {
+    issueLibraryBook(bookId: $bookId, userId: $userId, dueDate: $dueDate) {
+      id
+      status
+      dueDate
+      issueDate
+    }
+  }
+`;
+
+export const RETURN_LIBRARY_BOOK = gql`
+  mutation ReturnLibraryBook($issueId: ID!, $fineAmount: Float, $finePaidStatus: String) {
+    returnLibraryBook(issueId: $issueId, fineAmount: $fineAmount, finePaidStatus: $finePaidStatus) {
+      id
+      status
+      returnDate
+      fineAmount
+      finePaidStatus
+    }
+  }
+`;
+
+export const GET_NOTIFICATIONS = gql`
+  query GetNotifications($role: String) {
+    getNotifications(role: $role) {
+      id
+      title
+      message
+      type
+      recipientRoles
+      createdAt
+    }
+  }
+`;
+
+export const CREATE_NOTIFICATION = gql`
+  mutation CreateNotification($title: String!, $message: String!, $type: String!, $recipientRoles: [String!]!) {
+    createNotification(title: $title, message: $message, type: $type, recipientRoles: $recipientRoles) {
+      id
+      title
+      message
+      type
+      recipientRoles
+      createdAt
+    }
+  }
+`;
+
+export const DELETE_NOTIFICATION = gql`
+  mutation DeleteNotification($id: ID!) {
+    deleteNotification(id: $id)
   }
 `;
 
