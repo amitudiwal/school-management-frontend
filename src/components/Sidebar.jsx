@@ -222,7 +222,31 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
         },
       }}
     >
-      <Box sx={{ width: '100%', overflow: 'hidden' }}>
+      <Box sx={{ 
+        width: '100%', 
+        overflowY: 'auto', 
+        overflowX: 'hidden', 
+        flexGrow: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        '&::-webkit-scrollbar': {
+          width: '6px',
+        },
+        '&::-webkit-scrollbar-track': {
+          backgroundColor: 'transparent',
+        },
+        '&::-webkit-scrollbar-thumb': {
+          backgroundColor: theme.palette.mode === 'dark'
+            ? 'rgba(255, 255, 255, 0.15)'
+            : 'rgba(0, 0, 0, 0.12)',
+          borderRadius: '10px',
+        },
+        '&::-webkit-scrollbar-thumb:hover': {
+          backgroundColor: theme.palette.mode === 'dark'
+            ? 'rgba(255, 255, 255, 0.3)'
+            : 'rgba(0, 0, 0, 0.25)',
+        }
+      }}>
         {/* Brand Header */}
         <Box sx={{ 
           p: 2.5, 
@@ -233,6 +257,7 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
           display: 'flex', 
           alignItems: 'center', 
           position: 'relative',
+          flexShrink: 0,
           overflow: 'hidden',
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
         }}>
@@ -248,7 +273,7 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
               transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
               opacity: sidebarOpen ? 1 : 0,
               width: sidebarOpen ? 'auto' : 0,
-              maxWidth: sidebarOpen ? '200px' : 0,
+              maxWidth: '200px',
               visibility: sidebarOpen ? 'visible' : 'hidden',
               whiteSpace: 'nowrap',
               overflow: 'hidden'
@@ -268,7 +293,7 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
               sx={{ 
                 color: 'text.secondary',
                 position: 'absolute',
-                left: sidebarOpen ? 236 : 28,
+                right: sidebarOpen ? 16 : 28,
                 top: sidebarOpen ? 24 : 72,
                 zIndex: 10,
                 transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
@@ -289,9 +314,9 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
           backgroundColor: sidebarOpen ? (theme.palette.mode === 'dark' ? '#1E293B' : '#F8FAFC') : 'transparent', 
           display: 'flex', 
           flexDirection: 'column', 
-          alignItems: 'center',
-          justifyContent: 'center',
+          alignItems: sidebarOpen ? 'stretch' : 'center',
           gap: 1,
+          flexShrink: 0,
           transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           overflow: 'hidden'
         }}>

@@ -52,30 +52,30 @@ const getDesignTokens = (mode) => ({
         }),
   },
   typography: {
-    fontFamily: "'Inter', 'Outfit', sans-serif",
+    fontFamily: "'Inter', 'Outfit', 'Marcellus', sans-serif",
     h1: {
-      fontFamily: "'Outfit', sans-serif",
-      fontWeight: 800,
+      fontFamily: "'Marcellus', serif",
+      fontWeight: 400,
     },
     h2: {
-      fontFamily: "'Outfit', sans-serif",
-      fontWeight: 700,
+      fontFamily: "'Marcellus', serif",
+      fontWeight: 400,
     },
     h3: {
-      fontFamily: "'Outfit', sans-serif",
-      fontWeight: 700,
+      fontFamily: "'Marcellus', serif",
+      fontWeight: 400,
     },
     h4: {
-      fontFamily: "'Outfit', sans-serif",
-      fontWeight: 600,
+      fontFamily: "'Marcellus', serif",
+      fontWeight: 400,
     },
     h5: {
-      fontFamily: "'Outfit', sans-serif",
-      fontWeight: 600,
+      fontFamily: "'Marcellus', serif",
+      fontWeight: 400,
     },
     h6: {
-      fontFamily: "'Outfit', sans-serif",
-      fontWeight: 600,
+      fontFamily: "'Marcellus', serif",
+      fontWeight: 400,
     },
     button: {
       fontFamily: "'Outfit', sans-serif",
