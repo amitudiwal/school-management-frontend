@@ -9,17 +9,14 @@ import {
   Paper, CircularProgress, Alert, Button, useTheme, LinearProgress, Chip,
   Tabs, Tab, TextField, TablePagination, Stack, MenuItem
 } from '@mui/material';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend,
-  ResponsiveContainer, PieChart, Pie, Cell, AreaChart, Area
-} from 'recharts';
+import Chart from 'react-apexcharts';
 import {
   School as SchoolIcon, People as PeopleIcon, LocalLibrary as LibraryIcon,
   AttachMoney as FeesIcon, AssignmentTurnedIn as AttendanceIcon,
   Warning as AlertIcon, Security as AuditIcon, DateRange as LeaveIcon,
   Assignment as HomeworkIcon, CalendarMonth as CalendarIcon
 } from '@mui/icons-material';
-import { GET_SUPER_ADMIN_DASHBOARD, GET_SCHOOL_ADMIN_DASHBOARD, GET_AUDIT_LOGS, GET_PENDING_JOBS, GET_EVENTS, GET_CLASSES, GET_SECTIONS, GET_GRADE_DISTRIBUTION, GET_COPY_SUBMISSION_ANALYTICS } from '../graphql/operations';
+import { GET_SUPER_ADMIN_DASHBOARD, GET_SCHOOL_ADMIN_DASHBOARD, GET_AUDIT_LOGS, GET_PENDING_JOBS, GET_EVENTS, GET_CLASSES, GET_SECTIONS, GET_GRADE_DISTRIBUTION, GET_COPY_SUBMISSION_ANALYTICS, GET_INVENTORY_LIST } from '../graphql/operations';
 import CustomDatePicker from '../components/CustomDatePicker';
 
 const containerVariants = {
@@ -46,6 +43,19 @@ function Dashboard() {
   const theme = useTheme();
   const navigate = useNavigate();
   const [activeAttendanceTab, setActiveAttendanceTab] = useState(0);
+
+  const cardStyle = {
+    borderRadius: '24px',
+    border: theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.04)',
+    background: theme.palette.mode === 'dark' ? 'rgba(17, 24, 39, 0.65)' : '#ffffff',
+    boxShadow: theme.palette.mode === 'dark' ? '0 10px 30px rgba(0, 0, 0, 0.3)' : '0 10px 30px rgba(99, 102, 241, 0.03)',
+    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+    '&:hover': {
+      transform: 'translateY(-4px)',
+      boxShadow: theme.palette.mode === 'dark' ? '0 18px 40px rgba(0, 0, 0, 0.55)' : '0 18px 40px rgba(99, 102, 241, 0.08)',
+      borderColor: theme.palette.primary.main
+    }
+  };
   const todayStr = new Date().toISOString().split('T')[0];
   const [startDate, setStartDate] = useState(todayStr);
   const [endDate, setEndDate] = useState(todayStr);
@@ -107,6 +117,11 @@ function Dashboard() {
       classId: copyClassId || undefined,
       sectionId: copySectionId || undefined
     },
+    fetchPolicy: 'network-only'
+  });
+
+  const { loading: inventoryLoading, data: inventoryData } = useQuery(GET_INVENTORY_LIST, {
+    skip: isSuperAdmin,
     fetchPolicy: 'network-only'
   });
 
@@ -177,10 +192,10 @@ function Dashboard() {
   if (isSuperAdmin) {
     const stats = saData?.getSuperAdminDashboard;
     const cards = [
-      { title: 'Total Schools Onboarded', value: stats?.totalSchools ?? 0, icon: <SchoolIcon />, color: '#6366F1', path: '/schools' },
-      { title: 'Total Students Globally', value: stats?.totalStudents ?? 0, icon: <PeopleIcon />, color: '#D946EF' },
-      { title: 'Total Active Teachers', value: stats?.totalTeachers ?? 0, icon: <LibraryIcon />, color: '#10B981' },
-      { title: 'Monthly Revenue', value: `₹${(stats?.monthlyRevenue ?? 0).toLocaleString()}`, icon: <FeesIcon />, color: '#F59E0B' },
+      { title: 'Total Schools Onboarded', value: stats?.totalSchools ?? 0, icon: <SchoolIcon />, gradient: 'linear-gradient(135deg, #FF9F59 0%, #FF7043 100%)', shadowColor: 'rgba(255, 112, 67, 0.4)', path: '/schools' },
+      { title: 'Total Students Globally', value: stats?.totalStudents ?? 0, icon: <PeopleIcon />, gradient: 'linear-gradient(135deg, #7F56D9 0%, #6130C3 100%)', shadowColor: 'rgba(97, 48, 195, 0.4)' },
+      { title: 'Total Active Teachers', value: stats?.totalTeachers ?? 0, icon: <LibraryIcon />, gradient: 'linear-gradient(135deg, #06AED5 0%, #0086C4 100%)', shadowColor: 'rgba(0, 134, 196, 0.4)' },
+      { title: 'Monthly Revenue', value: `₹${(stats?.monthlyRevenue ?? 0).toLocaleString()}`, icon: <FeesIcon />, gradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', shadowColor: 'rgba(217, 119, 6, 0.4)' },
     ];
 
     console.log('Global Audit Logs:', logsData?.getGlobalAuditLogs);
@@ -199,26 +214,34 @@ function Dashboard() {
                 onClick={() => card.path && navigate(card.path)}
                 sx={{
                   cursor: card.path ? 'pointer' : 'default',
-                  transition: 'all 0.2s ease-in-out',
+                  background: card.gradient,
+                  color: '#fff',
+                  borderRadius: '24px',
+                  boxShadow: `0 12px 28px -5px ${card.shadowColor}`,
+                  transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                  border: 'none',
+                  height: '100%',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'center',
                   '&:hover': card.path ? {
-                    transform: 'translateY(-4px)',
-                    boxShadow: theme.shadows[4],
-                    border: `1px solid ${card.color}`
+                    transform: 'translateY(-6px) scale(1.02)',
+                    boxShadow: `0 20px 40px -5px ${card.shadowColor}`
                   } : {}
                 }}
               >
-                <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <Avatar sx={{ bgcolor: `${card.color}20`, color: card.color, width: 56, height: 56 }}>
-                    {card.icon}
-                  </Avatar>
+                <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, p: 3, '&:last-child': { pb: 3 }, flexGrow: 1 }}>
                   <Box>
-                    <Typography variant="caption" color="text.secondary" display="block" sx={{ fontWeight: 600 }}>
+                    <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                       {card.title}
                     </Typography>
-                    <Typography variant="h5" sx={{ fontWeight: 800 }}>
-                      {card.value}
+                    <Typography variant="h4" sx={{ fontWeight: 850, mt: 0.5, fontFamily: "'Outfit', sans-serif" }}>
+                      {card.value ?? 0}
                     </Typography>
                   </Box>
+                  <Avatar sx={{ bgcolor: 'rgba(255, 255, 255, 0.22)', color: '#fff', width: 56, height: 56, boxShadow: 'inset 0 1.5px 3px rgba(255, 255, 255, 0.1)' }}>
+                    {card.icon}
+                  </Avatar>
                 </CardContent>
               </Card>
             </Grid>
@@ -228,33 +251,36 @@ function Dashboard() {
         {/* Revenue Analytics Graph */}
         <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
           <Grid item xs={12} md={8} component={motion.div} variants={itemVariants}>
-            <Card sx={{ p: 2 }}>
+            <Card sx={{ ...cardStyle, p: 2 }}>
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
                 SaaS Monthly Subscription Revenue
               </Typography>
-              <Box sx={{ width: '100%', height: { xs: 240, sm: 300 } }}>
-                <ResponsiveContainer>
-                  <AreaChart data={stats?.monthlyRevenueSeries || []}>
-                    <defs>
-                      <linearGradient id="colorRev" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#6366F1" stopOpacity={0.4} />
-                        <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                    <XAxis dataKey="month" stroke={theme.palette.text.secondary} />
-                    <YAxis stroke={theme.palette.text.secondary} />
-                    <Tooltip contentStyle={{ backgroundColor: theme.palette.background.paper, borderColor: theme.palette.divider }} />
-                    <Area type="monotone" dataKey="revenue" stroke="#6366F1" fillOpacity={1} fill="url(#colorRev)" strokeWidth={3} />
-                  </AreaChart>
-                </ResponsiveContainer>
+              <Box sx={{ width: '100%' }}>
+                <Chart
+                  options={{
+                    chart: { id: 'monthly-revenue', type: 'area', toolbar: { show: false }, background: 'transparent' },
+                    xaxis: { categories: (stats?.monthlyRevenueSeries || []).map(x => x.month), labels: { style: { colors: theme.palette.text.secondary } } },
+                    yaxis: { labels: { style: { colors: theme.palette.text.secondary } } },
+                    colors: ['#6366F1'],
+                    stroke: { curve: 'smooth', width: 3 },
+                    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0, stops: [0, 90, 100] } },
+                    theme: { mode: theme.palette.mode },
+                    tooltip: { theme: theme.palette.mode }
+                  }}
+                  series={[{
+                    name: 'Revenue',
+                    data: (stats?.monthlyRevenueSeries || []).map(x => x.revenue)
+                  }]}
+                  type="area"
+                  height={300}
+                />
               </Box>
             </Card>
           </Grid>
 
           {/* Subscriptions breakdown */}
           <Grid item xs={12} md={4} component={motion.div} variants={itemVariants}>
-            <Card sx={{ height: '100%', p: 2 }}>
+            <Card sx={{ ...cardStyle, height: '100%', p: 2 }}>
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>
                 Subscription Health
               </Typography>
@@ -338,10 +364,10 @@ function Dashboard() {
   // --- RENDERING TENANT SCHOOL ADMIN PORTAL ---
   const stats = dashboardData || schoolData?.getSchoolAdminDashboard;
   const cards = [
-    { title: 'Total Enrolled Students', value: stats?.studentCount, icon: <PeopleIcon />, color: '#6366F1', path: '/students' },
-    { title: 'Academic Faculty Teachers', value: stats?.teacherCount, icon: <LibraryIcon />, color: '#D946EF', path: '/teachers' },
-    { title: 'Operational Staff Members', value: stats?.staffCount, icon: <SchoolIcon />, color: '#10B981', path: '/teachers?tab=staff' },
-    { title: 'Upcoming Examinations', value: stats?.upcomingExamsCount, icon: <AlertIcon />, color: '#F59E0B', path: '/exams' },
+    { title: 'Total Enrolled Students', value: stats?.studentCount, icon: <PeopleIcon />, gradient: 'linear-gradient(135deg, #FF9F59 0%, #FF7043 100%)', shadowColor: 'rgba(255, 112, 67, 0.4)', path: '/students' },
+    { title: 'Academic Faculty Teachers', value: stats?.teacherCount, icon: <LibraryIcon />, gradient: 'linear-gradient(135deg, #7F56D9 0%, #6130C3 100%)', shadowColor: 'rgba(97, 48, 195, 0.4)', path: '/teachers' },
+    { title: 'Operational Staff Members', value: stats?.staffCount, icon: <SchoolIcon />, gradient: 'linear-gradient(135deg, #06AED5 0%, #0086C4 100%)', shadowColor: 'rgba(0, 134, 196, 0.4)', path: '/teachers?tab=staff' },
+    { title: 'Upcoming Examinations', value: stats?.upcomingExamsCount, icon: <AlertIcon />, gradient: 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)', shadowColor: 'rgba(217, 119, 6, 0.4)', path: '/exams' },
   ];
 
   // Attendance Data Formats
@@ -428,26 +454,34 @@ function Dashboard() {
               onClick={() => card.path && navigate(card.path)}
               sx={{
                 cursor: card.path ? 'pointer' : 'default',
-                transition: 'all 0.2s ease-in-out',
+                background: card.gradient,
+                color: '#fff',
+                borderRadius: '24px',
+                boxShadow: `0 12px 28px -5px ${card.shadowColor}`,
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                border: 'none',
+                height: '100%',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'center',
                 '&:hover': card.path ? {
-                  transform: 'translateY(-4px)',
-                  boxShadow: theme.shadows[4],
-                  border: `1px solid ${card.color}`
+                  transform: 'translateY(-6px) scale(1.02)',
+                  boxShadow: `0 20px 40px -5px ${card.shadowColor}`
                 } : {}
               }}
             >
-              <CardContent sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Avatar sx={{ bgcolor: `${card.color}20`, color: card.color, width: 56, height: 56 }}>
-                  {card.icon}
-                </Avatar>
+              <CardContent sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: 2, p: 3, '&:last-child': { pb: 3 }, flexGrow: 1 }}>
                 <Box>
-                  <Typography variant="caption" color="text.secondary" display="block" sx={{ fontWeight: 600 }}>
+                  <Typography variant="caption" sx={{ color: 'rgba(255, 255, 255, 0.8)', display: 'block', fontWeight: 700, fontSize: '0.75rem', textTransform: 'uppercase', letterSpacing: 0.5 }}>
                     {card.title}
                   </Typography>
-                  <Typography variant="h5" sx={{ fontWeight: 800 }}>
-                    {card.value}
+                  <Typography variant="h4" sx={{ fontWeight: 850, mt: 0.5, fontFamily: "'Outfit', sans-serif" }}>
+                    {card.value ?? 0}
                   </Typography>
                 </Box>
+                <Avatar sx={{ bgcolor: 'rgba(255, 255, 255, 0.22)', color: '#fff', width: 56, height: 56, boxShadow: 'inset 0 1.5px 3px rgba(255, 255, 255, 0.1)' }}>
+                  {card.icon}
+                </Avatar>
               </CardContent>
             </Card>
           </Grid>
@@ -458,7 +492,7 @@ function Dashboard() {
       <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
         {/* Library Stats Card */}
         <Grid item xs={12} md={4} component={motion.div} variants={itemVariants}>
-          <Card sx={{ height: '100%' }}>
+          <Card sx={{ ...cardStyle, height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
                 <Avatar sx={{ bgcolor: 'info.main' + '20', color: 'info.main', width: 44, height: 44 }}>
@@ -495,7 +529,7 @@ function Dashboard() {
 
         {/* Leave Requests Summary Card */}
         <Grid item xs={12} md={4} component={motion.div} variants={itemVariants}>
-          <Card sx={{ height: '100%' }}>
+          <Card sx={{ ...cardStyle, height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
                 <Avatar sx={{ bgcolor: 'warning.main' + '20', color: 'warning.main', width: 44, height: 44 }}>
@@ -536,7 +570,7 @@ function Dashboard() {
 
         {/* Homework Board Analytics Card */}
         <Grid item xs={12} md={4} component={motion.div} variants={itemVariants}>
-          <Card sx={{ height: '100%' }}>
+          <Card sx={{ ...cardStyle, height: '100%' }}>
             <CardContent>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, mb: 2 }}>
                 <Avatar sx={{ bgcolor: 'secondary.main' + '20', color: 'secondary.main', width: 44, height: 44 }}>
@@ -576,23 +610,29 @@ function Dashboard() {
       <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
         {/* Fees Collection chart */}
         <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
-          <Card sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 420 }}>
+          <Card sx={{ ...cardStyle, p: 2, display: 'flex', flexDirection: 'column', height: 420 }}>
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
               Fee Collection Status
             </Typography>
-            <Box sx={{ flexGrow: 1, display: 'flex', alignItems: 'center' }}>
-              <ResponsiveContainer width="100%" height={280}>
-                <BarChart data={feeData}>
-                  <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                  <XAxis dataKey="name" stroke={theme.palette.text.secondary} />
-                  <YAxis stroke={theme.palette.text.secondary} />
-                  <Tooltip formatter={(value) => `₹${value.toLocaleString()}`} />
-                  <Bar dataKey="value" fill="#6366F1" radius={[8, 8, 0, 0]}>
-                    <Cell fill="#10B981" />
-                    <Cell fill="#EF4444" />
-                  </Bar>
-                </BarChart>
-              </ResponsiveContainer>
+            <Box sx={{ flexGrow: 1, width: '100%' }}>
+              <Chart
+                options={{
+                  chart: { id: 'fee-collection', type: 'bar', toolbar: { show: false }, background: 'transparent' },
+                  plotOptions: { bar: { columnWidth: '45%', distributed: true, borderRadius: 8 } },
+                  xaxis: { categories: ['Collected', 'Outstanding'], labels: { style: { colors: theme.palette.text.secondary, fontWeight: 600 } } },
+                  yaxis: { labels: { style: { colors: theme.palette.text.secondary }, formatter: (val) => `₹${val.toLocaleString()}` } },
+                  colors: ['#10B981', '#EF4444'],
+                  legend: { show: false },
+                  theme: { mode: theme.palette.mode },
+                  tooltip: { theme: theme.palette.mode, y: { formatter: (val) => `₹${val.toLocaleString()}` } }
+                }}
+                series={[{
+                  name: 'Amount',
+                  data: [stats?.feeCollectionSummary?.totalCollected || 0, stats?.feeCollectionSummary?.totalOutstanding || 0]
+                }]}
+                type="bar"
+                height={280}
+              />
             </Box>
             <Box sx={{ textAlign: 'center', mt: 1 }}>
               <Typography variant="body2" sx={{ fontWeight: 700, color: 'text.secondary' }}>
@@ -604,7 +644,7 @@ function Dashboard() {
 
         {/* Attendance Pie Chart with Tabs */}
         <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
-          <Card sx={{ p: 2, display: 'flex', flexDirection: 'column', height: 420 }}>
+          <Card sx={{ ...cardStyle, p: 2, display: 'flex', flexDirection: 'column', height: 420 }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1, flexWrap: 'wrap', gap: 1 }}>
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
                 Attendance Ratios (Today)
@@ -635,24 +675,45 @@ function Dashboard() {
                   </Typography>
                 </Box>
               ) : (
-                <ResponsiveContainer width="100%" height={260}>
-                  <PieChart>
-                    <Pie
-                      data={currentAttendanceData}
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={65}
-                      outerRadius={85}
-                      paddingAngle={5}
-                      dataKey="value"
-                    >
-                      {currentAttendanceData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill={entry.color} />
-                      ))}
-                    </Pie>
-                    <Tooltip formatter={(value) => `${Number(value).toFixed(1)}%`} />
-                  </PieChart>
-                </ResponsiveContainer>
+                <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                  <Chart
+                    options={{
+                      chart: { id: 'attendance-donut', type: 'donut', background: 'transparent' },
+                      labels: currentAttendanceData.map(d => d.name),
+                      colors: currentAttendanceData.map(d => d.color),
+                      stroke: { show: false },
+                      legend: { show: false },
+                      plotOptions: {
+                        pie: {
+                          donut: {
+                            size: '72%',
+                            labels: {
+                              show: true,
+                              name: { show: true, fontSize: '0.8rem', fontWeight: 600, color: theme.palette.text.secondary },
+                              value: { show: true, fontSize: '1.2rem', fontWeight: 800, color: theme.palette.text.primary, formatter: (val) => `${Number(val).toFixed(1)}%` },
+                              total: {
+                                show: true,
+                                label: 'Attendance',
+                                color: theme.palette.text.secondary,
+                                formatter: (w) => {
+                                  const present = w.globals.series[0] || 0;
+                                  const late = w.globals.series[2] || 0;
+                                  return `${(present + late).toFixed(1)}%`;
+                                }
+                              }
+                            }
+                          }
+                        }
+                      },
+                      theme: { mode: theme.palette.mode },
+                      tooltip: { theme: theme.palette.mode, y: { formatter: (val) => `${val.toFixed(1)}%` } }
+                    }}
+                    series={currentAttendanceData.map(d => d.value)}
+                    type="donut"
+                    height={260}
+                    width="100%"
+                  />
+                </Box>
               )}
             </Box>
             <Box sx={{ display: 'flex', justifyContent: 'center', gap: 2, flexWrap: 'wrap', mt: 1 }}>
@@ -672,7 +733,7 @@ function Dashboard() {
       {/* Absent / On-Leave Faculty Row */}
       <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
         <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
-          <Card sx={{ p: 2, height: 380, display: 'flex', flexDirection: 'column' }}>
+          <Card sx={{ ...cardStyle, p: 2, height: 380, display: 'flex', flexDirection: 'column' }}>
             <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
               <AlertIcon color="warning" /> Absent / On-Leave Faculty
             </Typography>
@@ -719,40 +780,109 @@ function Dashboard() {
             </Box>
           </Card>
         </Grid>
+
+        {/* School Inventory Analytics Card */}
+        <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
+          <Card sx={{ ...cardStyle, p: 2, height: 380, display: 'flex', flexDirection: 'column' }}>
+            <Typography variant="h6" sx={{ fontWeight: 700, mb: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+              <SchoolIcon color="primary" /> School Inventory Analytics
+            </Typography>
+            <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center', width: '100%' }}>
+              {(() => {
+                const inventoryItems = inventoryData?.getInventoryList || [];
+                const categoryLabels = {
+                  STATIONERY: 'Stationery',
+                  FURNITURE: 'Furniture',
+                  LAB_EQUIPMENT: 'Lab Equipment',
+                  SPORTS: 'Sports & Gym',
+                  CLASSROOM: 'Classroom Supplies',
+                  COMPUTERS: 'Computers & IT',
+                  OTHER: 'Other Assets'
+                };
+                const inventoryByCategory = {};
+                inventoryItems.forEach(item => {
+                  const cat = item.category || 'OTHER';
+                  if (!inventoryByCategory[cat]) {
+                    inventoryByCategory[cat] = 0;
+                  }
+                  inventoryByCategory[cat] += item.quantity;
+                });
+                const inventoryChartData = Object.keys(inventoryByCategory).map(cat => ({
+                  category: categoryLabels[cat] || cat,
+                  quantity: inventoryByCategory[cat]
+                }));
+
+                if (inventoryLoading) {
+                  return <CircularProgress size={30} />;
+                }
+
+                if (inventoryItems.length === 0) {
+                  return (
+                    <Box sx={{ py: 6, textAlign: 'center' }}>
+                      <Typography color="text.secondary" variant="body2" sx={{ fontWeight: 600 }}>
+                        No inventory records found.
+                      </Typography>
+                    </Box>
+                  );
+                }
+
+                return (
+                  <Chart
+                    options={{
+                      chart: { id: 'inventory-chart', type: 'bar', toolbar: { show: false }, background: 'transparent' },
+                      plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: '55%', distributed: true } },
+                      xaxis: { categories: inventoryChartData.map(d => d.category), labels: { style: { colors: theme.palette.text.secondary, fontWeight: 600 } } },
+                      yaxis: { labels: { style: { colors: theme.palette.text.secondary } } },
+                      colors: ['#6366F1', '#10B981', '#F59E0B', '#14B8A6', '#EC4899', '#3B82F6', '#6B7280'],
+                      legend: { show: false },
+                      theme: { mode: theme.palette.mode },
+                      tooltip: { theme: theme.palette.mode, y: { formatter: (val) => `${val} items` } }
+                    }}
+                    series={[{
+                      name: 'Quantity',
+                      data: inventoryChartData.map(d => d.quantity)
+                    }]}
+                    type="bar"
+                    height={280}
+                    width="100%"
+                  />
+                );
+              })()}
+            </Box>
+          </Card>
+        </Grid>
       </Grid>
 
       {/* Faculty Attendance Trend Chart */}
       {trendData.length > 0 && (
         <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
           <Grid item xs={12} component={motion.div} variants={itemVariants}>
-            <Card sx={{ p: 3, display: 'flex', flexDirection: 'column' }}>
+            <Card sx={{ ...cardStyle, p: 3, display: 'flex', flexDirection: 'column' }}>
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>
                 Faculty & Staff Attendance Trend (Last 7 Days)
               </Typography>
               <Box sx={{ width: '100%', height: { xs: 260, sm: 320 } }}>
-                <ResponsiveContainer>
-                  <AreaChart data={trendData}>
-                    <defs>
-                      <linearGradient id="colorPresentTeachers" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#10B981" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#10B981" stopOpacity={0} />
-                      </linearGradient>
-                      <linearGradient id="colorPresentStaff" x1="0" y1="0" x2="0" y2="1">
-                        <stop offset="5%" stopColor="#6366F1" stopOpacity={0.3} />
-                        <stop offset="95%" stopColor="#6366F1" stopOpacity={0} />
-                      </linearGradient>
-                    </defs>
-                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                    <XAxis dataKey="date" stroke={theme.palette.text.secondary} />
-                    <YAxis stroke={theme.palette.text.secondary} allowDecimals={false} />
-                    <Tooltip contentStyle={{ backgroundColor: theme.palette.background.paper, borderColor: theme.palette.divider }} />
-                    <Legend />
-                    <Area type="monotone" name="Present Teachers" dataKey="presentTeachers" stroke="#10B981" fillOpacity={1} fill="url(#colorPresentTeachers)" strokeWidth={3} />
-                    <Area type="monotone" name="Present Staff" dataKey="presentStaff" stroke="#6366F1" fillOpacity={1} fill="url(#colorPresentStaff)" strokeWidth={3} />
-                    <Area type="monotone" name="Absent Teachers" dataKey="absentTeachers" stroke="#EF4444" strokeWidth={2} strokeDasharray="5 5" fill="none" />
-                    <Area type="monotone" name="Absent Staff" dataKey="absentStaff" stroke="#F59E0B" strokeWidth={2} strokeDasharray="5 5" fill="none" />
-                  </AreaChart>
-                </ResponsiveContainer>
+                <Chart
+                  options={{
+                    chart: { id: 'attendance-trend', type: 'area', toolbar: { show: false }, background: 'transparent' },
+                    stroke: { curve: 'smooth', width: [3, 3, 2, 2], dashArray: [0, 0, 5, 5] },
+                    colors: ['#10B981', '#6366F1', '#EF4444', '#F59E0B'],
+                    xaxis: { categories: trendData.map(d => d.date), labels: { style: { colors: theme.palette.text.secondary } } },
+                    yaxis: { labels: { style: { colors: theme.palette.text.secondary } } },
+                    legend: { position: 'top', horizontalAlign: 'right', labels: { colors: theme.palette.text.primary } },
+                    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: [0.35, 0.35, 0, 0], opacityTo: 0, stops: [0, 90, 100] } },
+                    theme: { mode: theme.palette.mode },
+                    tooltip: { theme: theme.palette.mode }
+                  }}
+                  series={[
+                    { name: 'Present Teachers', data: trendData.map(d => d.presentTeachers) },
+                    { name: 'Present Staff', data: trendData.map(d => d.presentStaff) },
+                    { name: 'Absent Teachers', data: trendData.map(d => d.absentTeachers) },
+                    { name: 'Absent Staff', data: trendData.map(d => d.absentStaff) }
+                  ]}
+                  type="area"
+                  height={280}
+                />
               </Box>
             </Card>
           </Grid>
@@ -769,7 +899,7 @@ function Dashboard() {
           <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
             {/* Activity Chart breakdown */}
             <Grid item xs={12} md={4} component={motion.div} variants={itemVariants}>
-              <Card sx={{ p: 2, height: 420, display: 'flex', flexDirection: 'column' }}>
+              <Card sx={{ ...cardStyle, p: 2, height: 420, display: 'flex', flexDirection: 'column' }}>
                 <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
                   Activity Type Breakdown
                 </Typography>
@@ -796,24 +926,41 @@ function Dashboard() {
                   return (
                     <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                       <Box sx={{ height: 220, position: 'relative' }}>
-                        <ResponsiveContainer width="100%" height="100%">
-                          <PieChart>
-                            <Pie
-                              data={chartData}
-                              cx="50%"
-                              cy="50%"
-                              innerRadius={60}
-                              outerRadius={80}
-                              paddingAngle={5}
-                              dataKey="value"
-                            >
-                              {chartData.map((entry, index) => (
-                                <Cell key={`cell-${index}`} fill={entry.color} />
-                              ))}
-                            </Pie>
-                            <Tooltip />
-                          </PieChart>
-                        </ResponsiveContainer>
+                        <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
+                          <Chart
+                            options={{
+                              chart: { id: 'activity-breakdown', type: 'donut', background: 'transparent' },
+                              labels: ['Lectures / Study', 'Other Activities'],
+                              colors: ['#6366F1', '#F59E0B'],
+                              stroke: { show: false },
+                              legend: { show: false },
+                              plotOptions: {
+                                pie: {
+                                  donut: {
+                                    size: '72%',
+                                    labels: {
+                                      show: true,
+                                      name: { show: true, fontSize: '0.8rem', color: theme.palette.text.secondary },
+                                      value: { show: true, fontSize: '1.2rem', fontWeight: 800, color: theme.palette.text.primary },
+                                      total: {
+                                        show: true,
+                                        label: 'Total Active',
+                                        color: theme.palette.text.secondary,
+                                        formatter: () => `${studyCount + othersCount}`
+                                      }
+                                    }
+                                  }
+                                }
+                              },
+                              theme: { mode: theme.palette.mode },
+                              tooltip: { theme: theme.palette.mode }
+                            }}
+                            series={[studyCount, othersCount]}
+                            type="donut"
+                            height={200}
+                            width="100%"
+                          />
+                        </Box>
                       </Box>
 
                       <Stack direction="row" spacing={2} justifyContent="center" sx={{ mt: 2 }}>
@@ -838,7 +985,7 @@ function Dashboard() {
 
             {/* Analytical Graph */}
             <Grid item xs={12} md={8} component={motion.div} variants={itemVariants}>
-              <Card sx={{ p: 2, height: 420, display: 'flex', flexDirection: 'column' }}>
+              <Card sx={{ ...cardStyle, p: 2, height: 420, display: 'flex', flexDirection: 'column' }}>
                 <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
                   Subject & Activity Tracker Graph
                 </Typography>
@@ -874,30 +1021,24 @@ function Dashboard() {
 
                   return (
                     <Box sx={{ flexGrow: 1, width: '100%', height: 320 }}>
-                      <ResponsiveContainer width="100%" height="100%">
-                        <BarChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
-                          <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} vertical={false} />
-                          <XAxis dataKey="name" stroke={theme.palette.text.secondary} style={{ fontSize: '0.75rem', fontWeight: 600 }} />
-                          <YAxis stroke={theme.palette.text.secondary} allowDecimals={false} style={{ fontSize: '0.75rem' }} />
-                          <Tooltip
-                            contentStyle={{
-                              backgroundColor: theme.palette.background.paper,
-                              borderColor: theme.palette.divider,
-                              borderRadius: 8,
-                              boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
-                            }}
-                          />
-                          <Legend
-                            verticalAlign="top"
-                            height={36}
-                            iconType="circle"
-                            iconSize={8}
-                            wrapperStyle={{ fontSize: '0.75rem', fontWeight: 600, paddingBottom: '10px' }}
-                          />
-                          <Bar dataKey="Running" name="Running" fill="#10B981" stackId="a" radius={[0, 0, 0, 0]} />
-                          <Bar dataKey="Complete" name="Completed" fill="#6366F1" stackId="a" radius={[4, 4, 0, 0]} />
-                        </BarChart>
-                      </ResponsiveContainer>
+                      <Chart
+                        options={{
+                          chart: { id: 'activity-tracker', type: 'bar', stacked: true, toolbar: { show: false }, background: 'transparent' },
+                          plotOptions: { bar: { horizontal: false, columnWidth: '40%', borderRadius: 4 } },
+                          xaxis: { categories: chartData.map(c => c.name), labels: { style: { colors: theme.palette.text.secondary, fontSize: '0.75rem', fontWeight: 600 } } },
+                          yaxis: { labels: { style: { colors: theme.palette.text.secondary } } },
+                          colors: ['#10B981', '#6366F1'],
+                          legend: { position: 'top', horizontalAlign: 'right', labels: { colors: theme.palette.text.primary } },
+                          theme: { mode: theme.palette.mode },
+                          tooltip: { theme: theme.palette.mode }
+                        }}
+                        series={[
+                          { name: 'Running', data: chartData.map(c => c.Running) },
+                          { name: 'Completed', data: chartData.map(c => c.Complete) }
+                        ]}
+                        type="bar"
+                        height={280}
+                      />
                     </Box>
                   );
                 })()}
@@ -912,24 +1053,28 @@ function Dashboard() {
         {/* Class-wise Student Enrollment */}
         {classEnrollmentData.length > 0 && (
           <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
-            <Card sx={{ p: 2, height: 380, display: 'flex', flexDirection: 'column' }}>
+            <Card sx={{ ...cardStyle, p: 2, height: 380, display: 'flex', flexDirection: 'column' }}>
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 2 }}>
                 Class-wise Student Enrollment
               </Typography>
               <Box sx={{ width: '100%', height: 280, flexGrow: 1 }}>
-                <ResponsiveContainer>
-                  <BarChart data={classEnrollmentData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                    <XAxis dataKey="name" stroke={theme.palette.text.secondary} />
-                    <YAxis stroke={theme.palette.text.secondary} allowDecimals={false} />
-                    <Tooltip formatter={(value) => [`${value} Students`, 'Count']} />
-                    <Bar dataKey="students" fill="#6366F1" radius={[6, 6, 0, 0]}>
-                      {classEnrollmentData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill="#6366F1" />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                <Chart
+                  options={{
+                    chart: { id: 'class-enrollment', type: 'bar', toolbar: { show: false }, background: 'transparent' },
+                    plotOptions: { bar: { columnWidth: '45%', borderRadius: 6 } },
+                    xaxis: { categories: classEnrollmentData.map(c => c.name), labels: { style: { colors: theme.palette.text.secondary } } },
+                    yaxis: { labels: { style: { colors: theme.palette.text.secondary } } },
+                    colors: ['#6366F1'],
+                    theme: { mode: theme.palette.mode },
+                    tooltip: { theme: theme.palette.mode, y: { formatter: (val) => `${val} Students` } }
+                  }}
+                  series={[{
+                    name: 'Students',
+                    data: classEnrollmentData.map(c => c.students)
+                  }]}
+                  type="bar"
+                  height={280}
+                />
               </Box>
             </Card>
           </Grid>
@@ -937,7 +1082,7 @@ function Dashboard() {
 
         {/* Academic Grade Distribution */}
         <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
-          <Card sx={{ p: 2, height: 420, display: 'flex', flexDirection: 'column' }}>
+          <Card sx={{ ...cardStyle, p: 2, height: 420, display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, gap: 1.5, flexWrap: 'wrap' }}>
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
                 Academic Grade Distribution
@@ -983,19 +1128,23 @@ function Dashboard() {
                   No grading data found for the selected filters.
                 </Typography>
               ) : (
-                <ResponsiveContainer>
-                  <BarChart data={gradeDistributionData}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                    <XAxis dataKey="name" stroke={theme.palette.text.secondary} />
-                    <YAxis stroke={theme.palette.text.secondary} allowDecimals={false} />
-                    <Tooltip formatter={(value) => [`${value} Students`, 'Count']} />
-                    <Bar dataKey="count" fill="#10B981" radius={[6, 6, 0, 0]}>
-                      {gradeDistributionData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill="#10B981" />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                <Chart
+                  options={{
+                    chart: { id: 'grade-distribution', type: 'bar', toolbar: { show: false }, background: 'transparent' },
+                    plotOptions: { bar: { columnWidth: '45%', borderRadius: 6 } },
+                    xaxis: { categories: gradeDistributionData.map(g => g.name), labels: { style: { colors: theme.palette.text.secondary } } },
+                    yaxis: { labels: { style: { colors: theme.palette.text.secondary } } },
+                    colors: ['#10B981'],
+                    theme: { mode: theme.palette.mode },
+                    tooltip: { theme: theme.palette.mode, y: { formatter: (val) => `${val} Students` } }
+                  }}
+                  series={[{
+                    name: 'Students',
+                    data: gradeDistributionData.map(g => g.count)
+                  }]}
+                  type="bar"
+                  height={280}
+                />
               )}
             </Box>
           </Card>
@@ -1006,7 +1155,7 @@ function Dashboard() {
       <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
         {/* Right Column: Copy Completion Analytics */}
         <Grid item xs={12} md={6} component={motion.div} variants={itemVariants}>
-          <Card sx={{ p: 2, height: 420, display: 'flex', flexDirection: 'column' }}>
+          <Card sx={{ ...cardStyle, p: 2, height: 420, display: 'flex', flexDirection: 'column' }}>
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2, gap: 1.5, flexWrap: 'wrap' }}>
               <Typography variant="h6" sx={{ fontWeight: 700 }}>
                 Fair Copy Completion Rates (%)
@@ -1052,22 +1201,23 @@ function Dashboard() {
                   No copy records found for the selected filters.
                 </Typography>
               ) : (
-                <ResponsiveContainer width="100%" height="100%">
-                  <BarChart data={persistentCopyData.map(item => ({
-                    name: `${item.subjectName} (${item.className})`,
-                    rate: item.completionRate
-                  }))} margin={{ top: 10, right: 10, left: -20, bottom: 5 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} vertical={false} />
-                    <XAxis dataKey="name" stroke={theme.palette.text.secondary} style={{ fontSize: '0.75rem', fontWeight: 600 }} />
-                    <YAxis stroke={theme.palette.text.secondary} style={{ fontSize: '0.75rem' }} domain={[0, 100]} unit="%" />
-                    <Tooltip formatter={(value) => [`${value}% Completed`, 'Rate']} />
-                    <Bar dataKey="rate" fill="#D946EF" radius={[6, 6, 0, 0]}>
-                      {persistentCopyData.map((entry, index) => (
-                        <Cell key={`cell-${index}`} fill="#D946EF" />
-                      ))}
-                    </Bar>
-                  </BarChart>
-                </ResponsiveContainer>
+                <Chart
+                  options={{
+                    chart: { id: 'copy-completion', type: 'bar', toolbar: { show: false }, background: 'transparent' },
+                    plotOptions: { bar: { columnWidth: '45%', borderRadius: 6 } },
+                    xaxis: { categories: persistentCopyData.map(item => `${item.subjectName} (${item.className})`), labels: { style: { colors: theme.palette.text.secondary, fontSize: '0.75rem', fontWeight: 600 } } },
+                    yaxis: { max: 100, labels: { style: { colors: theme.palette.text.secondary }, formatter: (val) => `${val}%` } },
+                    colors: ['#D946EF'],
+                    theme: { mode: theme.palette.mode },
+                    tooltip: { theme: theme.palette.mode, y: { formatter: (val) => `${val}% Completed` } }
+                  }}
+                  series={[{
+                    name: 'Completion Rate',
+                    data: persistentCopyData.map(item => item.completionRate)
+                  }]}
+                  type="bar"
+                  height={280}
+                />
               )}
             </Box>
           </Card>
@@ -1079,12 +1229,8 @@ function Dashboard() {
         <Grid item xs={12} component={motion.div} variants={itemVariants}>
           <Card
             sx={{
-              p: 3,
-              borderRadius: 4,
-              border: theme.palette.mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.05)',
-              background: theme.palette.mode === 'dark' ? 'rgba(17, 24, 39, 0.7)' : '#ffffff',
-              backdropFilter: 'blur(10px)',
-              boxShadow: theme.palette.mode === 'dark' ? '0 8px 32px 0 rgba(0, 0, 0, 0.3)' : '0 8px 32px 0 rgba(99, 102, 241, 0.04)'
+              ...cardStyle,
+              p: 3
             }}
           >
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3, flexWrap: 'wrap', gap: 2 }}>

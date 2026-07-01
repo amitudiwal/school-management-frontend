@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useQuery, useApolloClient } from '@apollo/client';
 import {
   Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText,
-  Avatar, Box, Typography, Divider, IconButton, Chip, useTheme
+  Avatar, Box, Typography, Divider, IconButton, Chip, useTheme, Tooltip
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -27,10 +27,13 @@ import {
   EventNote as EventsIcon,
   Inventory as InventoryIcon,
   Book as LibraryIcon,
-  Campaign as AnnouncementIcon
+  Campaign as AnnouncementIcon,
+  ChevronLeft as ChevronLeftIcon,
+  ChevronRight as ChevronRightIcon,
+  Menu as MenuIcon
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
-import { toggleTheme } from '../store/slices/uiSlice';
+import { toggleTheme, toggleSidebar } from '../store/slices/uiSlice';
 import { GET_SCHOOL } from '../graphql/operations';
 import { BACKEND_URL } from '../graphql/client';
 import vidyaflowLogo from '../assets/vidyaflowlogo.png';
@@ -39,7 +42,7 @@ const DRAWER_WIDTH = 280;
 
 function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
   const { user } = useSelector((state) => state.auth);
-  const { themeMode } = useSelector((state) => state.ui);
+  const { themeMode, sidebarOpen } = useSelector((state) => state.ui);
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const location = useLocation();
@@ -53,6 +56,8 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
 
   const schoolLogo = schoolData?.getSchool?.schoolLogo || schoolData?.getSchool?.logo;
   const schoolName = schoolData?.getSchool?.schoolName || schoolData?.getSchool?.name;
+  
+  const drawerWidth = sidebarOpen ? 280 : 88;
 
   const handleLogout = async () => {
     dispatch(logout());
@@ -175,17 +180,28 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
       onClose={onMobileClose}
       ModalProps={{ keepMounted: true }}
       sx={{
-        width: { md: DRAWER_WIDTH },
+        width: { md: drawerWidth },
         flexShrink: { md: 0 },
+        transition: theme.transitions.create('width', {
+          easing: theme.transitions.easing.easeInOut,
+          duration: sidebarOpen ? theme.transitions.duration.enteringScreen : theme.transitions.duration.leavingScreen,
+        }),
         [`& .MuiDrawer-paper`]: {
-          width: { xs: '82vw', sm: DRAWER_WIDTH },
-          maxWidth: DRAWER_WIDTH,
+          width: isMobile ? '82vw' : drawerWidth,
+          maxWidth: isMobile ? 280 : drawerWidth,
           boxSizing: 'border-box',
           backgroundColor: theme.palette.background.paper,
           borderRight: `1px solid ${theme.palette.divider}`,
           display: 'flex',
           flexDirection: 'column',
           justifyContent: 'space-between',
+          overflowX: 'hidden',
+          left: isMobile ? 'auto' : 0,
+          transform: isMobile ? undefined : 'none !important',
+          transition: theme.transitions.create(['width', 'max-width'], {
+            easing: theme.transitions.easing.easeInOut,
+            duration: sidebarOpen ? theme.transitions.duration.enteringScreen : theme.transitions.duration.leavingScreen,
+          }),
           '&::-webkit-scrollbar': {
             width: '6px',
           },
@@ -206,38 +222,95 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
         },
       }}
     >
-      <Box>
+      <Box sx={{ width: '100%', overflow: 'hidden' }}>
         {/* Brand Header */}
-        <Box sx={{ p: 3, display: 'flex', alignItems: 'center', gap: 2 }}>
-          <Avatar
-            variant="rounded"
-            src={schoolLogo ? (schoolLogo.startsWith('http') ? schoolLogo : `${BACKEND_URL}${schoolLogo}`) : vidyaflowLogo}
-            sx={{ width: 40, height: 40, background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)' }}
-          >
-            {schoolName?.charAt(0) || ''}
-          </Avatar>
-          <Box>
-            <Typography variant="h6" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, lineHeight: 1.2 }}>
-              {schoolName || "VidhyaFlowAI"}
-            </Typography>
-            <Typography variant="caption" color="text.secondary">
-              {schoolName ? "School ERP Portal" : "School ERP System"}
-            </Typography>
+        <Box sx={{ 
+          p: 2.5, 
+          pl: sidebarOpen ? 2.5 : 3,
+          pb: sidebarOpen ? 2.5 : 8.5,
+          width: '100%',
+          boxSizing: 'border-box',
+          display: 'flex', 
+          alignItems: 'center', 
+          position: 'relative',
+          overflow: 'hidden',
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, overflow: 'hidden', flexGrow: 1 }}>
+            <Avatar
+              variant="rounded"
+              src={schoolLogo ? (schoolLogo.startsWith('http') ? schoolLogo : `${BACKEND_URL}${schoolLogo}`) : vidyaflowLogo}
+              sx={{ width: 40, height: 40, flexShrink: 0, background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)' }}
+            >
+              {schoolName?.charAt(0) || ''}
+            </Avatar>
+            <Box sx={{ 
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              opacity: sidebarOpen ? 1 : 0,
+              width: sidebarOpen ? 'auto' : 0,
+              maxWidth: sidebarOpen ? '200px' : 0,
+              visibility: sidebarOpen ? 'visible' : 'hidden',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden'
+            }}>
+              <Typography variant="h6" noWrap sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: '1.1rem', lineHeight: 1.2 }}>
+                {schoolName || "VidhyaFlowAI"}
+              </Typography>
+              <Typography variant="caption" color="text.secondary" noWrap display="block">
+                {schoolName ? "School ERP Portal" : "School ERP System"}
+              </Typography>
+            </Box>
           </Box>
+          {!isMobile && (
+            <IconButton 
+              onClick={() => dispatch(toggleSidebar())} 
+              size="small" 
+              sx={{ 
+                color: 'text.secondary',
+                position: 'absolute',
+                left: sidebarOpen ? 236 : 28,
+                top: sidebarOpen ? 24 : 72,
+                zIndex: 10,
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
+              }}
+            >
+              {sidebarOpen ? <ChevronLeftIcon /> : <ChevronRightIcon />}
+            </IconButton>
+          )}
         </Box>
 
         <Divider />
 
         {/* User Card */}
-        <Box sx={{ p: 2, m: 2, borderRadius: 3, backgroundColor: theme.palette.mode === 'dark' ? '#1E293B' : '#F8FAFC', display: 'flex', flexDirection: 'column', gap: 1 }}>
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+        <Box sx={{ 
+          p: sidebarOpen ? 2 : 1, 
+          m: sidebarOpen ? 2 : 1, 
+          borderRadius: 3, 
+          backgroundColor: sidebarOpen ? (theme.palette.mode === 'dark' ? '#1E293B' : '#F8FAFC') : 'transparent', 
+          display: 'flex', 
+          flexDirection: 'column', 
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 1,
+          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          overflow: 'hidden'
+        }}>
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: sidebarOpen ? 'flex-start' : 'center', width: '100%', gap: 1.5, pl: sidebarOpen ? 0 : 0.5, transition: 'all 0.3s' }}>
             <Avatar
               src={user?.avatar}
-              sx={{ width: 44, height: 44, bgcolor: theme.palette.primary.main, border: `2px solid ${theme.palette.primary.light}` }}
+              sx={{ width: 44, height: 44, bgcolor: theme.palette.primary.main, border: `2px solid ${theme.palette.primary.light}`, flexShrink: 0 }}
             >
               {user?.name?.charAt(0)}
             </Avatar>
-            <Box sx={{ overflow: 'hidden' }}>
+            <Box sx={{ 
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              opacity: sidebarOpen ? 1 : 0,
+              width: sidebarOpen ? 'auto' : 0,
+              maxWidth: sidebarOpen ? '150px' : 0,
+              visibility: sidebarOpen ? 'visible' : 'hidden',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden'
+            }}>
               <Typography variant="subtitle2" noWrap sx={{ fontWeight: 600 }}>
                 {user?.name}
               </Typography>
@@ -246,84 +319,166 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
               </Typography>
             </Box>
           </Box>
-          <Chip
-            label={user?.role === 'SUPER_TEACHER' ? 'Academic Management' : user?.role?.replace('_', ' ')}
-            size="small"
-            color="primary"
-            variant="soft"
-            sx={{ fontWeight: 700, fontSize: '0.65rem', alignSelf: 'flex-start' }}
-          />
+          <Box sx={{
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            opacity: sidebarOpen ? 1 : 0,
+            height: sidebarOpen ? 'auto' : 0,
+            visibility: sidebarOpen ? 'visible' : 'hidden',
+            overflow: 'hidden',
+            mt: sidebarOpen ? 1 : 0
+          }}>
+            <Chip
+              label={user?.role === 'SUPER_TEACHER' ? 'Academic Management' : user?.role?.replace('_', ' ')}
+              size="small"
+              color="primary"
+              variant="soft"
+              sx={{ fontWeight: 700, fontSize: '0.65rem', width: '100%' }}
+            />
+          </Box>
         </Box>
 
         {/* Navigation List */}
-        <List sx={{ px: 2 }}>
+        <List sx={{ px: sidebarOpen ? 2 : 1, width: '100%' }}>
           {menuItems.map((item) => (
-            <ListItem key={item.text} disablePadding sx={{ mb: 0.5 }}>
-              <ListItemButton
-                component={motion.div}
-                whileHover={{ scale: 1.02, x: 6 }}
-                whileTap={{ scale: 0.98 }}
-                onClick={() => handleNavigate(item.path)}
-                sx={{
-                  borderRadius: 2,
-                  backgroundColor: isActive(item.path) ? 'action.selected' : 'transparent',
-                  color: isActive(item.path) ? theme.palette.primary.main : 'text.secondary',
-                  cursor: 'pointer',
-                  '&:hover': {
-                    backgroundColor: 'action.hover',
-                    color: theme.palette.text.primary,
-                  },
-                }}
-              >
-                <ListItemIcon sx={{ color: 'inherit', minWidth: 40 }}>
-                  {item.icon}
-                </ListItemIcon>
-                <ListItemText
-                  primary={item.text}
-                  primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: isActive(item.path) ? 600 : 500 }}
-                />
-              </ListItemButton>
+            <ListItem key={item.text} disablePadding sx={{ mb: 0.5, width: '100%', display: 'block' }}>
+              <Tooltip title={!sidebarOpen ? item.text : ""} placement="right" arrow>
+                <ListItemButton
+                  component={motion.div}
+                  whileHover={sidebarOpen ? { scale: 1.02, x: 6 } : { scale: 1.08 }}
+                  whileTap={{ scale: 0.98 }}
+                  onClick={() => handleNavigate(item.path)}
+                  sx={{
+                    borderRadius: 2,
+                    justifyContent: sidebarOpen ? 'flex-start' : 'center',
+                    px: sidebarOpen ? 2 : 0,
+                    py: 1.2,
+                    backgroundColor: isActive(item.path) ? 'action.selected' : 'transparent',
+                    color: isActive(item.path) ? theme.palette.primary.main : 'text.secondary',
+                    cursor: 'pointer',
+                    overflow: 'hidden',
+                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    '&:hover': {
+                      backgroundColor: 'action.hover',
+                      color: theme.palette.text.primary,
+                    },
+                  }}
+                >
+                  <ListItemIcon sx={{ 
+                    color: 'inherit', 
+                    minWidth: sidebarOpen ? 40 : 0,
+                    justifyContent: 'center',
+                    flexShrink: 0
+                  }}>
+                    {item.icon}
+                  </ListItemIcon>
+                  <ListItemText
+                    primary={item.text}
+                    primaryTypographyProps={{ 
+                      fontSize: '0.875rem', 
+                      fontWeight: isActive(item.path) ? 600 : 500,
+                      noWrap: true
+                    }}
+                    sx={{
+                      transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                      opacity: sidebarOpen ? 1 : 0,
+                      width: sidebarOpen ? 'auto' : 0,
+                      maxWidth: sidebarOpen ? '180px' : 0,
+                      visibility: sidebarOpen ? 'visible' : 'hidden',
+                      m: 0,
+                      overflow: 'hidden'
+                    }}
+                  />
+                </ListItemButton>
+              </Tooltip>
             </ListItem>
           ))}
         </List>
       </Box>
 
       {/* Footer Controls */}
-      <Box sx={{ p: 2 }}>
+      <Box sx={{ p: 2, width: '100%' }}>
         <Divider sx={{ mb: 2 }} />
-        <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
-          <Typography variant="body2" color="text.secondary">
+        <Box sx={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: sidebarOpen ? 'space-between' : 'center', 
+          mb: 2,
+          overflow: 'hidden',
+          px: sidebarOpen ? 0 : 1.5,
+          transition: 'all 0.3s'
+        }}>
+          <Typography 
+            variant="body2" 
+            color="text.secondary"
+            sx={{
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              opacity: sidebarOpen ? 1 : 0,
+              width: sidebarOpen ? 'auto' : 0,
+              maxWidth: sidebarOpen ? '150px' : 0,
+              visibility: sidebarOpen ? 'visible' : 'hidden',
+              whiteSpace: 'nowrap',
+              overflow: 'hidden'
+            }}
+          >
             {themeMode === 'dark' ? 'Dark Mode' : 'Light Mode'}
           </Typography>
-          <IconButton
-            component={motion.button}
-            whileHover={{ scale: 1.1, rotate: themeMode === 'dark' ? 15 : -15 }}
-            whileTap={{ scale: 0.9 }}
-            onClick={() => dispatch(toggleTheme())}
-            color="inherit"
-          >
-            {themeMode === 'dark' ? <LightIcon /> : <DarkIcon />}
-          </IconButton>
+          <Tooltip title={!sidebarOpen ? (themeMode === 'dark' ? 'Light Mode' : 'Dark Mode') : ""} placement="right" arrow>
+            <IconButton
+              component={motion.button}
+              whileHover={{ scale: 1.1, rotate: themeMode === 'dark' ? 15 : -15 }}
+              whileTap={{ scale: 0.9 }}
+              onClick={() => dispatch(toggleTheme())}
+              color="inherit"
+              size="small"
+              sx={{ flexShrink: 0 }}
+            >
+              {themeMode === 'dark' ? <LightIcon /> : <DarkIcon />}
+            </IconButton>
+          </Tooltip>
         </Box>
-        <ListItemButton
-          component={motion.div}
-          whileHover={{ scale: 1.02, x: 6 }}
-          whileTap={{ scale: 0.98 }}
-          onClick={handleLogout}
-          sx={{
-            borderRadius: 2,
-            color: 'error.main',
-            cursor: 'pointer',
-            '&:hover': {
-              backgroundColor: 'error.lighter',
-            },
-          }}
-        >
-          <ListItemIcon sx={{ color: 'inherit', minWidth: 40 }}>
-            <LogoutIcon />
-          </ListItemIcon>
-          <ListItemText primary="Log Out" primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 600 }} />
-        </ListItemButton>
+        <Tooltip title={!sidebarOpen ? "Log Out" : ""} placement="right" arrow>
+          <ListItemButton
+            component={motion.div}
+            whileHover={sidebarOpen ? { scale: 1.02, x: 6 } : { scale: 1.08 }}
+            whileTap={{ scale: 0.98 }}
+            onClick={handleLogout}
+            sx={{
+              borderRadius: 2,
+              justifyContent: sidebarOpen ? 'flex-start' : 'center',
+              px: sidebarOpen ? 2 : 0,
+              py: 1.2,
+              color: 'error.main',
+              cursor: 'pointer',
+              overflow: 'hidden',
+              transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              '&:hover': {
+                backgroundColor: 'error.lighter',
+              },
+            }}
+          >
+            <ListItemIcon sx={{ 
+              color: 'inherit', 
+              minWidth: sidebarOpen ? 40 : 0,
+              justifyContent: 'center',
+              flexShrink: 0
+            }}>
+              <LogoutIcon />
+            </ListItemIcon>
+            <ListItemText 
+              primary="Log Out" 
+              primaryTypographyProps={{ fontSize: '0.875rem', fontWeight: 600, noWrap: true }} 
+              sx={{
+                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                opacity: sidebarOpen ? 1 : 0,
+                width: sidebarOpen ? 'auto' : 0,
+                maxWidth: sidebarOpen ? '180px' : 0,
+                visibility: sidebarOpen ? 'visible' : 'hidden',
+                m: 0,
+                overflow: 'hidden'
+              }}
+            />
+          </ListItemButton>
+        </Tooltip>
       </Box>
     </Drawer>
   );
