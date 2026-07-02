@@ -69,6 +69,61 @@ function InventoryManagement() {
   const [purchaseDate, setPurchaseDate] = useState(new Date().toISOString().split('T')[0]);
   const [formError, setFormError] = useState('');
 
+  // Custom Category State & Handler
+  const [customCategories, setCustomCategories] = useState(() => {
+    try {
+      const stored = localStorage.getItem(`custom_inventory_categories_${user?.schoolId}`);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  const [openCategoryModal, setOpenCategoryModal] = useState(false);
+  const [newCategoryName, setNewCategoryName] = useState('');
+  const [categoryError, setCategoryError] = useState('');
+
+  const allCategories = React.useMemo(() => {
+    return [
+      ...CATEGORIES,
+      ...customCategories.map(cat => ({
+        value: cat.toUpperCase().replace(/[^A-Z0-9_]/g, '_'),
+        label: cat,
+        color: '#8B5CF6' // Premium violet color for custom categories
+      }))
+    ];
+  }, [customCategories, user]);
+
+  const handleCreateCategory = (e) => {
+    e.preventDefault();
+    setCategoryError('');
+    const trimmed = newCategoryName.trim();
+    if (!trimmed) {
+      setCategoryError('Category name is required');
+      return;
+    }
+    
+    // Check for duplicates
+    const value = trimmed.toUpperCase().replace(/[^A-Z0-9_]/g, '_');
+    const exists = allCategories.some(c => c.value === value || c.label.toLowerCase() === trimmed.toLowerCase());
+    if (exists) {
+      setCategoryError('This category already exists');
+      return;
+    }
+    
+    const updated = [...customCategories, trimmed];
+    setCustomCategories(updated);
+    try {
+      localStorage.setItem(`custom_inventory_categories_${user?.schoolId}`, JSON.stringify(updated));
+    } catch (err) {
+      console.error(err);
+    }
+    
+    dispatch(showToast({ message: `Category "${trimmed}" created successfully!`, severity: 'success' }));
+    setNewCategoryName('');
+    setOpenCategoryModal(false);
+  };
+
   // GraphQL Operations
   const { loading, error, data, refetch } = useQuery(GET_INVENTORY_LIST);
 
@@ -195,7 +250,7 @@ function InventoryManagement() {
   });
 
   const getCategoryDetails = (catVal) => {
-    return CATEGORIES.find(c => c.value === catVal) || { label: catVal, color: '#6B7280' };
+    return allCategories.find(c => c.value === catVal) || { label: catVal, color: '#6B7280' };
   };
 
   if (loading) {
@@ -234,20 +289,40 @@ function InventoryManagement() {
           </Box>
         </Box>
 
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={handleOpenAddModal}
-          sx={{
-            py: 1.5,
-            px: 3,
-            fontWeight: 700,
-            borderRadius: 3,
-            boxShadow: isDark ? 'none' : '0px 4px 14px rgba(99, 102, 241, 0.4)'
-          }}
-        >
-          Add Asset Item
-        </Button>
+        <Stack direction="row" spacing={2}>
+          <Button
+            variant="outlined"
+            startIcon={<CategoryIcon />}
+            onClick={() => setOpenCategoryModal(true)}
+            sx={{
+              py: 1.5,
+              px: 3,
+              fontWeight: 700,
+              borderRadius: 3,
+              borderWidth: '2px',
+              '&:hover': {
+                borderWidth: '2px'
+              }
+            }}
+          >
+            Create Category
+          </Button>
+
+          <Button
+            variant="contained"
+            startIcon={<AddIcon />}
+            onClick={handleOpenAddModal}
+            sx={{
+              py: 1.5,
+              px: 3,
+              fontWeight: 700,
+              borderRadius: 3,
+              boxShadow: isDark ? 'none' : '0px 4px 14px rgba(99, 102, 241, 0.4)'
+            }}
+          >
+            Add Asset Item
+          </Button>
+        </Stack>
       </Box>
 
       {/* Statistics Cards */}
@@ -367,7 +442,7 @@ function InventoryManagement() {
                 onClick={() => setSelectedCategory('ALL')}
                 sx={{ fontWeight: 600 }}
               />
-              {CATEGORIES.map((cat) => (
+              {allCategories.map((cat) => (
                 <Chip
                   key={cat.value}
                   label={cat.label}
@@ -560,7 +635,7 @@ function InventoryManagement() {
               fullWidth
               variant="outlined"
             >
-              {CATEGORIES.map((cat) => (
+              {allCategories.map((cat) => (
                 <MenuItem key={cat.value} value={cat.value}>
                   {cat.label}
                 </MenuItem>
@@ -623,6 +698,54 @@ function InventoryManagement() {
               sx={{ fontWeight: 700, borderRadius: 2 }}
             >
               {addLoading || editLoading ? <CircularProgress size={24} /> : 'Save Asset'}
+            </Button>
+          </DialogActions>
+        </form>
+      </Dialog>
+
+      {/* Create Category Modal */}
+      <Dialog
+        open={openCategoryModal}
+        onClose={() => setOpenCategoryModal(false)}
+        maxWidth="xs"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: 4,
+            backgroundImage: 'none',
+            bgcolor: isDark ? 'background.paper' : '#ffffff',
+            boxShadow: '0px 20px 40px rgba(0,0,0,0.1)'
+          }
+        }}
+      >
+        <DialogTitle sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, pb: 1 }}>
+          Create Inventory Category
+        </DialogTitle>
+        <form onSubmit={handleCreateCategory}>
+          <DialogContent sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
+            {categoryError && <Alert severity="error">{categoryError}</Alert>}
+
+            <TextField
+              label="Category Name"
+              value={newCategoryName}
+              onChange={(e) => setNewCategoryName(e.target.value)}
+              placeholder="e.g. Science Lab Equipment, Musical Instruments"
+              fullWidth
+              required
+              autoFocus
+              variant="outlined"
+            />
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3, gap: 1 }}>
+            <Button onClick={() => setOpenCategoryModal(false)} variant="outlined" color="inherit">
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              variant="contained"
+              sx={{ fontWeight: 700, borderRadius: 2 }}
+            >
+              Create
             </Button>
           </DialogActions>
         </form>

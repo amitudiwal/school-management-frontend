@@ -13,6 +13,7 @@ import { Add as AddIcon, FileDownload as ExportIcon, Settings as SettingsIcon, E
 import { GET_FEES_LIST, GET_STUDENT_FEE_LEDGER, GET_CLASSES, GET_STUDENTS, COLLECT_STUDENT_FEE, CREATE_FEE_STRUCTURE, UPDATE_FEE_STRUCTURE, DELETE_FEE_STRUCTURE, GET_STUDENT_FEE_STRUCTURE, SAVE_STUDENT_FEE_STRUCTURE } from '../graphql/operations';
 import { showToast } from '../store/slices/uiSlice';
 import CustomDatePicker from '../components/CustomDatePicker';
+import { BACKEND_URL } from '../graphql/client';
 
 function FeesList() {
   const dispatch = useDispatch();
@@ -475,7 +476,7 @@ function FeesList() {
   const handleExport = async (format) => {
     try {
       const moduleName = activeTab === 0 ? 'fees' : 'fees-ledger';
-      const response = await fetch(`http://localhost:5000/api/export/${format}/${moduleName}?classId=${classId || ''}`, {
+      const response = await fetch(`${BACKEND_URL}/api/export/${format}/${moduleName}?classId=${classId || ''}`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }

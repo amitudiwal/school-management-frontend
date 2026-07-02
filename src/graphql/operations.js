@@ -2488,8 +2488,8 @@ export const GET_NOTIFICATIONS = gql`
 `;
 
 export const CREATE_NOTIFICATION = gql`
-  mutation CreateNotification($title: String!, $message: String!, $type: String!, $recipientRoles: [String!]!) {
-    createNotification(title: $title, message: $message, type: $type, recipientRoles: $recipientRoles) {
+  mutation CreateNotification($title: String!, $message: String!, $type: String!, $recipientRoles: [String!]!, $sendSMS: Boolean) {
+    createNotification(title: $title, message: $message, type: $type, recipientRoles: $recipientRoles, sendSMS: $sendSMS) {
       id
       title
       message

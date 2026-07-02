@@ -51,7 +51,8 @@ const ROLE_FEATURES = {
   ],
   PARENT: [
     { key: 'parent-portal', label: 'Parent Portal', desc: 'Dashboard with kid reports, grades, and fee records.' },
-    { key: 'bus-tracker', label: 'Bus Tracker', desc: 'Provides real-time GPS school bus location tracking.' }
+    { key: 'bus-tracker', label: 'Bus Tracker', desc: 'Provides real-time GPS school bus location tracking.' },
+    { key: 'announcements', label: 'Circular Portal', desc: 'Allows viewing notice board updates, announcements, and SMS alerts.' }
   ]
 };
 
@@ -59,7 +60,7 @@ const DEFAULT_PERMISSIONS = {
   SUPER_TEACHER: ['teachers', 'classes', 'timetable', 'exams', 'staff-attendance', 'leaves', 'copy-submission', 'events', 'inventory', 'library', 'announcements'],
   ACCOUNTANT: ['students', 'fees', 'payroll'],
   TEACHER: ['pending-jobs', 'timetable', 'bus-tracker', 'attendance', 'leaves', 'homework', 'grades', 'analytics', 'payroll', 'copy-submission', 'library', 'announcements'],
-  PARENT: ['parent-portal', 'bus-tracker']
+  PARENT: ['parent-portal', 'bus-tracker', 'announcements']
 };
 
 function FeaturePermissions() {

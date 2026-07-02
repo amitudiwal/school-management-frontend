@@ -88,12 +88,12 @@ function BusTracker() {
   const [mapLoaded, setMapLoaded] = useState(false);
   const [leafletError, setLeafletError] = useState(false);
 
-  // Simulation State
+  // Geolocation Broadcasting State
   const [selectedSimVehicle, setSelectedSimVehicle] = useState('');
   const [simRouteName, setSimRouteName] = useState('Route A - North City');
   const [isSimulating, setIsSimulating] = useState(false);
-  const [simStep, setSimStep] = useState(0);
-  const [simSpeed, setSimSpeed] = useState(45);
+  const [realCoords, setRealCoords] = useState(null);
+  const [gpsError, setGpsError] = useState(null);
   const [initializing, setInitializing] = useState(false);
 
   // Refs for Leaflet Map
@@ -101,7 +101,7 @@ function BusTracker() {
   const markersRef = useRef({});
   const routesLinesRef = useRef([]);
   const stopsMarkersRef = useRef([]);
-  const simIntervalRef = useRef(null);
+  const watchIdRef = useRef(null);
 
   // Queries & Mutations
   const { loading, error, data, refetch } = useQuery(GET_VEHICLES_TRACKING, {
@@ -666,91 +666,84 @@ function BusTracker() {
     }
   };
 
-  // --- DRIVER CONSOLE TRIP SIMULATION TRIGGER ---
+  // --- DRIVER CONSOLE TRIP REAL GPS STREAMER ---
   const handleToggleSimulation = () => {
     if (isSimulating) {
-      // STOP SIMULATION
-      clearInterval(simIntervalRef.current);
-      simIntervalRef.current = null;
+      // STOP GPS BROADCASTING
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
+        watchIdRef.current = null;
+      }
       setIsSimulating(false);
-      setSimStep(0);
+      setRealCoords(null);
+      setGpsError(null);
 
       // Mark vehicle status as Inactive on server
       if (selectedSimVehicle) {
-        const routePoints = getRoutePoints(simRouteName);
-        const lastCoords = routePoints[routePoints.length - 1]; // Reset position to school
         updateLocation({
           variables: {
             id: selectedSimVehicle,
-            latitude: lastCoords.lat,
-            longitude: lastCoords.lng,
+            latitude: baseLat,
+            longitude: baseLng,
             status: 'Inactive'
           }
         }).then(() => refetch());
       }
     } else {
-      // START SIMULATION
+      // START GPS BROADCASTING
       if (!selectedSimVehicle) return;
+      if (!navigator.geolocation) {
+        setGpsError('Geolocation is not supported by this browser/device.');
+        return;
+      }
+
       setIsSimulating(true);
-      setSimStep(0);
-      
-      const routePoints = getRoutePoints(simRouteName);
-      let currentStepIndex = 0;
+      setGpsError(null);
 
-      // Immediately execute first step
-      const stepPoint = routePoints[0];
-      updateLocation({
-        variables: {
-          id: selectedSimVehicle,
-          latitude: stepPoint.lat,
-          longitude: stepPoint.lng,
-          status: 'Active'
-        }
-      }).then(() => refetch());
-
-      // Set simulation interval
-      simIntervalRef.current = setInterval(() => {
-        currentStepIndex += 1;
-        if (currentStepIndex >= routePoints.length) {
-          // Completed the trip!
-          clearInterval(simIntervalRef.current);
-          simIntervalRef.current = null;
-          setIsSimulating(false);
-          setSimStep(0);
-
-          // Reset status to Inactive
-          updateLocation({
-            variables: {
-              id: selectedSimVehicle,
-              latitude: routePoints[routePoints.length - 1].lat,
-              longitude: routePoints[routePoints.length - 1].lng,
-              status: 'Inactive'
-            }
-          }).then(() => refetch());
-        } else {
-          setSimStep(currentStepIndex);
-          const nextPoint = routePoints[currentStepIndex];
-          
-          // Randomize speed slightly
-          setSimSpeed(Math.floor(Math.random() * 20) + 35);
+      const watchId = navigator.geolocation.watchPosition(
+        (position) => {
+          const { latitude, longitude, accuracy, speed } = position.coords;
+          // speed is in m/s, convert to km/h if it is a number
+          const speedKmH = typeof speed === 'number' && speed > 0 ? Math.round(speed * 3.6) : 0;
+          setRealCoords({ latitude, longitude, accuracy, speed: speedKmH });
 
           updateLocation({
             variables: {
               id: selectedSimVehicle,
-              latitude: nextPoint.lat,
-              longitude: nextPoint.lng,
+              latitude,
+              longitude,
               status: 'Active'
             }
           }).then(() => refetch());
+        },
+        (err) => {
+          console.error('GPS error:', err);
+          let errMsg = 'Failed to retrieve location.';
+          if (err.code === 1) errMsg = 'Permission denied. Please allow location access.';
+          else if (err.code === 2) errMsg = 'Position unavailable. Check your GPS signal.';
+          else if (err.code === 3) errMsg = 'GPS timeout. Try again.';
+          setGpsError(errMsg);
+          setIsSimulating(false);
+          if (watchIdRef.current !== null) {
+            navigator.geolocation.clearWatch(watchIdRef.current);
+            watchIdRef.current = null;
+          }
+        },
+        {
+          enableHighAccuracy: true,
+          maximumAge: 0,
+          timeout: 10000
         }
-      }, 5000); // Shift coords every 5 seconds
+      );
+
+      watchIdRef.current = watchId;
     }
   };
 
   useEffect(() => {
     return () => {
-      if (simIntervalRef.current) {
-        clearInterval(simIntervalRef.current);
+      if (watchIdRef.current !== null) {
+        navigator.geolocation.clearWatch(watchIdRef.current);
       }
     };
   }, []);
@@ -935,26 +928,26 @@ function BusTracker() {
           <Grid item xs={12} md={6}>
             <Card sx={{ p: 3, height: '100%' }}>
               <Typography variant="h6" sx={{ fontWeight: 700, mb: 3 }}>
-                Driver Control Simulator Panel
+                Driver GPS Broadcaster Panel
               </Typography>
               <Typography color="text.secondary" variant="body2" sx={{ mb: 3 }}>
-                Simulate a live school bus GPS tracking session. Once activated, the driver's phone sends real-time GPS coordinates to the server every 5 seconds.
+                Broadcast your mobile device's actual GPS location. Once active, the server receives real-time GPS coordinates to display on the live tracking board.
               </Typography>
 
               {vehiclesList.length === 0 ? (
                 <Box sx={{ textAlign: 'center', py: 4 }}>
                   <Typography color="text.secondary" variant="body2" sx={{ mb: 2 }}>
-                    Please initialize the demo fleets in the first tab to begin simulation.
+                    Please register fleets or initialize demo data in the first tab to begin.
                   </Typography>
                 </Box>
               ) : (
                 <Stack spacing={3}>
                   <FormControl fullWidth disabled={isSimulating}>
-                    <InputLabel id="sim-vehicle-select-label">Select Simulation Bus</InputLabel>
+                    <InputLabel id="sim-vehicle-select-label">Select Active Bus</InputLabel>
                     <Select
                       labelId="sim-vehicle-select-label"
                       value={selectedSimVehicle}
-                      label="Select Simulation Bus"
+                      label="Select Active Bus"
                       onChange={(e) => {
                         const vehicleId = e.target.value;
                         setSelectedSimVehicle(vehicleId);
@@ -974,28 +967,16 @@ function BusTracker() {
 
                   <Card variant="outlined" sx={{ p: 2, bgcolor: 'background.default' }}>
                     <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 1, display: 'flex', alignItems: 'center', gap: 1 }}>
-                      <ExploreIcon color="primary" /> Route Points to Traverse:
+                      <ExploreIcon color="primary" /> GPS Status & Settings
                     </Typography>
-                    <List dense>
-                      {getRoutePoints(simRouteName).map((point, index) => (
-                        <ListItem key={index}>
-                          <Chip
-                            label={index + 1}
-                            size="small"
-                            color={simStep === index && isSimulating ? 'success' : 'primary'}
-                            sx={{ mr: 2, fontWeight: 800, width: 22, height: 22 }}
-                          />
-                          <ListItemText
-                            primary={point.name}
-                            primaryTypographyProps={{
-                              fontWeight: simStep === index && isSimulating ? 700 : 500,
-                              color: simStep === index && isSimulating ? 'success.main' : 'text.primary'
-                            }}
-                            secondary={`Lat: ${point.lat}, Lng: ${point.lng}`}
-                          />
-                        </ListItem>
-                      ))}
-                    </List>
+                    <Stack spacing={1}>
+                      <Typography variant="body2" color="text.secondary">
+                        Assigned Route: <strong>{simRouteName || 'Unassigned'}</strong>
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+                        💡 <strong>Notice:</strong> Keep this browser tab open and ensure your phone screen stays active while driving. Turn on high accuracy location mode on your device.
+                      </Typography>
+                    </Stack>
                   </Card>
 
                   <Button
@@ -1007,7 +988,7 @@ function BusTracker() {
                     startIcon={isSimulating ? <StopIcon /> : <PlayIcon />}
                     sx={{ py: 1.5, borderRadius: 2, fontWeight: 700, textTransform: 'none' }}
                   >
-                    {isSimulating ? 'Stop Simulation & Turn Off GPS' : 'Start Route Simulation'}
+                    {isSimulating ? 'Stop GPS Broadcasting' : 'Start GPS Broadcasting'}
                   </Button>
                 </Stack>
               )}
@@ -1021,10 +1002,16 @@ function BusTracker() {
                 Live Driver Telemetry Console
               </Typography>
 
+              {gpsError && (
+                <Alert severity="error" sx={{ mb: 2 }}>
+                  {gpsError}
+                </Alert>
+              )}
+
               {!isSimulating ? (
                 <Box sx={{ display: 'flex', flexGrow: 1, justifyContent: 'center', alignItems: 'center', flexDirection: 'column', minHeight: 300 }}>
                   <ExploreIcon sx={{ fontSize: '3.5rem', color: 'text.secondary', opacity: 0.25, mb: 2 }} />
-                  <Typography color="text.secondary">Start a simulation to stream live telemetry.</Typography>
+                  <Typography color="text.secondary">Start broadcasting to stream live GPS telemetry.</Typography>
                 </Box>
               ) : (
                 <Stack spacing={3} sx={{ flexGrow: 1 }}>
@@ -1034,7 +1021,7 @@ function BusTracker() {
                       <Typography sx={{ fontWeight: 600 }}>Calculated Speed</Typography>
                     </Box>
                     <Typography variant="h5" sx={{ fontWeight: 800, color: 'success.main' }}>
-                      {simSpeed} km/h
+                      {realCoords?.speed !== undefined ? `${realCoords.speed} km/h` : '0 km/h'}
                     </Typography>
                   </Box>
 
@@ -1046,39 +1033,25 @@ function BusTracker() {
                       <Typography sx={{ fontWeight: 600 }}>Current Coordinates</Typography>
                     </Box>
                     <Typography variant="body2" sx={{ fontFamily: 'monospace', fontWeight: 700 }}>
-                      {getRoutePoints(simRouteName)[simStep]?.lat?.toFixed(5)}, {getRoutePoints(simRouteName)[simStep]?.lng?.toFixed(5)}
+                      {realCoords ? `${realCoords.latitude.toFixed(5)}, ${realCoords.longitude.toFixed(5)}` : 'Retrieving GPS lock...'}
                     </Typography>
                   </Box>
 
                   <Divider />
 
-                  <Box>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 700, mb: 2 }}>
-                      Trip Progress:
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                      <TimeIcon color="warning" />
+                      <Typography sx={{ fontWeight: 600 }}>GPS Accuracy</Typography>
+                    </Box>
+                    <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                      {realCoords ? `± ${realCoords.accuracy.toFixed(1)} meters` : 'N/A'}
                     </Typography>
-                    <Stack spacing={1.5}>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant="body2" color="text.secondary">Next Stop:</Typography>
-                        <Typography variant="body2" sx={{ fontWeight: 700 }}>
-                          {getRoutePoints(simRouteName)[simStep + 1]?.name || 'School Main Gate (Arrival)'}
-                        </Typography>
-                      </Box>
-                      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                        <Typography variant="body2" color="text.secondary">Estimated Time to Arrival:</Typography>
-                        <Chip
-                          label={`${(getRoutePoints(simRouteName).length - simStep - 1) * 3} mins`}
-                          size="small"
-                          color="warning"
-                          icon={<TimeIcon />}
-                          sx={{ fontWeight: 700 }}
-                        />
-                      </Box>
-                    </Stack>
                   </Box>
 
                   <Box sx={{ mt: 'auto', p: 2, bgcolor: '#10B98115', borderRadius: 2, border: '1px dashed', borderColor: 'success.main' }}>
                     <Typography variant="body2" color="success.main" sx={{ fontWeight: 700 }} align="center">
-                      ✓ GPS Signal: ACTIVE | Transmitting to Server...
+                      ✓ GPS BROADCAST: ACTIVE | Transmitting to Server...
                     </Typography>
                   </Box>
                 </Stack>

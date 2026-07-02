@@ -69,7 +69,7 @@ function App() {
         SUPER_TEACHER: ['teachers', 'classes', 'timetable', 'exams', 'staff-attendance', 'leaves', 'copy-submission', 'events', 'inventory'],
         ACCOUNTANT: ['students', 'fees', 'payroll'],
         TEACHER: ['pending-jobs', 'timetable', 'bus-tracker', 'attendance', 'leaves', 'homework', 'grades', 'analytics', 'payroll'],
-        PARENT: ['parent-portal', 'bus-tracker']
+        PARENT: ['parent-portal', 'bus-tracker', 'announcements']
       }[roleName] || [];
     }
     const perms = schoolData.getSchool.settings.featurePermissions;
@@ -298,7 +298,7 @@ function App() {
 
             <Route 
               path="/announcements" 
-              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'announcements')) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'announcements'))) ? <AnnouncementPortal /> : <Navigate to="/" />} 
+              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'announcements')) || (['TEACHER', 'CLASS_TEACHER', 'PARENT'].includes(user?.role) && hasPermission(user.role, 'announcements'))) ? <AnnouncementPortal /> : <Navigate to="/" />} 
             />
 
             <Route 

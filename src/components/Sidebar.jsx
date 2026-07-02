@@ -5,7 +5,7 @@ import { useSelector, useDispatch } from 'react-redux';
 import { useQuery, useApolloClient } from '@apollo/client';
 import {
   Drawer, List, ListItem, ListItemButton, ListItemIcon, ListItemText,
-  Avatar, Box, Typography, Divider, IconButton, Chip, useTheme, Tooltip
+  Avatar, Box, Typography, Divider, IconButton, Chip, useTheme, Tooltip, Badge
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -34,7 +34,7 @@ import {
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
 import { toggleTheme, toggleSidebar } from '../store/slices/uiSlice';
-import { GET_SCHOOL } from '../graphql/operations';
+import { GET_SCHOOL, GET_NOTIFICATIONS } from '../graphql/operations';
 import { BACKEND_URL } from '../graphql/client';
 import vidyaflowLogo from '../assets/vidyaflowlogo.png';
 
@@ -53,6 +53,69 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
     variables: { id: user?.schoolId },
     skip: !user?.schoolId || user?.role === 'SUPER_ADMIN',
   });
+
+  // Query to get circular notifications for badge status
+  const { data: notificationsData } = useQuery(GET_NOTIFICATIONS, {
+    skip: !user || ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role),
+    pollInterval: 10000, // Poll every 10 seconds for real-time notification badging
+  });
+
+  const [readAlerts, setReadAlerts] = React.useState(() => {
+    try {
+      const stored = localStorage.getItem(`read_alerts_${user?.id}`);
+      return stored ? JSON.parse(stored) : [];
+    } catch {
+      return [];
+    }
+  });
+
+  React.useEffect(() => {
+    const handleAlertsRead = () => {
+      try {
+        const stored = localStorage.getItem(`read_alerts_${user?.id}`);
+        setReadAlerts(stored ? JSON.parse(stored) : []);
+      } catch (e) {
+        console.error(e);
+      }
+    };
+    window.addEventListener('alertsRead', handleAlertsRead);
+    return () => window.removeEventListener('alertsRead', handleAlertsRead);
+  }, [user]);
+
+  React.useEffect(() => {
+    const handleStorageChange = (e) => {
+      if (e.key === `read_alerts_${user?.id}`) {
+        try {
+          setReadAlerts(e.newValue ? JSON.parse(e.newValue) : []);
+        } catch {}
+      }
+    };
+    window.addEventListener('storage', handleStorageChange);
+    return () => window.removeEventListener('storage', handleStorageChange);
+  }, [user]);
+
+  const unreadCounts = React.useMemo(() => {
+    if (!notificationsData?.getNotifications) {
+      return { alerts: 0, notices: 0, announcements: 0, total: 0 };
+    }
+    const unreadList = notificationsData.getNotifications.filter(n => !readAlerts.includes(n.id));
+    const alerts = unreadList.filter(n => n.type === 'ALERT').length;
+    const notices = unreadList.filter(n => n.type === 'NOTICE').length;
+    const announcements = unreadList.filter(n => n.type === 'ANNOUNCEMENT').length;
+    return {
+      alerts,
+      notices,
+      announcements,
+      total: unreadList.length
+    };
+  }, [notificationsData, readAlerts]);
+
+  const badgeColor = React.useMemo(() => {
+    if (unreadCounts.alerts > 0) return 'error'; // Red for Alerts
+    if (unreadCounts.notices > 0) return 'secondary'; // Purple for Notices
+    return 'primary'; // Blue for Announcements
+  }, [unreadCounts]);
+
 
   const schoolLogo = schoolData?.getSchool?.schoolLogo || schoolData?.getSchool?.logo;
   const schoolName = schoolData?.getSchool?.schoolName || schoolData?.getSchool?.name;
@@ -85,7 +148,7 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
         SUPER_TEACHER: ['teachers', 'classes', 'timetable', 'exams', 'staff-attendance', 'leaves', 'copy-submission', 'events', 'inventory', 'library', 'announcements'],
         ACCOUNTANT: ['students', 'fees', 'payroll'],
         TEACHER: ['pending-jobs', 'timetable', 'bus-tracker', 'attendance', 'leaves', 'homework', 'grades', 'analytics', 'payroll', 'copy-submission', 'library', 'announcements'],
-        PARENT: ['parent-portal', 'bus-tracker']
+        PARENT: ['parent-portal', 'bus-tracker', 'announcements']
       }[roleName] || [];
     }
     const perms = schoolData.getSchool.settings.featurePermissions;
@@ -169,7 +232,8 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
     // PARENT
     ...(user?.role === 'PARENT' ? [
       { text: 'Parent Portal', icon: <DashboardIcon />, path: '/parent-portal', feature: 'parent-portal' },
-      { text: 'Bus Tracker', icon: <BusIcon />, path: '/bus-tracker', feature: 'bus-tracker' }
+      { text: 'Bus Tracker', icon: <BusIcon />, path: '/bus-tracker', feature: 'bus-tracker' },
+      { text: 'Circular Portal', icon: <AnnouncementIcon />, path: '/announcements', feature: 'announcements' }
     ].filter(item => hasPermission('PARENT', item.feature)) : [])
   ];
 
@@ -394,7 +458,11 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
                     justifyContent: 'center',
                     flexShrink: 0
                   }}>
-                    {item.icon}
+                    {item.path === '/announcements' && unreadCounts.total > 0 ? (
+                      <Badge badgeContent={unreadCounts.total} color={badgeColor}>
+                        {item.icon}
+                      </Badge>
+                    ) : item.icon}
                   </ListItemIcon>
                   <ListItemText
                     primary={item.text}
