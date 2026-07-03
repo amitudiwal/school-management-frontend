@@ -453,10 +453,10 @@ function Login() {
     mb: 3,
     '& .MuiOutlinedInput-root': {
       color: themeMode === 'dark' ? '#E2E8F0' : '#0F172A',
-      backgroundColor: themeMode === 'dark' ? 'rgba(15, 23, 42, 0.58)' : 'rgba(241, 245, 249, 0.8)',
+      backgroundColor: themeMode === 'dark' ? 'rgba(9, 15, 33, 0.65)' : 'rgba(241, 245, 249, 0.8)',
       borderRadius: 2,
       '& fieldset': {
-        borderColor: themeMode === 'dark' ? 'rgba(148, 163, 184, 0.28)' : 'rgba(71, 85, 105, 0.2)'
+        borderColor: themeMode === 'dark' ? 'rgba(99, 102, 241, 0.2)' : 'rgba(71, 85, 105, 0.2)'
       },
       '&:hover fieldset': {
         borderColor: `${activeColor}aa`
@@ -486,16 +486,10 @@ function Login() {
         justifyContent: 'center',
         position: 'relative',
         p: { xs: 2, sm: 4 },
-        ...((step === 'SCHOOL_CODE' || step === 'SELECT_ROLE') ? {
-          backgroundImage: `url(${themeMode === 'dark' ? darkModeBg : lightModeBg})`,
-          backgroundSize: 'cover',
-          backgroundPosition: 'center',
-          backgroundRepeat: 'no-repeat',
-        } : {
-          background: themeMode === 'dark'
-            ? 'linear-gradient(135deg, #0B0F19 0%, #111827 50%, #1F2937 100%)'
-            : 'linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%)',
-        })
+        backgroundImage: `url(${themeMode === 'dark' ? darkModeBg : lightModeBg})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
       }}>
         {/* Floating Theme Toggle */}
         <IconButton
@@ -522,10 +516,12 @@ function Login() {
           maxWidth: 450,
           width: '100%',
           borderRadius: 4,
-          background: themeMode === 'dark' ? 'rgba(17, 24, 39, 0.8)' : '#FFFFFF',
-          backdropFilter: 'blur(16px)',
-          boxShadow: themeMode === 'dark' ? '0 12px 40px 0 rgba(0, 0, 0, 0.4)' : '0 12px 40px 0 rgba(99, 102, 241, 0.08)',
-          border: themeMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.05)' : '1px solid rgba(0, 0, 0, 0.05)',
+          background: themeMode === 'dark' ? 'rgba(10, 18, 36, 0.72)' : '#FFFFFF',
+          backdropFilter: 'blur(20px)',
+          boxShadow: themeMode === 'dark' 
+            ? '0 12px 40px 0 rgba(0, 0, 0, 0.5), 0 0 24px rgba(99, 102, 241, 0.15)' 
+            : '0 12px 40px 0 rgba(99, 102, 241, 0.08)',
+          border: themeMode === 'dark' ? '1px solid rgba(99, 102, 241, 0.2)' : '1px solid rgba(0, 0, 0, 0.05)',
         }}>
           <CardContent sx={{ p: { xs: 3, sm: 4 } }}>
 

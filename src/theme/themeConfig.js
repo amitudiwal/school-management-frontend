@@ -87,6 +87,28 @@ const getDesignTokens = (mode) => ({
     borderRadius: 16, // Curves for modern card designs
   },
   components: {
+    MuiCssBaseline: {
+      styleOverrides: {
+        'html, body, *': {
+          '&::-webkit-scrollbar': {
+            width: '8px',
+            height: '8px',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: mode === 'dark' ? '#0B0F19' : '#F8FAFC',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: mode === 'dark' ? 'rgba(99, 102, 241, 0.4)' : 'rgba(79, 70, 229, 0.4)',
+            borderRadius: '4px',
+          },
+          '&::-webkit-scrollbar-thumb:hover': {
+            background: mode === 'dark' ? 'rgba(99, 102, 241, 0.6)' : 'rgba(79, 70, 229, 0.6)',
+          },
+          scrollbarWidth: 'thin',
+          scrollbarColor: mode === 'dark' ? 'rgba(99, 102, 241, 0.4) #0B0F19' : 'rgba(79, 70, 229, 0.4) #F8FAFC',
+        },
+      },
+    },
     MuiButton: {
       styleOverrides: {
         root: {

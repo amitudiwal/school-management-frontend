@@ -161,11 +161,11 @@ function App() {
                   canViewDashboard ? (
                     <Dashboard />
                   ) : user?.role === 'SUPER_TEACHER' ? (
-                    <Navigate to="/teachers" />
+                    <Navigate to="/self-attendance" />
                   ) : user?.role === 'ACCOUNTANT' ? (
-                    <Navigate to="/students" />
+                    <Navigate to="/self-attendance" />
                   ) : ['TEACHER', 'CLASS_TEACHER'].includes(user?.role) ? (
-                    <Navigate to="/timetable" />
+                    <Navigate to="/self-attendance" />
                   ) : user?.role === 'PARENT' ? (
                     <Navigate to="/parent-portal" />
                   ) : (
