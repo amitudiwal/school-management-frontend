@@ -12,14 +12,17 @@ import { useTheme } from '@mui/material/styles';
 import {
   Visibility, VisibilityOff, Email, Lock, ArrowBack,
   School as SchoolIcon, Smartphone, VpnKey, Business,
-  AdminPanelSettings, Person, SupervisorAccount, AttachMoney as AccountantIcon
+  AdminPanelSettings, Person, SupervisorAccount, AttachMoney as AccountantIcon,
+  Brightness4 as DarkModeIcon, Brightness7 as LightModeIcon
 } from '@mui/icons-material';
 import { GET_SCHOOL_BY_CODE, LOGIN_WITH_PASSWORD, SEND_OTP, VERIFY_OTP, FORGOT_PASSWORD } from '../graphql/operations';
 import { loginStart, loginSuccess, loginFailure } from '../store/slices/authSlice';
 
-import { showToast } from '../store/slices/uiSlice';
+import { showToast, toggleTheme } from '../store/slices/uiSlice';
 import { BACKEND_URL } from '../graphql/client';
 import vidyaflowLogo from '../assets/vidyaflowlogo.png';
+import darkModeBg from '../assets/Dark_mode_bg.png';
+import lightModeBg from '../assets/Light_mode_bg.png';
 
 function Login() {
   const globalTheme = useTheme();
@@ -481,11 +484,40 @@ function Login() {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: themeMode === 'dark'
-          ? 'linear-gradient(135deg, #0B0F19 0%, #111827 50%, #1F2937 100%)'
-          : 'linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%)',
-        p: { xs: 2, sm: 4 }
+        position: 'relative',
+        p: { xs: 2, sm: 4 },
+        ...((step === 'SCHOOL_CODE' || step === 'SELECT_ROLE') ? {
+          backgroundImage: `url(${themeMode === 'dark' ? darkModeBg : lightModeBg})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        } : {
+          background: themeMode === 'dark'
+            ? 'linear-gradient(135deg, #0B0F19 0%, #111827 50%, #1F2937 100%)'
+            : 'linear-gradient(135deg, #F8FAFC 0%, #E2E8F0 100%)',
+        })
       }}>
+        {/* Floating Theme Toggle */}
+        <IconButton
+          onClick={() => dispatch(toggleTheme())}
+          sx={{
+            position: 'absolute',
+            top: 24,
+            right: 24,
+            bgcolor: themeMode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.05)',
+            backdropFilter: 'blur(8px)',
+            border: themeMode === 'dark' ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.1)',
+            color: themeMode === 'dark' ? '#F59E0B' : '#6366F1',
+            '&:hover': {
+              bgcolor: themeMode === 'dark' ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.15)',
+              transform: 'scale(1.1)',
+            },
+            transition: 'all 0.2s ease-in-out',
+          }}
+        >
+          {themeMode === 'dark' ? <LightModeIcon /> : <DarkModeIcon />}
+        </IconButton>
+
         <Card sx={{
           maxWidth: 450,
           width: '100%',

@@ -38,6 +38,7 @@ import EventsManagement from './pages/EventsManagement';
 import InventoryManagement from './pages/InventoryManagement';
 import LibraryManagement from './pages/LibraryManagement';
 import AnnouncementPortal from './pages/AnnouncementPortal';
+import Settings from './pages/Settings';
 import PrintReportCard from './pages/PrintReportCard';
 import PrintCertificate from './pages/PrintCertificate';
 import { useQuery } from '@apollo/client';
@@ -299,6 +300,11 @@ function App() {
             <Route 
               path="/announcements" 
               element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'announcements')) || (['TEACHER', 'CLASS_TEACHER', 'PARENT'].includes(user?.role) && hasPermission(user.role, 'announcements'))) ? <AnnouncementPortal /> : <Navigate to="/" />} 
+            />
+
+            <Route 
+              path="/settings" 
+              element={isAuthenticated ? <Settings /> : <Navigate to="/login" />} 
             />
 
             <Route 

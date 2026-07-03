@@ -171,7 +171,8 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
     // SUPER_ADMIN
     ...(user?.role === 'SUPER_ADMIN' ? [
       { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-      { text: 'Manage Schools', icon: <SchoolIcon />, path: '/schools' }
+      { text: 'Manage Schools', icon: <SchoolIcon />, path: '/schools' },
+      { text: 'Settings', icon: <SettingsIcon />, path: '/settings' }
     ] : []),
 
     // SCHOOL_ADMIN / PRINCIPAL / VICE_PRINCIPAL
@@ -186,7 +187,8 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
       { text: 'Events & Holidays', icon: <EventsIcon />, path: '/events' },
       { text: 'School Inventory', icon: <InventoryIcon />, path: '/inventory' },
       { text: 'Library Bookshelf', icon: <LibraryIcon />, path: '/library' },
-      { text: 'Circular Portal', icon: <AnnouncementIcon />, path: '/announcements' }
+      { text: 'Circular Portal', icon: <AnnouncementIcon />, path: '/announcements' },
+      { text: 'Settings', icon: <SettingsIcon />, path: '/settings' }
     ] : []),
 
     // SUPER_TEACHER
@@ -201,7 +203,8 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
       { text: 'Events & Holidays', icon: <EventsIcon />, path: '/events', feature: 'events' },
       { text: 'School Inventory', icon: <InventoryIcon />, path: '/inventory', feature: 'inventory' },
       { text: 'Library Bookshelf', icon: <LibraryIcon />, path: '/library', feature: 'library' },
-      { text: 'Circular Portal', icon: <AnnouncementIcon />, path: '/announcements', feature: 'announcements' }
+      { text: 'Circular Portal', icon: <AnnouncementIcon />, path: '/announcements', feature: 'announcements' },
+      { text: 'Settings', icon: <SettingsIcon />, path: '/settings' }
     ].filter(item => !item.feature || hasPermission('SUPER_TEACHER', item.feature)) : []),
 
     // ACCOUNTANT
@@ -209,7 +212,8 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
       { text: 'Mark Attendance', icon: <AttendanceIcon />, path: '/self-attendance' },
       { text: 'Student Registration', icon: <PeopleIcon />, path: '/students', feature: 'students' },
       { text: 'Fees Accounting', icon: <FeesIcon />, path: '/fees', feature: 'fees' },
-      { text: 'Payroll & Payslips', icon: <PayrollIcon />, path: '/payroll', feature: 'payroll' }
+      { text: 'Payroll & Payslips', icon: <PayrollIcon />, path: '/payroll', feature: 'payroll' },
+      { text: 'Settings', icon: <SettingsIcon />, path: '/settings' }
     ].filter(item => !item.feature || hasPermission('ACCOUNTANT', item.feature)) : []),
 
     // TEACHER / CLASS_TEACHER
@@ -226,14 +230,16 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
       { text: 'Performance Analytics', icon: <DashboardIcon />, path: '/analytics', feature: 'analytics' },
       { text: 'Payroll & Payslips', icon: <PayrollIcon />, path: '/payroll', feature: 'payroll' },
       { text: 'Library Bookshelf', icon: <LibraryIcon />, path: '/library', feature: 'library' },
-      { text: 'Circular Portal', icon: <AnnouncementIcon />, path: '/announcements', feature: 'announcements' }
+      { text: 'Circular Portal', icon: <AnnouncementIcon />, path: '/announcements', feature: 'announcements' },
+      { text: 'Settings', icon: <SettingsIcon />, path: '/settings' }
     ].filter(item => !item.feature || hasPermission(user.role, item.feature)) : []),
 
     // PARENT
     ...(user?.role === 'PARENT' ? [
       { text: 'Parent Portal', icon: <DashboardIcon />, path: '/parent-portal', feature: 'parent-portal' },
       { text: 'Bus Tracker', icon: <BusIcon />, path: '/bus-tracker', feature: 'bus-tracker' },
-      { text: 'Circular Portal', icon: <AnnouncementIcon />, path: '/announcements', feature: 'announcements' }
+      { text: 'Circular Portal', icon: <AnnouncementIcon />, path: '/announcements', feature: 'announcements' },
+      { text: 'Settings', icon: <SettingsIcon />, path: '/settings' }
     ].filter(item => hasPermission('PARENT', item.feature)) : [])
   ];
 
