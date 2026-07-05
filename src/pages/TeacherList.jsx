@@ -209,6 +209,7 @@ function TeacherList() {
     setPhone('');
     setDepartment('HR');
     setDesignation('');
+    setPassword('');
     setFormError('');
     setErrors({});
     setSelectedStaff(null);
@@ -240,6 +241,7 @@ function TeacherList() {
     setPhone(staff.phone);
     setDepartment(staff.department || 'HR');
     setDesignation(staff.designation || '');
+    setPassword('dummy_pass');
     setFormError('');
     setErrors({});
     setOpenStaffModal(true);
@@ -336,6 +338,10 @@ function TeacherList() {
     if (!department) newErrors.department = 'Department is required.';
     if (!designation.trim()) newErrors.designation = 'Designation is required.';
 
+    if (!selectedStaff && !password) {
+      newErrors.password = 'Password is required for registration.';
+    }
+
     if (Object.keys(newErrors).length > 0) {
       setErrors(newErrors);
       setFormError('Please correct the highlighted errors before submitting.');
@@ -364,7 +370,8 @@ function TeacherList() {
           gender,
           phone: phone.trim(),
           department,
-          designation: designation.trim()
+          designation: designation.trim(),
+          password
         }
       });
     }
@@ -787,6 +794,32 @@ function TeacherList() {
                   helperText={errors.designation}
                 />
               </Grid>
+              {!selectedStaff && (
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth
+                    required
+                    type={showPassword ? 'text' : 'password'}
+                    label="Staff Login Password"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
+                    }}
+                    error={Boolean(errors.password)}
+                    helperText={errors.password}
+                    InputProps={{
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton onClick={() => setShowPassword(!showPassword)} edge="end">
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+                </Grid>
+              )}
             </Grid>
           </DialogContent>
           <DialogActions sx={{ p: { xs: 2, sm: 3 }, flexDirection: { xs: 'column-reverse', sm: 'row' }, alignItems: { xs: 'stretch', sm: 'center' } }}>

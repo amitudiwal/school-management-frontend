@@ -168,6 +168,8 @@ function App() {
                     <Navigate to="/self-attendance" />
                   ) : user?.role === 'PARENT' ? (
                     <Navigate to="/parent-portal" />
+                  ) : user?.role === 'DRIVER' ? (
+                    <Navigate to="/bus-tracker" />
                   ) : (
                     <Navigate to="/login" />
                   )
@@ -264,7 +266,7 @@ function App() {
 
             <Route 
               path="/bus-tracker" 
-              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'bus-tracker')) || (user?.role === 'PARENT' && hasPermission('PARENT', 'bus-tracker'))) ? <BusTracker /> : <Navigate to="/" />} 
+              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'DRIVER'].includes(user?.role) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'bus-tracker')) || (user?.role === 'PARENT' && hasPermission('PARENT', 'bus-tracker'))) ? <BusTracker /> : <Navigate to="/" />} 
             />
 
             <Route 

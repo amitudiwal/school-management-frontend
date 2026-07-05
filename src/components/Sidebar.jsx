@@ -240,7 +240,13 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
       { text: 'Bus Tracker', icon: <BusIcon />, path: '/bus-tracker', feature: 'bus-tracker' },
       { text: 'Circular Portal', icon: <AnnouncementIcon />, path: '/announcements', feature: 'announcements' },
       { text: 'Settings', icon: <SettingsIcon />, path: '/settings' }
-    ].filter(item => hasPermission('PARENT', item.feature)) : [])
+    ].filter(item => hasPermission('PARENT', item.feature)) : []),
+
+    // DRIVER
+    ...(user?.role === 'DRIVER' ? [
+      { text: 'Bus Tracker', icon: <BusIcon />, path: '/bus-tracker' },
+      { text: 'Settings', icon: <SettingsIcon />, path: '/settings' }
+    ] : [])
   ];
 
   return (

@@ -13,7 +13,7 @@ import {
   Visibility, VisibilityOff, Email, Lock, ArrowBack,
   School as SchoolIcon, Smartphone, VpnKey, Business,
   AdminPanelSettings, Person, SupervisorAccount, AttachMoney as AccountantIcon,
-  Brightness4 as DarkModeIcon, Brightness7 as LightModeIcon
+  Brightness4 as DarkModeIcon, Brightness7 as LightModeIcon, DirectionsBus as BusIcon
 } from '@mui/icons-material';
 import { GET_SCHOOL_BY_CODE, LOGIN_WITH_PASSWORD, SEND_OTP, VERIFY_OTP, FORGOT_PASSWORD } from '../graphql/operations';
 import { loginStart, loginSuccess, loginFailure } from '../store/slices/authSlice';
@@ -100,6 +100,12 @@ function Login() {
         dispatch(showToast({ message: 'Access denied: You are not registered as a School Accountant.', severity: 'error' }));
         return;
       }
+      if (selectedRole === 'DRIVER' && user.role !== 'DRIVER') {
+        dispatch(loginFailure('Access denied: You are not registered as a Bus Driver.'));
+        setValidationError('Access denied: You are not registered as a Bus Driver.');
+        dispatch(showToast({ message: 'Access denied: You are not registered as a Bus Driver.', severity: 'error' }));
+        return;
+      }
       if (selectedRole === 'SCHOOL_ADMIN' && !['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user.role)) {
         dispatch(loginFailure('Access denied: You do not have School Admin/Management permissions.'));
         setValidationError('Access denied: You do not have School Admin/Management permissions.');
@@ -166,6 +172,12 @@ function Login() {
         dispatch(loginFailure('Access denied: You are not registered as a School Accountant.'));
         setValidationError('Access denied: You are not registered as a School Accountant.');
         dispatch(showToast({ message: 'Access denied: You are not registered as a School Accountant.', severity: 'error' }));
+        return;
+      }
+      if (selectedRole === 'DRIVER' && user.role !== 'DRIVER') {
+        dispatch(loginFailure('Access denied: You are not registered as a Bus Driver.'));
+        setValidationError('Access denied: You are not registered as a Bus Driver.');
+        dispatch(showToast({ message: 'Access denied: You are not registered as a Bus Driver.', severity: 'error' }));
         return;
       }
       if (selectedRole === 'SCHOOL_ADMIN' && !['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user.role)) {
@@ -305,6 +317,8 @@ function Login() {
       setStep('SUPER_TEACHER_LOGIN');
     } else if (selectedRole === 'ACCOUNTANT') {
       setStep('ACCOUNTANT_LOGIN');
+    } else if (selectedRole === 'DRIVER') {
+      setStep('DRIVER_LOGIN');
     } else if (selectedRole === 'TEACHER') {
       setStep('TEACHER_LOGIN');
     } else if (selectedRole === 'PARENT') {
@@ -430,6 +444,9 @@ function Login() {
     } else if (roleType === 'ACCOUNTANT') {
       setEmail('accountant@greenwood.com');
       setPassword('accountant_password');
+    } else if (roleType === 'DRIVER') {
+      setEmail('driver@greenwood.com');
+      setPassword('driver_password');
     } else if (roleType === 'TEACHER') {
       if (methodType === 'OTP') {
         setMobile(school?.schoolCode === 'SUNRISE001' ? '1234567890' : '1122334455');
@@ -729,6 +746,7 @@ function Login() {
                       { value: 'SCHOOL_ADMIN', label: 'School Admin', icon: <AdminPanelSettings /> },
                       { value: 'SUPER_TEACHER', label: 'Academics Management', icon: <SupervisorAccount /> },
                       { value: 'ACCOUNTANT', label: 'School Accountant', icon: <AccountantIcon /> },
+                      { value: 'DRIVER', label: 'Bus Driver', icon: <BusIcon /> },
                       { value: 'TEACHER', label: 'Faculty Teacher', icon: <Person /> },
                       { value: 'PARENT', label: 'Parent / Guardian', icon: <SupervisorAccount /> }
                     ].map((opt) => (
@@ -1200,6 +1218,88 @@ function Login() {
                     <Chip
                       label="Autofill Demo Parent Password"
                       onClick={() => handleQuickFillUser('PARENT', 'PW')}
+                      sx={{ cursor: 'pointer', backgroundColor: `${activeColor}15`, color: activeColor, border: `1px solid ${activeColor}30` }}
+                    />
+                  </Box>
+                </form>
+              </Box>
+            )}
+
+            {/* STEP 3F: DRIVER LOGIN */}
+            {step === 'DRIVER_LOGIN' && (
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 700, mb: 1, textAlign: 'center' }}>
+                  Bus Driver Sign In
+                </Typography>
+                <form onSubmit={handleLoginSubmit}>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 3, textAlign: 'center' }}>
+                    Enter your driver credentials to log in.
+                  </Typography>
+
+                  <TextField
+                    fullWidth
+                    label="Email Address"
+                    variant="outlined"
+                    value={email}
+                    onChange={(e) => {
+                      setEmail(e.target.value);
+                      if (errors.email) setErrors(prev => ({ ...prev, email: '' }));
+                    }}
+                    error={Boolean(errors.email)}
+                    helperText={errors.email}
+                    sx={textFieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Email sx={{ color: activeColor }} />
+                        </InputAdornment>
+                      ),
+                    }}
+                  />
+
+                  <TextField
+                    fullWidth
+                    label="Password"
+                    type={showPassword ? 'text' : 'password'}
+                    variant="outlined"
+                    value={password}
+                    onChange={(e) => {
+                      setPassword(e.target.value);
+                      if (errors.password) setErrors(prev => ({ ...prev, password: '' }));
+                    }}
+                    error={Boolean(errors.password)}
+                    helperText={errors.password}
+                    sx={textFieldSx}
+                    InputProps={{
+                      startAdornment: (
+                        <InputAdornment position="start">
+                          <Lock sx={{ color: activeColor }} />
+                        </InputAdornment>
+                      ),
+                      endAdornment: (
+                        <InputAdornment position="end">
+                          <IconButton onClick={() => setShowPassword(!showPassword)} edge="end" sx={{ color: 'text.secondary' }}>
+                            {showPassword ? <VisibilityOff /> : <Visibility />}
+                          </IconButton>
+                        </InputAdornment>
+                      )
+                    }}
+                  />
+
+                  <Button
+                    type="submit"
+                    fullWidth
+                    variant="contained"
+                    disabled={pwLoading}
+                    sx={{ py: 1.5, fontWeight: 700 }}
+                  >
+                    {pwLoading ? <CircularProgress size={24} color="inherit" /> : 'Log In'}
+                  </Button>
+
+                  <Box sx={{ mt: 3, pt: 2, borderTop: '1px solid', borderColor: 'divider', textAlign: 'center' }}>
+                    <Chip
+                      label="Autofill Demo Driver"
+                      onClick={() => handleQuickFillUser('DRIVER')}
                       sx={{ cursor: 'pointer', backgroundColor: `${activeColor}15`, color: activeColor, border: `1px solid ${activeColor}30` }}
                     />
                   </Box>
