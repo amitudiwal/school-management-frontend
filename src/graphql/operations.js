@@ -185,6 +185,19 @@ export const GET_SCHOOL_ADMIN_DASHBOARD = gql`
         presentStaff
         absentStaff
       }
+      totalBoys
+      totalGirls
+      sectionStrength {
+        className
+        sectionName
+        strength
+      }
+      salaryExpenses
+      pendingFees
+      schoolIncome
+      teacherAttendanceRate
+      homeworkCompletionRate
+      studentPerformanceAvg
     }
   }
 `;
@@ -2509,6 +2522,327 @@ export const DELETE_NOTIFICATION = gql`
 export const CHANGE_PASSWORD = gql`
   mutation ChangePassword($currentPassword: String!, $newPassword: String!) {
     changePassword(currentPassword: $currentPassword, newPassword: $newPassword)
+  }
+`;
+
+export const GET_COMPLAINTS = gql`
+  query GetComplaints {
+    getComplaints {
+      id
+      title
+      description
+      category
+      complaintStatus
+      feedback
+      createdAt
+      parentId {
+        id
+        firstName
+        lastName
+        phone
+      }
+      studentId {
+        id
+        firstName
+        lastName
+      }
+    }
+  }
+`;
+
+export const GET_MY_COMPLAINTS = gql`
+  query GetMyComplaints {
+    getMyComplaints {
+      id
+      title
+      description
+      category
+      complaintStatus
+      feedback
+      createdAt
+      studentId {
+        id
+        firstName
+        lastName
+      }
+    }
+  }
+`;
+
+export const CREATE_COMPLAINT = gql`
+  mutation CreateComplaint($title: String!, $description: String!, $category: String!, $studentId: ID) {
+    createComplaint(title: $title, description: $description, category: $category, studentId: $studentId) {
+      id
+      title
+      complaintStatus
+    }
+  }
+`;
+
+export const RESOLVE_COMPLAINT = gql`
+  mutation ResolveComplaint($id: ID!, $feedback: String!) {
+    resolveComplaint(id: $id, feedback: $feedback) {
+      id
+      complaintStatus
+      feedback
+    }
+  }
+`;
+
+export const GET_ACADEMIC_SESSIONS = gql`
+  query GetAcademicSessions {
+    getAcademicSessions {
+      id
+      year
+      isCurrent
+      sessionStatus
+    }
+  }
+`;
+
+export const CREATE_ACADEMIC_SESSION = gql`
+  mutation CreateAcademicSession($year: String!) {
+    createAcademicSession(year: $year) {
+      id
+      year
+      isCurrent
+      sessionStatus
+    }
+  }
+`;
+
+export const SET_ACTIVE_SESSION = gql`
+  mutation SetActiveAcademicSession($id: ID!) {
+    setActiveAcademicSession(id: $id) {
+      id
+      year
+      isCurrent
+    }
+  }
+`;
+
+export const GET_EXPENSES = gql`
+  query GetExpenses {
+    getExpenses {
+      id
+      category
+      amount
+      date
+      description
+    }
+  }
+`;
+
+export const CREATE_EXPENSE = gql`
+  mutation CreateExpense($category: String!, $amount: Float!, $date: Date!, $description: String) {
+    createExpense(category: $category, amount: $amount, date: $date, description: $description) {
+      id
+      category
+      amount
+      date
+      description
+    }
+  }
+`;
+
+export const PROMOTE_STUDENTS = gql`
+  mutation PromoteStudents($classId: ID!, $targetClassId: ID!, $studentIds: [ID!]!) {
+    promoteStudents(classId: $classId, targetClassId: $targetClassId, studentIds: $studentIds)
+  }
+`;
+
+export const PUBLISH_EXAM_RESULTS = gql`
+  mutation PublishExamResults($examId: ID!, $publish: Boolean!) {
+    publishExamResults(examId: $examId, publish: $publish) {
+      id
+      name
+      resultsPublished
+    }
+  }
+`;
+
+export const ASSIGN_TEACHER_DUTIES = gql`
+  mutation AssignSubjectsAndClassesToTeacher($teacherId: ID!, $assignedSubjects: [ID!]!, $assignedClasses: [AssignedClassInput!]!) {
+    assignSubjectsAndClassesToTeacher(teacherId: $teacherId, assignedSubjects: $assignedSubjects, assignedClasses: $assignedClasses) {
+      id
+      firstName
+      lastName
+      assignedSubjects {
+        id
+        name
+        code
+      }
+      assignedClasses {
+        classId {
+          id
+          name
+        }
+        sectionId {
+          id
+          name
+        }
+      }
+    }
+  }
+`;
+
+export const CREATE_STUDY_MATERIAL = gql`
+  mutation CreateStudyMaterial($classId: ID!, $sectionId: ID!, $subjectId: ID!, $title: String!, $fileUrl: String!, $fileType: String!, $description: String) {
+    createStudyMaterial(classId: $classId, sectionId: $sectionId, subjectId: $subjectId, title: $title, fileUrl: $fileUrl, fileType: $fileType, description: $description) {
+      id
+      title
+      fileUrl
+      fileType
+    }
+  }
+`;
+
+export const GET_STUDY_MATERIALS = gql`
+  query GetStudyMaterials($classId: ID, $sectionId: ID) {
+    getStudyMaterials(classId: $classId, sectionId: $sectionId) {
+      id
+      title
+      description
+      fileUrl
+      fileType
+      createdAt
+      subjectId {
+        id
+        name
+        code
+      }
+      teacherId {
+        id
+        firstName
+        lastName
+      }
+    }
+  }
+`;
+
+export const CREATE_BEHAVIOUR_LOG = gql`
+  mutation CreateBehaviourLog($studentId: ID!, $category: String!, $remarks: String) {
+    createBehaviourLog(studentId: $studentId, category: $category, remarks: $remarks) {
+      id
+      category
+      remarks
+      date
+    }
+  }
+`;
+
+export const GET_BEHAVIOUR_LOGS = gql`
+  query GetBehaviourLogs($studentId: ID!) {
+    getBehaviourLogs(studentId: $studentId) {
+      id
+      category
+      remarks
+      date
+      teacherId {
+        id
+        firstName
+        lastName
+      }
+    }
+  }
+`;
+
+export const CREATE_DOUBT = gql`
+  mutation CreateDoubt($teacherId: ID!, $subjectId: ID!, $question: String!) {
+    createDoubt(teacherId: $teacherId, subjectId: $subjectId, question: $question) {
+      id
+      question
+      doubtStatus
+    }
+  }
+`;
+
+export const ANSWER_DOUBT = gql`
+  mutation AnswerDoubt($doubtId: ID!, $answer: String!) {
+    answerDoubt(doubtId: $doubtId, answer: $answer) {
+      id
+      question
+      answer
+      doubtStatus
+      answeredAt
+    }
+  }
+`;
+
+export const GET_DOUBTS = gql`
+  query GetDoubts($teacherId: ID, $studentId: ID) {
+    getDoubts(teacherId: $teacherId, studentId: $studentId) {
+      id
+      question
+      answer
+      doubtStatus
+      answeredAt
+      createdAt
+      studentId {
+        id
+        firstName
+        lastName
+      }
+      subjectId {
+        id
+        name
+        code
+      }
+      teacherId {
+        id
+        firstName
+        lastName
+      }
+    }
+  }
+`;
+
+export const SEND_MESSAGE = gql`
+  mutation SendMessage($receiverId: ID!, $message: String!) {
+    sendMessage(receiverId: $receiverId, message: $message) {
+      id
+      content
+      createdAt
+    }
+  }
+`;
+
+export const GET_MESSAGES = gql`
+  query GetMessages($partnerId: ID!) {
+    getMessages(partnerId: $partnerId) {
+      id
+      content
+      createdAt
+      senderId {
+        id
+        name
+        role
+      }
+      receiverId {
+        id
+        name
+        role
+      }
+    }
+  }
+`;
+
+export const GET_TEACHER_CONTACTS = gql`
+  query GetTeacherContacts {
+    getTeacherContacts {
+      teacher {
+        id
+        firstName
+        lastName
+        phone
+        email
+        userId {
+          id
+        }
+      }
+      subjectName
+      isClassTeacher
+    }
   }
 `;
 

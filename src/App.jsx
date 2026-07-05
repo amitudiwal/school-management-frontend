@@ -67,7 +67,7 @@ function App() {
     if (!schoolData?.getSchool?.settings?.featurePermissions) {
       // Default fallback
       return {
-        SUPER_TEACHER: ['teachers', 'classes', 'timetable', 'exams', 'staff-attendance', 'leaves', 'copy-submission', 'events', 'inventory'],
+        SUPER_TEACHER: ['students', 'teachers', 'classes', 'timetable', 'exams', 'staff-attendance', 'leaves', 'copy-submission', 'events', 'inventory'],
         ACCOUNTANT: ['students', 'fees', 'payroll'],
         TEACHER: ['pending-jobs', 'timetable', 'bus-tracker', 'attendance', 'leaves', 'homework', 'grades', 'analytics', 'payroll'],
         PARENT: ['parent-portal', 'bus-tracker', 'announcements']
@@ -179,7 +179,7 @@ function App() {
             
              <Route 
               path="/students" 
-              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (user?.role === 'ACCOUNTANT' && hasPermission('ACCOUNTANT', 'students'))) ? <StudentList /> : <Navigate to="/" />} 
+              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'students')) || (user?.role === 'ACCOUNTANT' && hasPermission('ACCOUNTANT', 'students'))) ? <StudentList /> : <Navigate to="/" />} 
             />
 
             <Route 

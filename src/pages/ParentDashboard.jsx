@@ -1,12 +1,13 @@
 import React, { useState, useEffect } from 'react';
-import { useQuery } from '@apollo/client';
-import { useSelector } from 'react-redux';
+import { useQuery, useMutation } from '@apollo/client';
+import { useSelector, useDispatch } from 'react-redux';
 import { motion, AnimatePresence } from 'framer-motion';
 import {
   Box, Grid, Card, CardContent, Typography, Avatar, Tab, Tabs,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, CircularProgress, Alert, Button, useTheme, LinearProgress, Chip,
-  Divider, List, ListItem, ListItemText, ListItemIcon, Stack, TablePagination
+  Divider, List, ListItem, ListItemText, ListItemIcon, Stack, TablePagination,
+  Dialog, DialogTitle, DialogContent, DialogActions, TextField, MenuItem
 } from '@mui/material';
 import {
   School as SchoolIcon,
@@ -26,7 +27,8 @@ import {
   Transgender as GenderIcon,
   FamilyRestroom as ParentIcon,
   AccountBox as ProfileIcon,
-  Campaign as AnnouncementIcon
+  Campaign as AnnouncementIcon,
+  RateReview as ComplaintIcon
 } from '@mui/icons-material';
 import {
   GET_PARENT_PROFILE,
@@ -35,8 +37,11 @@ import {
   GET_HOMEWORK,
   GET_STUDENT_FEE_STATUS,
   GET_TRANSPORT_ROUTES,
-  GET_NOTIFICATIONS
+  GET_NOTIFICATIONS,
+  GET_MY_COMPLAINTS,
+  CREATE_COMPLAINT
 } from '../graphql/operations';
+import { showToast } from '../store/slices/uiSlice';
 
 function ParentDashboard() {
   const theme = useTheme();
@@ -53,6 +58,31 @@ function ParentDashboard() {
 
   // Query: Get parent profile & children
   const { data: parentData, loading: parentLoading, error: parentError } = useQuery(GET_PARENT_PROFILE);
+
+  const dispatch = useDispatch();
+  const [openComplaintModal, setOpenComplaintModal] = useState(false);
+  const [complaintTitle, setComplaintTitle] = useState('');
+  const [complaintCategory, setComplaintCategory] = useState('Academic');
+  const [complaintStudentId, setComplaintStudentId] = useState('');
+  const [complaintDescription, setComplaintDescription] = useState('');
+
+  const { data: complaintsData, loading: complaintsLoading, refetch: refetchComplaints } = useQuery(GET_MY_COMPLAINTS, {
+    fetchPolicy: 'network-only'
+  });
+
+  const [createComplaintMutation, { loading: creatingComplaint }] = useMutation(CREATE_COMPLAINT, {
+    onCompleted: () => {
+      refetchComplaints();
+      setOpenComplaintModal(false);
+      setComplaintTitle('');
+      setComplaintDescription('');
+      setComplaintStudentId('');
+      dispatch(showToast({ message: 'Complaint submitted successfully!', severity: 'success' }));
+    },
+    onError: (err) => {
+      dispatch(showToast({ message: err.message, severity: 'error' }));
+    }
+  });
 
   const parentProfile = parentData?.getParentProfile;
   const children = parentProfile?.children || [];
@@ -270,6 +300,7 @@ function ParentDashboard() {
               <Tab icon={<HomeworkIcon />} iconPosition="start" label="Homework Board" />
               <Tab icon={<FeesIcon />} iconPosition="start" label="Fees Directory" />
               <Tab icon={<TransportIcon />} iconPosition="start" label="School Transport" />
+              <Tab icon={<ComplaintIcon />} iconPosition="start" label="Parent Complaints" />
             </Tabs>
 
             {/* Tab Contents */}
@@ -726,12 +757,168 @@ function ParentDashboard() {
                   )}
                 </Box>
               )}
+              {/* Tab 5: Parent Complaints */}
+              {activeTab === 5 && (
+                <Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                    <Typography variant="h6" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700 }}>
+                      Grievances & Complaints Directory
+                    </Typography>
+                    <Button
+                      variant="contained"
+                      onClick={() => {
+                        setComplaintStudentId(activeChild?.id || '');
+                        setComplaintTitle('');
+                        setComplaintDescription('');
+                        setComplaintCategory('Academic');
+                        setOpenComplaintModal(true);
+                      }}
+                      startIcon={<ComplaintIcon />}
+                      sx={{ textTransform: 'none', borderRadius: 2 }}
+                    >
+                      File a Complaint
+                    </Button>
+                  </Box>
+
+                  {complaintsLoading ? (
+                    <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
+                  ) : (!complaintsData?.getMyComplaints || complaintsData.getMyComplaints.length === 0) ? (
+                    <Alert severity="info">You have not filed any complaints yet.</Alert>
+                  ) : (
+                    <Grid container spacing={2}>
+                      {complaintsData.getMyComplaints.map((c) => {
+                        const isResolved = c.complaintStatus === 'RESOLVED';
+                        return (
+                          <Grid item xs={12} key={c.id}>
+                            <Card variant="outlined" sx={{ borderRadius: 3 }}>
+                              <CardContent>
+                                <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5, flexWrap: 'wrap', gap: 1 }}>
+                                  <Box>
+                                    <Chip label={c.category} size="small" variant="outlined" sx={{ mr: 1, fontWeight: 700 }} />
+                                    <Typography variant="caption" color="text.secondary">
+                                      Filed on: {new Date(c.createdAt).toLocaleDateString()}
+                                    </Typography>
+                                  </Box>
+                                  <Chip
+                                    label={c.complaintStatus}
+                                    size="small"
+                                    color={isResolved ? 'success' : 'warning'}
+                                    sx={{ fontWeight: 800 }}
+                                  />
+                                </Box>
+                                <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 1 }}>
+                                  {c.title}
+                                </Typography>
+                                <Typography variant="body2" color="text.secondary" sx={{ whiteSpace: 'pre-wrap', mb: 2 }}>
+                                  {c.description}
+                                </Typography>
+
+                                {c.studentId && (
+                                  <Typography variant="caption" sx={{ display: 'block', mb: 1, color: 'text.secondary', fontWeight: 600 }}>
+                                    Child Related: {c.studentId.firstName} {c.studentId.lastName}
+                                  </Typography>
+                                )}
+
+                                {isResolved && c.feedback && (
+                                  <Box sx={{ p: 2, bgcolor: 'success.main' + '10', borderRadius: 2, borderLeft: '4px solid', borderColor: 'success.main' }}>
+                                    <Typography variant="subtitle2" color="success.main" sx={{ fontWeight: 800, mb: 0.5 }}>
+                                      Resolution & Admin Feedback:
+                                    </Typography>
+                                    <Typography variant="body2" sx={{ fontStyle: 'italic' }}>
+                                      {c.feedback}
+                                    </Typography>
+                                  </Box>
+                                )}
+                              </CardContent>
+                            </Card>
+                          </Grid>
+                        );
+                      })}
+                    </Grid>
+                  )}
+                </Box>
+              )}
                 </motion.div>
               </AnimatePresence>
             </Box>
           </Paper>
         </Box>
       )}
+
+      {/* File New Complaint Dialog */}
+      <Dialog open={openComplaintModal} onClose={() => setOpenComplaintModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800 }}>File a New Complaint / Grievance</DialogTitle>
+        <DialogContent>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 1.5 }}>
+            <TextField
+              label="Complaint Title"
+              fullWidth
+              value={complaintTitle}
+              onChange={(e) => setComplaintTitle(e.target.value)}
+              placeholder="e.g. Broken bus seat, Incorrect mark entry, Canteen food quality"
+            />
+            
+            <TextField
+              select
+              label="Category"
+              fullWidth
+              value={complaintCategory}
+              onChange={(e) => setComplaintCategory(e.target.value)}
+            >
+              <MenuItem value="Academic">Academic</MenuItem>
+              <MenuItem value="Fee-related">Fee-related</MenuItem>
+              <MenuItem value="Transport">Transport</MenuItem>
+              <MenuItem value="Food/Canteen">Food / Canteen</MenuItem>
+              <MenuItem value="Discipline">Discipline / Safety</MenuItem>
+              <MenuItem value="Other">Other / Administrative</MenuItem>
+            </TextField>
+
+            <TextField
+              select
+              label="Relates to Child"
+              fullWidth
+              value={complaintStudentId}
+              onChange={(e) => setComplaintStudentId(e.target.value)}
+            >
+              <MenuItem value="">General (No specific child)</MenuItem>
+              {children.map((child) => (
+                <MenuItem key={child.id} value={child.id}>
+                  {child.firstName} {child.lastName}
+                </MenuItem>
+              ))}
+            </TextField>
+
+            <TextField
+              label="Detailed Description"
+              fullWidth
+              multiline
+              rows={4}
+              value={complaintDescription}
+              onChange={(e) => setComplaintDescription(e.target.value)}
+              placeholder="Please provide all details so the school administration can resolve this effectively."
+            />
+          </Box>
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button onClick={() => setOpenComplaintModal(false)} variant="outlined">Cancel</Button>
+          <Button
+            onClick={() => {
+              createComplaintMutation({
+                variables: {
+                  title: complaintTitle.trim(),
+                  category: complaintCategory,
+                  studentId: complaintStudentId || null,
+                  description: complaintDescription.trim()
+                }
+              });
+            }}
+            variant="contained"
+            disabled={creatingComplaint || !complaintTitle.trim() || !complaintDescription.trim()}
+          >
+            {creatingComplaint ? 'Submitting...' : 'Submit Complaint'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

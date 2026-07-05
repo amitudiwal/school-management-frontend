@@ -1,23 +1,24 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
-import { useSelector } from 'react-redux';
-import { useQuery, useLazyQuery } from '@apollo/client';
+import { useSelector, useDispatch } from 'react-redux';
+import { useQuery, useLazyQuery, useMutation } from '@apollo/client';
 import {
   Box, Grid, Card, CardContent, Typography, Avatar,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, CircularProgress, Alert, Button, useTheme, LinearProgress, Chip,
-  Tabs, Tab, TextField, TablePagination, Stack, MenuItem
+  Tabs, Tab, TextField, TablePagination, Stack, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions
 } from '@mui/material';
 import Chart from 'react-apexcharts';
 import {
   School as SchoolIcon, People as PeopleIcon, LocalLibrary as LibraryIcon,
   AttachMoney as FeesIcon, AssignmentTurnedIn as AttendanceIcon,
   Warning as AlertIcon, Security as AuditIcon, DateRange as LeaveIcon,
-  Assignment as HomeworkIcon, CalendarMonth as CalendarIcon
+  Assignment as HomeworkIcon, CalendarMonth as CalendarIcon, RateReview as ComplaintIcon
 } from '@mui/icons-material';
-import { GET_SUPER_ADMIN_DASHBOARD, GET_SCHOOL_ADMIN_DASHBOARD, GET_AUDIT_LOGS, GET_PENDING_JOBS, GET_EVENTS, GET_CLASSES, GET_SECTIONS, GET_GRADE_DISTRIBUTION, GET_COPY_SUBMISSION_ANALYTICS, GET_INVENTORY_LIST } from '../graphql/operations';
+import { GET_SUPER_ADMIN_DASHBOARD, GET_SCHOOL_ADMIN_DASHBOARD, GET_AUDIT_LOGS, GET_PENDING_JOBS, GET_EVENTS, GET_CLASSES, GET_SECTIONS, GET_GRADE_DISTRIBUTION, GET_COPY_SUBMISSION_ANALYTICS, GET_INVENTORY_LIST, GET_COMPLAINTS, RESOLVE_COMPLAINT } from '../graphql/operations';
 import CustomDatePicker from '../components/CustomDatePicker';
+import { showToast } from '../store/slices/uiSlice';
 
 const containerVariants = {
   hidden: { opacity: 0 },
@@ -70,6 +71,27 @@ function Dashboard() {
 
   // Load appropriate dashboard queries based on user role
   const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+  const dispatch = useDispatch();
+  const [selectedComplaint, setSelectedComplaint] = useState(null);
+  const [feedbackText, setFeedbackText] = useState('');
+  const [openComplaintDialog, setOpenComplaintDialog] = useState(false);
+
+  const { data: complaintsData, refetch: refetchComplaints } = useQuery(GET_COMPLAINTS, {
+    skip: isSuperAdmin || !['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role),
+    fetchPolicy: 'network-only'
+  });
+
+  const [resolveComplaintMutation, { loading: resolvingComplaint }] = useMutation(RESOLVE_COMPLAINT, {
+    onCompleted: () => {
+      refetchComplaints();
+      setOpenComplaintDialog(false);
+      setFeedbackText('');
+      dispatch(showToast({ message: 'Complaint resolved successfully!', severity: 'success' }));
+    },
+    onError: (err) => {
+      dispatch(showToast({ message: err.message, severity: 'error' }));
+    }
+  });
 
   const { data: classesData } = useQuery(GET_CLASSES, { skip: isSuperAdmin });
   const [getGradeSections, { data: gradeSectionsData }] = useLazyQuery(GET_SECTIONS);
@@ -165,8 +187,9 @@ function Dashboard() {
       });
       refetchJobs?.();
       refetchEvents?.();
+      refetchComplaints?.();
     }
-  }, [isSuperAdmin, startDate, endDate, refetchSuperDashboard, refetchSchoolDashboard, refetchJobs, refetchEvents]);
+  }, [isSuperAdmin, startDate, endDate, refetchSuperDashboard, refetchSchoolDashboard, refetchJobs, refetchEvents, refetchComplaints]);
 
   const { loading: logsLoading, data: logsData } = useQuery(GET_AUDIT_LOGS, {
     skip: !['SUPER_ADMIN', 'SCHOOL_ADMIN'].includes(user?.role)
@@ -487,6 +510,163 @@ function Dashboard() {
           </Grid>
         ))}
       </Grid>
+
+      {/* Financial Insights (Admin View) */}
+      {!isSuperAdmin && (
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h6" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, mb: 2 }}>
+            Financial Insights Dashboard (Admin view)
+          </Typography>
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card sx={{ ...cardStyle, bgcolor: 'success.main' + '10' }}>
+                <CardContent>
+                  <Typography variant="caption" color="success.main" sx={{ fontWeight: 700, textTransform: 'uppercase' }}>
+                    Total Fee Collected
+                  </Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 850, mt: 1, color: 'success.main' }}>
+                    ₹{(stats?.schoolIncome ?? 0).toLocaleString()}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card sx={{ ...cardStyle, bgcolor: 'error.main' + '10' }}>
+                <CardContent>
+                  <Typography variant="caption" color="error.main" sx={{ fontWeight: 700, textTransform: 'uppercase' }}>
+                    Pending Fees
+                  </Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 850, mt: 1, color: 'error.main' }}>
+                    ₹{(stats?.pendingFees ?? 0).toLocaleString()}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card sx={{ ...cardStyle, bgcolor: 'warning.main' + '10' }}>
+                <CardContent>
+                  <Typography variant="caption" color="warning.main" sx={{ fontWeight: 700, textTransform: 'uppercase' }}>
+                    Salary Expenses
+                  </Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 850, mt: 1, color: 'warning.main' }}>
+                    ₹{(stats?.salaryExpenses ?? 0).toLocaleString()}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={6} md={3}>
+              <Card sx={{ ...cardStyle, bgcolor: 'primary.main' + '10' }}>
+                <CardContent>
+                  <Typography variant="caption" color="primary.main" sx={{ fontWeight: 700, textTransform: 'uppercase' }}>
+                    Net School Income
+                  </Typography>
+                  <Typography variant="h5" sx={{ fontWeight: 850, mt: 1, color: 'primary.main' }}>
+                    ₹{((stats?.schoolIncome ?? 0) - (stats?.salaryExpenses ?? 0)).toLocaleString()}
+                  </Typography>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </Box>
+      )}
+
+      {/* Teacher Performance & Student Strength */}
+      {!isSuperAdmin && (
+        <Box sx={{ mb: 4 }}>
+          <Typography variant="h6" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, mb: 2 }}>
+            Demographics & Performance Analytics
+          </Typography>
+          <Grid container spacing={3}>
+            {/* Student Strength Analytics */}
+            <Grid item xs={12} md={4}>
+              <Card sx={{ ...cardStyle, p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 2 }}>
+                  Student Gender Strength
+                </Typography>
+                <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+                  <Chart
+                    options={{
+                      chart: { id: 'gender-split', type: 'pie', background: 'transparent' },
+                      labels: ['Boys', 'Girls'],
+                      colors: ['#3B82F6', '#EC4899'],
+                      legend: { position: 'bottom', labels: { colors: theme.palette.text.primary } },
+                      theme: { mode: theme.palette.mode }
+                    }}
+                    series={[stats?.totalBoys ?? 0, stats?.totalGirls ?? 0]}
+                    type="pie"
+                    height={220}
+                  />
+                </Box>
+              </Card>
+            </Grid>
+
+            {/* Section wise strength */}
+            <Grid item xs={12} md={4}>
+              <Card sx={{ ...cardStyle, p: 2, height: '100%', display: 'flex', flexDirection: 'column' }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 2 }}>
+                  Section-wise Strength
+                </Typography>
+                <Box sx={{ flexGrow: 1, overflowY: 'auto', maxHeight: 220 }}>
+                  {(!stats?.sectionStrength || stats.sectionStrength.length === 0) ? (
+                    <Typography variant="body2" color="text.secondary" sx={{ textAlign: 'center', mt: 4 }}>
+                      No section strength records found.
+                    </Typography>
+                  ) : (
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell sx={{ fontWeight: 700 }}>Class & Section</TableCell>
+                          <TableCell align="right" sx={{ fontWeight: 700 }}>Count</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {stats.sectionStrength.map((ss, idx) => (
+                          <TableRow key={idx} hover>
+                            <TableCell>{`${ss.className} - ${ss.sectionName}`}</TableCell>
+                            <TableCell align="right" sx={{ fontWeight: 700 }}>{ss.strength}</TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  )}
+                </Box>
+              </Card>
+            </Grid>
+
+            {/* Teacher Performance */}
+            <Grid item xs={12} md={4}>
+              <Card sx={{ ...cardStyle, p: 2, height: '100%' }}>
+                <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 2 }}>
+                  Teacher & Academic Performance
+                </Typography>
+                <Stack spacing={2} sx={{ mt: 1 }}>
+                  <Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                      <Typography variant="caption" sx={{ fontWeight: 600 }}>Teacher Attendance %</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 800 }}>{(stats?.teacherAttendanceRate ?? 0.0).toFixed(1)}%</Typography>
+                    </Box>
+                    <LinearProgress variant="determinate" value={stats?.teacherAttendanceRate ?? 0} color="success" sx={{ height: 6, borderRadius: 3 }} />
+                  </Box>
+                  <Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                      <Typography variant="caption" sx={{ fontWeight: 600 }}>Homework Completion Rate</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 800 }}>{(stats?.homeworkCompletionRate ?? 0.0).toFixed(1)}%</Typography>
+                    </Box>
+                    <LinearProgress variant="determinate" value={stats?.homeworkCompletionRate ?? 0} color="secondary" sx={{ height: 6, borderRadius: 3 }} />
+                  </Box>
+                  <Box>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                      <Typography variant="caption" sx={{ fontWeight: 600 }}>Average Student Performance</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 800 }}>{(stats?.studentPerformanceAvg ?? 0.0).toFixed(1)}%</Typography>
+                    </Box>
+                    <LinearProgress variant="determinate" value={stats?.studentPerformanceAvg ?? 0} color="primary" sx={{ height: 6, borderRadius: 3 }} />
+                  </Box>
+                </Stack>
+              </Card>
+            </Grid>
+          </Grid>
+        </Box>
+      )}
 
       {/* School Administration Overview Grid */}
       <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
@@ -1224,6 +1404,117 @@ function Dashboard() {
         </Grid>
       </Grid>
 
+      {/* Parent Complaints & Resolution Portal */}
+      {!isSuperAdmin && ['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) && (
+        <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
+          <Grid item xs={12} component={motion.div} variants={itemVariants}>
+            <Card sx={{ ...cardStyle, p: 3 }}>
+              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                  <Avatar sx={{ bgcolor: 'error.main' + '20', color: 'error.main' }}>
+                    <ComplaintIcon />
+                  </Avatar>
+                  <Box>
+                    <Typography variant="h6" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800 }}>
+                      Parent Complaints & Resolutions
+                    </Typography>
+                    <Typography variant="caption" color="text.secondary">
+                      Grievances and concerns raised by parents needing review and response.
+                    </Typography>
+                  </Box>
+                </Box>
+              </Box>
+
+              {(!complaintsData?.getComplaints || complaintsData.getComplaints.length === 0) ? (
+                <Box sx={{ py: 6, textAlign: 'center', border: `1px dashed ${theme.palette.divider}`, borderRadius: 3 }}>
+                  <Typography color="text.secondary" variant="body2" sx={{ fontWeight: 600 }}>
+                    No complaints registered by parents.
+                  </Typography>
+                </Box>
+              ) : (
+                <TableContainer component={Paper} variant="outlined" sx={{ borderRadius: 2 }}>
+                  <Table>
+                    <TableHead sx={{ bgcolor: 'action.hover' }}>
+                      <TableRow>
+                        <TableCell sx={{ fontWeight: 700 }}>Date</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Parent</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Student</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Category</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Title & Description</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                        <TableCell sx={{ fontWeight: 700 }} align="right">Actions</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {complaintsData.getComplaints.map((c) => {
+                        const isResolved = c.complaintStatus === 'RESOLVED';
+                        return (
+                          <TableRow key={c.id} hover>
+                            <TableCell sx={{ fontSize: '0.85rem' }}>
+                              {new Date(c.createdAt).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                                {c.parentId ? `${c.parentId.firstName} ${c.parentId.lastName}` : 'Unknown'}
+                              </Typography>
+                              <Typography variant="caption" color="text.secondary" display="block">
+                                {c.parentId?.phone}
+                              </Typography>
+                            </TableCell>
+                            <TableCell>
+                              {c.studentId ? `${c.studentId.firstName} ${c.studentId.lastName}` : '—'}
+                            </TableCell>
+                            <TableCell>
+                              <Chip label={c.category} size="small" variant="outlined" />
+                            </TableCell>
+                            <TableCell sx={{ maxWidth: 300 }}>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>{c.title}</Typography>
+                              <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 0.5, whiteSpace: 'pre-wrap' }}>
+                                {c.description}
+                              </Typography>
+                              {c.feedback && (
+                                <Box sx={{ mt: 1, p: 1, bgcolor: 'success.main' + '10', borderRadius: 1, borderLeft: '3px solid', borderColor: 'success.main' }}>
+                                  <Typography variant="caption" color="success.main" sx={{ fontWeight: 700, display: 'block' }}>Resolution Reply:</Typography>
+                                  <Typography variant="caption" color="text.primary">{c.feedback}</Typography>
+                                </Box>
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              <Chip
+                                label={c.complaintStatus}
+                                size="small"
+                                color={isResolved ? 'success' : 'warning'}
+                                sx={{ fontWeight: 700 }}
+                              />
+                            </TableCell>
+                            <TableCell align="right">
+                              {!isResolved && (
+                                <Button
+                                  variant="contained"
+                                  size="small"
+                                  onClick={() => {
+                                    setSelectedComplaint(c);
+                                    setFeedbackText('');
+                                    setOpenComplaintDialog(true);
+                                  }}
+                                  sx={{ textTransform: 'none', borderRadius: 2 }}
+                                >
+                                  Resolve
+                                </Button>
+                              )}
+                            </TableCell>
+                          </TableRow>
+                        );
+                      })}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+              )}
+            </Card>
+          </Grid>
+        </Grid>
+      )}
+
       {/* Events & Holidays Row */}
       <Grid container spacing={3} sx={{ mb: 4 }} component={motion.div} variants={containerVariants} initial="hidden" animate="show">
         <Grid item xs={12} component={motion.div} variants={itemVariants}>
@@ -1346,6 +1637,58 @@ function Dashboard() {
           </Card>
         </Grid>
       </Grid>
+
+      {/* Parent Complaints Response Dialog */}
+      <Dialog open={openComplaintDialog} onClose={() => setOpenComplaintDialog(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800 }}>Respond to Parent Complaint</DialogTitle>
+        <DialogContent>
+          {selectedComplaint && (
+            <Box sx={{ mt: 1 }}>
+              <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                Category: {selectedComplaint.category}
+              </Typography>
+              <Typography variant="subtitle1" sx={{ fontWeight: 800, mt: 1 }}>
+                {selectedComplaint.title}
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mt: 1, p: 2, bgcolor: 'action.hover', borderRadius: 2 }}>
+                {selectedComplaint.description}
+              </Typography>
+              <TextField
+                autoFocus
+                margin="dense"
+                label="Admin Feedback / Resolution Reply"
+                type="text"
+                fullWidth
+                multiline
+                rows={4}
+                variant="outlined"
+                value={feedbackText}
+                onChange={(e) => setFeedbackText(e.target.value)}
+                sx={{ mt: 3 }}
+              />
+            </Box>
+          )}
+        </DialogContent>
+        <DialogActions sx={{ px: 3, pb: 3 }}>
+          <Button onClick={() => setOpenComplaintDialog(false)} variant="outlined">Cancel</Button>
+          <Button
+            onClick={() => {
+              if (selectedComplaint) {
+                resolveComplaintMutation({
+                  variables: {
+                    id: selectedComplaint.id,
+                    feedback: feedbackText
+                  }
+                });
+              }
+            }}
+            variant="contained"
+            disabled={resolvingComplaint || !feedbackText.trim()}
+          >
+            {resolvingComplaint ? 'Resolving...' : 'Submit Resolution'}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
