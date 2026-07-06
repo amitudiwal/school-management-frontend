@@ -28,6 +28,7 @@ import {
   GET_TRANSPORT_ROUTES,
   GET_SCHOOL
 } from '../graphql/operations';
+import MapView from '../components/MapView';
 
 const SIM_ROUTES = {
   'Route A - North City': [
@@ -85,8 +86,6 @@ function BusTracker() {
   });
 
   const [activeTab, setActiveTab] = useState(0);
-  const [mapLoaded, setMapLoaded] = useState(false);
-  const [leafletError, setLeafletError] = useState(false);
 
   // Geolocation Broadcasting State
   const [selectedSimVehicle, setSelectedSimVehicle] = useState('');
@@ -96,11 +95,7 @@ function BusTracker() {
   const [gpsError, setGpsError] = useState(null);
   const [initializing, setInitializing] = useState(false);
 
-  // Refs for Leaflet Map
-  const mapRef = useRef(null);
-  const markersRef = useRef({});
-  const routesLinesRef = useRef([]);
-  const stopsMarkersRef = useRef([]);
+  // Refs
   const watchIdRef = useRef(null);
 
   // Queries & Mutations
@@ -117,6 +112,36 @@ function BusTracker() {
 
   const vehiclesList = data?.getVehicles || [];
   const routesList = routesData?.getTransportRoutes || [];
+
+  // Set default active tab based on role
+  useEffect(() => {
+    if (user?.role === 'DRIVER') {
+      setActiveTab(1);
+    } else {
+      setActiveTab(0);
+    }
+  }, [user]);
+
+  // Auto-select vehicle for logged in driver
+  useEffect(() => {
+    if (user?.role === 'DRIVER' && vehiclesList.length > 0 && !selectedSimVehicle) {
+      const driverName = user.name || `${user.firstName || ''} ${user.lastName || ''}`.trim();
+      const driverPhone = user.phone || '';
+      
+      const matchedVehicle = vehiclesList.find(v => {
+        const nameMatch = v.driverName && driverName && v.driverName.toLowerCase().includes(driverName.toLowerCase());
+        const phoneMatch = v.driverPhone && driverPhone && v.driverPhone.replace(/\D/g, '').includes(driverPhone.replace(/\D/g, ''));
+        return nameMatch || phoneMatch;
+      });
+
+      if (matchedVehicle) {
+        setSelectedSimVehicle(matchedVehicle.id);
+        if (matchedVehicle.routeId) {
+          setSimRouteName(matchedVehicle.routeId.routeName);
+        }
+      }
+    }
+  }, [user, vehiclesList, selectedSimVehicle]);
 
   // Dynamic base coordinates and location resolver
   const city = schoolData?.getSchool?.address?.city || '';
@@ -191,28 +216,7 @@ function BusTracker() {
     return SIM_ROUTES['Route A - North City'];
   }, [routesList, getCoordsForLocation]);
 
-  // Pan map when school location details load
-  useEffect(() => {
-    if (mapRef.current && schoolData?.getSchool?.address?.city) {
-      const cityVal = schoolData.getSchool.address.city.toLowerCase().trim();
-      let bLat = 28.6400;
-      let bLng = 77.2400;
-      if (cityVal === 'jaipur') {
-        bLat = 26.9124;
-        bLng = 75.7873;
-      } else if (cityVal === 'boston') {
-        bLat = 42.3601;
-        bLng = -71.0589;
-      } else if (cityVal === 'mumbai') {
-        bLat = 19.0760;
-        bLng = 72.8777;
-      } else if (cityVal === 'bangalore' || cityVal === 'bengaluru') {
-        bLat = 12.9716;
-        bLng = 77.5946;
-      }
-      mapRef.current.setView([bLat, bLng], 12);
-    }
-  }, [schoolData]);
+
 
   const locationSuggestions = React.useMemo(() => {
     const city = schoolData?.getSchool?.address?.city || '';
@@ -382,216 +386,7 @@ function BusTracker() {
     }
   };
 
-  // --- DYNAMICALLY LOAD LEAFLET MAP FROM CDN ---
-  useEffect(() => {
-    let isMounted = true;
-    let leafletLink = document.getElementById('leaflet-css');
-    if (!leafletLink) {
-      leafletLink = document.createElement('link');
-      leafletLink.id = 'leaflet-css';
-      leafletLink.rel = 'stylesheet';
-      leafletLink.href = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.css';
-      document.head.appendChild(leafletLink);
-    }
 
-    let leafletScript = document.getElementById('leaflet-js');
-    if (!leafletScript) {
-      leafletScript = document.createElement('script');
-      leafletScript.id = 'leaflet-js';
-      leafletScript.src = 'https://unpkg.com/leaflet@1.9.4/dist/leaflet.js';
-      document.head.appendChild(leafletScript);
-    }
-
-    const initMap = () => {
-      if (!isMounted) return;
-      if (!window.L) {
-        setLeafletError(true);
-        return;
-      }
-      try {
-        if (mapRef.current) return;
-        
-        const container = document.getElementById('leaflet-map');
-        if (!container) return;
-
-        // Initialize Map (default center at School Main Gate)
-        const mapInstance = window.L.map('leaflet-map').setView([28.6400, 77.2400], 12);
-        
-        window.L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-          attribution: '&copy; OpenStreetMap contributors'
-        }).addTo(mapInstance);
-
-        mapRef.current = mapInstance;
-        setMapLoaded(true);
-      } catch (err) {
-        console.error('Error initializing Leaflet:', err);
-        setLeafletError(true);
-      }
-    };
-
-    if (window.L) {
-      // Map div may not be rendered yet in tab 0
-      setTimeout(initMap, 100);
-    } else {
-      leafletScript.addEventListener('load', initMap);
-      leafletScript.addEventListener('error', () => setLeafletError(true));
-    }
-
-    return () => {
-      isMounted = false;
-      if (mapRef.current) {
-        mapRef.current.remove();
-        mapRef.current = null;
-      }
-      if (leafletScript) {
-        leafletScript.removeEventListener('load', initMap);
-      }
-    };
-  }, []);
-
-  // --- RENDER VEHICLE & ROUTE MARKERS ---
-  useEffect(() => {
-    if (!mapLoaded || !mapRef.current || !window.L || vehiclesList.length === 0) return;
-
-    try {
-      const L = window.L;
-
-      // Clear markers not in the current list
-      Object.keys(markersRef.current).forEach(id => {
-        if (!vehiclesList.find(v => v.id === id)) {
-          if (markersRef.current[id] && typeof markersRef.current[id].remove === 'function') {
-            markersRef.current[id].remove();
-          }
-          delete markersRef.current[id];
-        }
-      });
-
-      // Draw Stops and Polylines
-      if (routesLinesRef.current) {
-        routesLinesRef.current.forEach(line => {
-          if (line && typeof line.remove === 'function') line.remove();
-        });
-      }
-      routesLinesRef.current = [];
-
-      if (stopsMarkersRef.current) {
-        stopsMarkersRef.current.forEach(marker => {
-          if (marker && typeof marker.remove === 'function') marker.remove();
-        });
-      }
-      stopsMarkersRef.current = [];
-
-      // Draw active routes stop points
-      vehiclesList.forEach(v => {
-        if (v.routeId && v.routeId.routeName) {
-          const routePoints = getRoutePoints(v.routeId.routeName);
-          if (routePoints.length > 0) {
-            const latlngs = routePoints.map(p => [p.lat, p.lng]);
-            
-            // Draw connecting path line
-            const polyline = L.polyline(latlngs, { color: '#6366F1', weight: 4, opacity: 0.6 }).addTo(mapRef.current);
-            routesLinesRef.current.push(polyline);
-
-            // Place stop points
-            routePoints.forEach((stop, index) => {
-              const stopIconHtml = `
-                <div style="
-                  background-color: #6366F1;
-                  color: white;
-                  width: 20px;
-                  height: 20px;
-                  border-radius: 50%;
-                  display: flex;
-                  align-items: center;
-                  justify-content: center;
-                  box-shadow: 0 2px 4px rgba(0,0,0,0.3);
-                  border: 2px solid white;
-                  font-weight: 800;
-                  font-size: 9px;
-                ">
-                  ${index + 1}
-                </div>
-              `;
-              const stopIcon = L.divIcon({
-                html: stopIconHtml,
-                className: 'custom-stop-icon',
-                iconSize: [20, 20],
-                iconAnchor: [10, 10]
-              });
-
-              const stopMarker = L.marker([stop.lat, stop.lng], { icon: stopIcon })
-                .bindPopup(`<b>Stop ${index + 1}:</b> ${stop.name}`)
-                .addTo(mapRef.current);
-              stopsMarkersRef.current.push(stopMarker);
-            });
-          }
-        }
-      });
-
-      // Update or Draw Bus Positions
-      vehiclesList.forEach(vehicle => {
-        const { id, vehicleNo, currentLatitude, currentLongitude, status, driverName, driverPhone, routeId } = vehicle;
-        const isOnline = status === 'Active';
-
-        // Safeguard coordinates from null/undefined/NaN
-        const lat = (typeof currentLatitude === 'number' && !isNaN(currentLatitude)) ? currentLatitude : 28.6139;
-        const lng = (typeof currentLongitude === 'number' && !isNaN(currentLongitude)) ? currentLongitude : 77.2090;
-
-        const busIconHtml = `
-          <div style="
-            background-color: ${isOnline ? '#10B981' : '#64748B'};
-            color: white;
-            width: 38px;
-            height: 38px;
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            box-shadow: 0 4px 10px rgba(0,0,0,0.3);
-            border: 3px solid white;
-            font-size: 16px;
-            transition: all 0.5s ease;
-          ">
-            🚌
-          </div>
-        `;
-
-        const customIcon = L.divIcon({
-          html: busIconHtml,
-          className: 'custom-bus-marker',
-          iconSize: [38, 38],
-          iconAnchor: [19, 19]
-        });
-
-        const popupContent = `
-          <div style="font-family: sans-serif; padding: 5px; min-width: 150px;">
-            <h4 style="margin: 0 0 5px 0; color: #1E293B; display: flex; align-items: center; gap: 5px;">
-              Bus ${vehicleNo}
-              <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:${isOnline ? '#10B981' : '#64748B'};"></span>
-            </h4>
-            <p style="margin: 4px 0; font-size: 12px;"><b>Route:</b> ${routeId?.routeName || 'Unassigned'}</p>
-            <p style="margin: 4px 0; font-size: 12px;"><b>Driver:</b> ${driverName}</p>
-            <p style="margin: 4px 0; font-size: 12px;"><b>Phone:</b> ${driverPhone}</p>
-            <p style="margin: 4px 0; font-size: 12px;"><b>Status:</b> ${isOnline ? 'Active / On Trip' : 'Inactive / Parked'}</p>
-          </div>
-        `;
-
-        if (markersRef.current[id]) {
-          // Move Marker
-          markersRef.current[id].setLatLng([lat, lng]);
-          markersRef.current[id].getPopup().setContent(popupContent);
-        } else {
-          // Create Marker
-          const marker = L.marker([lat, lng], { icon: customIcon })
-            .bindPopup(popupContent)
-            .addTo(mapRef.current);
-          markersRef.current[id] = marker;
-        }
-      });
-    } catch (err) {
-      console.error('Error rendering markers:', err);
-    }
-  }, [mapLoaded, vehiclesList, routesList, getRoutePoints]);
 
   // --- INITIALIZE DEMO VEHICLES & ROUTES ---
   const handleInitDemo = async () => {
@@ -785,17 +580,19 @@ function BusTracker() {
       </Box>
 
       {/* Tabs Menu */}
-      <Tabs
-        value={activeTab}
-        onChange={(e, val) => setActiveTab(val)}
-        textColor="primary"
-        indicatorColor="primary"
-        sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
-      >
-        <Tab label="Live Tracking Board" sx={{ fontWeight: 700 }} />
-        <Tab label="Driver Console / Simulator" sx={{ fontWeight: 700 }} />
-        <Tab label="Fleet Manager" sx={{ fontWeight: 700 }} />
-      </Tabs>
+      {['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) && (
+        <Tabs
+          value={activeTab}
+          onChange={(e, val) => setActiveTab(val)}
+          textColor="primary"
+          indicatorColor="primary"
+          sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
+        >
+          <Tab label="Live Tracking Board" sx={{ fontWeight: 700 }} />
+          <Tab label="Driver Console / Simulator" sx={{ fontWeight: 700 }} />
+          <Tab label="Fleet Manager" sx={{ fontWeight: 700 }} />
+        </Tabs>
+      )}
 
       {/* RENDER BOTH TABS (Preserving Map DOM to prevent Leaflet cleanup crashes) */}
       <Box sx={{ display: activeTab === 0 ? 'block' : 'none' }}>
@@ -803,25 +600,11 @@ function BusTracker() {
           {/* Map Column */}
           <Grid item xs={12} lg={8}>
             <Card sx={{ height: { xs: 450, md: 550 }, display: 'flex', flexDirection: 'column', p: 1 }}>
-              {leafletError ? (
-                <Box sx={{ p: 3, display: 'flex', flexGrow: 1, justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
-                  <Alert severity="warning" sx={{ mb: 2 }}>
-                    Unable to load real Leaflet map without internet connectivity.
-                  </Alert>
-                  <Typography color="text.secondary" align="center">
-                    Please connect to the internet to load OpenStreetMap tiles.
-                  </Typography>
-                </Box>
-              ) : (
-                <Box sx={{ flexGrow: 1, position: 'relative', width: '100%', height: '100%', borderRadius: 2, overflow: 'hidden' }}>
-                  <div id="leaflet-map" style={{ width: '100%', height: '100%', minHeight: '380px' }} />
-                  {!mapLoaded && (
-                    <Box sx={{ position: 'absolute', top: 0, left: 0, right: 0, bottom: 0, bgcolor: 'background.paper', display: 'flex', justifyContent: 'center', alignItems: 'center', zIndex: 1000 }}>
-                      <CircularProgress size={40} />
-                    </Box>
-                  )}
-                </Box>
-              )}
+              <MapView 
+                vehiclesList={vehiclesList}
+                getRoutePoints={getRoutePoints}
+                center={[baseLat, baseLng]}
+              />
             </Card>
           </Grid>
 

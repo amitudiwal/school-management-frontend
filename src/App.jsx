@@ -45,6 +45,7 @@ import { useQuery } from '@apollo/client';
 import { GET_SCHOOL } from './graphql/operations';
 
 import ToastAlert from './components/ToastAlert';
+import SessionTimeoutManager from './components/SessionTimeoutManager';
 
 function App() {
   const { themeMode } = useSelector((state) => state.ui);
@@ -336,6 +337,7 @@ function App() {
     </Box>
       </Box>
       <ToastAlert />
+      <SessionTimeoutManager />
     </ThemeProvider>
   );
 }

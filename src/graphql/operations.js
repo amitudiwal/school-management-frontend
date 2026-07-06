@@ -84,6 +84,27 @@ export const LOGIN_MUTATION = gql`
   }
 `;
 
+export const REFRESH_TOKEN_MUTATION = gql`
+  mutation RefreshToken($refreshToken: String!) {
+    refreshToken(refreshToken: $refreshToken) {
+      token
+      refreshToken
+      user {
+        id
+        name
+        firstName
+        lastName
+        email
+        role
+        schoolId
+        phone
+        mobile
+        avatar
+      }
+    }
+  }
+`;
+
 export const GET_ME_QUERY = gql`
   query GetMe {
     getMe {
