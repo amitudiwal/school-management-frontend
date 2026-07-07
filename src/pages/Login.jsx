@@ -6,7 +6,8 @@ import {
   Box, Card, CardContent, TextField, Button, Typography,
   Alert, InputAdornment, IconButton, CircularProgress, Link, Chip, Grid,
   Radio, RadioGroup, FormControlLabel, FormControl, FormLabel,
-  Tabs, Tab, ThemeProvider, createTheme
+  Tabs, Tab, ThemeProvider, createTheme,
+  Dialog, DialogTitle, DialogContent, DialogContentText, DialogActions
 } from '@mui/material';
 import { useTheme } from '@mui/material/styles';
 import {
@@ -51,6 +52,8 @@ function Login() {
   const [errors, setErrors] = useState({});
   const [successMessage, setSuccessMessage] = useState('');
   const [otpTimer, setOtpTimer] = useState(300);
+  const [trialExpiredOpen, setTrialExpiredOpen] = useState(false);
+  const [trialExpiredMessage, setTrialExpiredMessage] = useState('');
 
   // Dynamic Theme Mode detection from globalTheme
   const themeMode = globalTheme.palette.mode;
@@ -127,7 +130,12 @@ function Login() {
     },
     onError: (err) => {
       dispatch(loginFailure(err.message));
-      dispatch(showToast({ message: err.message, severity: 'error' }));
+      if (err.message && err.message.includes('trial period has expired')) {
+        setTrialExpiredMessage(err.message);
+        setTrialExpiredOpen(true);
+      } else {
+        dispatch(showToast({ message: err.message, severity: 'error' }));
+      }
     }
   });
 
@@ -201,7 +209,12 @@ function Login() {
     },
     onError: (err) => {
       dispatch(loginFailure(err.message));
-      dispatch(showToast({ message: err.message, severity: 'error' }));
+      if (err.message && err.message.includes('trial period has expired')) {
+        setTrialExpiredMessage(err.message);
+        setTrialExpiredOpen(true);
+      } else {
+        dispatch(showToast({ message: err.message, severity: 'error' }));
+      }
     }
   });
 
@@ -1426,6 +1439,75 @@ function Login() {
 
           </CardContent>
         </Card>
+      <Dialog
+        open={trialExpiredOpen}
+        onClose={() => setTrialExpiredOpen(false)}
+        aria-labelledby="trial-expired-dialog-title"
+        aria-describedby="trial-expired-dialog-description"
+        PaperProps={{
+          sx: {
+            borderRadius: 3,
+            p: 1,
+            background: themeMode === 'dark' 
+              ? 'linear-gradient(135deg, #1e293b 0%, #0f172a 100%)' 
+              : 'linear-gradient(135deg, #ffffff 0%, #f1f5f9 100%)',
+            border: '1px solid',
+            borderColor: themeMode === 'dark' ? 'rgba(255, 255, 255, 0.08)' : 'rgba(0, 0, 0, 0.08)',
+            boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+          }
+        }}
+      >
+        <DialogTitle 
+          id="trial-expired-dialog-title"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+            fontWeight: 800,
+            fontSize: '1.25rem',
+            color: '#ef5350',
+            fontFamily: "'Outfit', sans-serif"
+          }}
+        >
+          <SchoolIcon sx={{ fontSize: 32 }} />
+          Trial Period Expired
+        </DialogTitle>
+        <DialogContent>
+          <DialogContentText 
+            id="trial-expired-dialog-description"
+            sx={{ 
+              fontWeight: 500, 
+              color: themeMode === 'dark' ? '#cbd5e1' : '#475569',
+              fontSize: '1rem',
+              mt: 1,
+              fontFamily: "'Outfit', sans-serif"
+            }}
+          >
+            {trialExpiredMessage}
+          </DialogContentText>
+        </DialogContent>
+        <DialogActions sx={{ p: 2 }}>
+          <Button 
+            onClick={() => setTrialExpiredOpen(false)} 
+            variant="contained"
+            color="error"
+            autoFocus
+            sx={{
+              fontWeight: 700,
+              px: 3,
+              borderRadius: 2,
+              textTransform: 'none',
+              fontFamily: "'Outfit', sans-serif",
+              backgroundColor: '#ef5350',
+              '&:hover': {
+                backgroundColor: '#d32f2f'
+              }
+            }}
+          >
+            Acknowledge
+          </Button>
+        </DialogActions>
+      </Dialog>
       </Box>
     </ThemeProvider>
   );

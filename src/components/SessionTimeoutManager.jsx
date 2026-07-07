@@ -24,7 +24,7 @@ const decodeToken = (token) => {
 
 export default function SessionTimeoutManager() {
   const dispatch = useDispatch();
-  const { isAuthenticated } = useSelector((state) => state.auth);
+  const { isAuthenticated, user } = useSelector((state) => state.auth);
   const [refreshSession] = useMutation(REFRESH_TOKEN_MUTATION);
   
   const isRefreshing = useRef(false);
@@ -78,10 +78,12 @@ export default function SessionTimeoutManager() {
         }
       }
 
-      // 1. Idle logout check (20 minutes inactivity)
+      // 1. Idle logout check (12 hours for Super Admin, 20 minutes for others)
       const idleTime = now - lastActiveTimeRef.current;
-      if (idleTime > 20 * 60 * 1000) {
-        console.log('SessionTimeoutManager: Idle limit reached (20 minutes). Logging out...');
+      const isSuperAdmin = user?.role === 'SUPER_ADMIN';
+      const idleLimit = isSuperAdmin ? 12 * 60 * 60 * 1000 : 20 * 60 * 1000;
+      if (idleTime > idleLimit) {
+        console.log(`SessionTimeoutManager: Idle limit reached (${isSuperAdmin ? '12 hours' : '20 minutes'}). Logging out...`);
         dispatch(logout());
         dispatch(showToast({ message: 'You have been logged out due to inactivity.', severity: 'warning' }));
         return;
@@ -97,8 +99,10 @@ export default function SessionTimeoutManager() {
       const expiresAt = decoded.exp * 1000;
       const timeLeft = expiresAt - now;
 
-      // If token expires in less than 5 minutes and we aren't already refreshing
-      if (timeLeft < 5 * 60 * 1000 && !isRefreshing.current) {
+      // If token expires soon and we aren't already refreshing
+      // 30 minutes threshold for Super Admin, 5 minutes for others
+      const refreshThreshold = isSuperAdmin ? 30 * 60 * 1000 : 5 * 60 * 1000;
+      if (timeLeft < refreshThreshold && !isRefreshing.current) {
         isRefreshing.current = true;
         console.log('SessionTimeoutManager: Access token expiring soon. Requesting refresh...');
         try {

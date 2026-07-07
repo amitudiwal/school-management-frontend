@@ -31,6 +31,7 @@ function SchoolsList() {
   const [email, setEmail] = useState('');
   const [phone, setPhone] = useState('');
   const [plan, setPlan] = useState('BASIC');
+  const [trialDays, setTrialDays] = useState(30);
   const [adminName, setAdminName] = useState('');
   const [adminEmail, setAdminEmail] = useState('');
   const [adminPassword, setAdminPassword] = useState('');
@@ -126,6 +127,7 @@ function SchoolsList() {
     setEmail('');
     setPhone('');
     setPlan('BASIC');
+    setTrialDays(30);
     setAdminName('');
     setAdminEmail('');
     setAdminPassword('');
@@ -156,6 +158,7 @@ function SchoolsList() {
     setEmail(sch.contact?.email || '');
     setPhone(sch.contact?.phone || '');
     setPlan(sch.subscription?.plan || 'BASIC');
+    setTrialDays(sch.subscription?.plan === 'TRIAL' ? 30 : 30); // Default to 30 for edit mode
     setSchoolCode(sch.schoolCode || '');
     setLogo(sch.logo || '');
     setSchoolLogo(sch.schoolLogo || '');
@@ -224,6 +227,7 @@ function SchoolsList() {
           plan,
           logo,
           schoolLogo,
+          trialDays: plan === 'TRIAL' ? parseInt(trialDays, 10) : null,
           address: {
             street: street.trim(),
             city: city.trim(),
@@ -249,6 +253,7 @@ function SchoolsList() {
         adminPassword,
         logo,
         schoolLogo,
+        trialDays: plan === 'TRIAL' ? parseInt(trialDays, 10) : null,
         address: {
           street: street.trim(),
           city: city.trim(),
@@ -327,7 +332,21 @@ function SchoolsList() {
                       <TableCell>{sch.address?.city || '—'}</TableCell>
                       <TableCell>{sch.address?.state || '—'}</TableCell>
                       <TableCell>
-                        <Chip size="small" label={sch.subscription?.plan} color="primary" variant="outlined" sx={{ fontWeight: 700 }} />
+                        <Chip size="small" label={sch.subscription?.plan} color="primary" variant="outlined" sx={{ fontWeight: 700, mb: 0.5 }} />
+                        {sch.subscription?.plan === 'TRIAL' && sch.subscription?.endDate && (
+                          <Typography variant="caption" display="block" sx={{ fontFamily: "'Outfit', sans-serif", fontSize: '0.72rem', fontWeight: 600 }}>
+                            {new Date(sch.subscription.endDate) < new Date() ? (
+                              <span style={{ color: '#ef5350' }}>Expired</span>
+                            ) : (
+                              <span style={{ color: '#10B981' }}>{Math.max(0, Math.ceil((new Date(sch.subscription.endDate) - Date.now()) / (1000 * 60 * 60 * 24)))} days left</span>
+                            )}
+                          </Typography>
+                        )}
+                        {sch.subscription?.plan !== 'TRIAL' && sch.subscription?.endDate && (
+                          <Typography variant="caption" display="block" sx={{ fontSize: '0.72rem', color: 'text.secondary' }}>
+                            Exp: {sch.subscription.endDate.split('T')[0]}
+                          </Typography>
+                        )}
                       </TableCell>
                       <TableCell>
                         <Chip
@@ -565,6 +584,19 @@ function SchoolsList() {
                   <MenuItem value="ENTERPRISE">Enterprise Tier</MenuItem>
                 </TextField>
               </Grid>
+              {plan === 'TRIAL' && (
+                <Grid item xs={12}>
+                  <TextField
+                    fullWidth required select label="Trial Duration (Days)"
+                    value={trialDays}
+                    onChange={(e) => setTrialDays(e.target.value)}
+                  >
+                    <MenuItem value={10}>10 Days</MenuItem>
+                    <MenuItem value={20}>20 Days</MenuItem>
+                    <MenuItem value={30}>30 Days</MenuItem>
+                  </TextField>
+                </Grid>
+              )}
               <Grid item xs={12}>
                 <Typography variant="subtitle2" sx={{ fontWeight: 800, mt: 1 }}>
                   School Address Configuration

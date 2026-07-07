@@ -893,6 +893,7 @@ export const CREATE_SCHOOL = gql`
     $address: AddressInput
     $logo: String
     $schoolLogo: String
+    $trialDays: Int
   ) {
     createSchool(
       name: $name
@@ -907,6 +908,7 @@ export const CREATE_SCHOOL = gql`
       address: $address
       logo: $logo
       schoolLogo: $schoolLogo
+      trialDays: $trialDays
     ) {
       id
       name
@@ -919,8 +921,8 @@ export const CREATE_SCHOOL = gql`
 `;
 
 export const UPDATE_SCHOOL = gql`
-  mutation UpdateSchool($id: ID!, $name: String, $plan: String, $status: String, $address: AddressInput, $logo: String, $schoolLogo: String) {
-    updateSchool(id: $id, name: $name, plan: $plan, status: $status, address: $address, logo: $logo, schoolLogo: $schoolLogo) {
+  mutation UpdateSchool($id: ID!, $name: String, $plan: String, $status: String, $address: AddressInput, $logo: String, $schoolLogo: String, $trialDays: Int) {
+    updateSchool(id: $id, name: $name, plan: $plan, status: $status, address: $address, logo: $logo, schoolLogo: $schoolLogo, trialDays: $trialDays) {
       id
       name
       status

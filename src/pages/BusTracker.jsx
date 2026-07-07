@@ -30,49 +30,12 @@ import {
 } from '../graphql/operations';
 import MapView from '../components/MapView';
 
-const SIM_ROUTES = {
-  'Route A - North City': [
-    { name: 'Terminal A - Sector 12', lat: 28.6139, lng: 77.2090 },
-    { name: 'Stop 1 - Sector 15 Metro', lat: 28.6250, lng: 77.2200 },
-    { name: 'Stop 2 - Rajeev Chowk Hub', lat: 28.6300, lng: 77.2180 },
-    { name: 'Stop 3 - Connaught Place', lat: 28.6328, lng: 77.2197 },
-    { name: 'School Main Gate', lat: 28.6400, lng: 77.2400 }
-  ],
-  'Route B - South Hub': [
-    { name: 'Terminal B - Vasant Kunj', lat: 28.5355, lng: 77.1554 },
-    { name: 'Stop 1 - Saket City Mall', lat: 28.5244, lng: 77.2066 },
-    { name: 'Stop 2 - Hauz Khas Metro', lat: 28.5434, lng: 77.2061 },
-    { name: 'Stop 3 - AIIMS Crossing', lat: 28.5672, lng: 77.2100 },
-    { name: 'School Main Gate', lat: 28.6400, lng: 77.2400 }
-  ]
-};
+const SIM_ROUTES = {};
 
 const LOCATION_COORDS = {
-  // Delhi / Defaults
-  'Terminal A - Sector 12': { lat: 28.6139, lng: 77.2090 },
-  'Stop 1 - Sector 15 Metro': { lat: 28.6250, lng: 77.2200 },
-  'Stop 2 - Rajeev Chowk Hub': { lat: 28.6300, lng: 77.2180 },
-  'Stop 3 - Connaught Place': { lat: 28.6328, lng: 77.2197 },
   'School Main Gate': { lat: 28.6400, lng: 77.2400 },
   'School Campus': { lat: 28.6400, lng: 77.2400 },
-  'Central School Campus': { lat: 28.6400, lng: 77.2400 },
-  
-  'Terminal B - Vasant Kunj': { lat: 28.5355, lng: 77.1554 },
-  'Stop 1 - Saket City Mall': { lat: 28.5244, lng: 77.2066 },
-  'Stop 2 - Hauz Khas Metro': { lat: 28.5434, lng: 77.2061 },
-  'Stop 3 - AIIMS Crossing': { lat: 28.5672, lng: 77.2100 },
-
-  'East Crossing Terminal': { lat: 28.6300, lng: 77.2900 },
-  'Central Market': { lat: 28.6200, lng: 77.2700 },
-  'Tech Park': { lat: 28.6250, lng: 77.2500 },
-
-  'Sector 62 Terminal': { lat: 28.6200, lng: 77.3700 },
-  'Metro Station Gate 2': { lat: 28.6250, lng: 77.3500 },
-
-  // Jaipur
-  'Jaipur Railway Station': { lat: 26.9196, lng: 75.7878 },
-  'Gopalbari': { lat: 26.9170, lng: 75.7920 },
-  'Jaipur Central Bus Stand': { lat: 26.9280, lng: 75.7980 },
+  'Central School Campus': { lat: 28.6400, lng: 77.2400 }
 };
 
 
@@ -89,11 +52,10 @@ function BusTracker() {
 
   // Geolocation Broadcasting State
   const [selectedSimVehicle, setSelectedSimVehicle] = useState('');
-  const [simRouteName, setSimRouteName] = useState('Route A - North City');
+  const [simRouteName, setSimRouteName] = useState('');
   const [isSimulating, setIsSimulating] = useState(false);
   const [realCoords, setRealCoords] = useState(null);
   const [gpsError, setGpsError] = useState(null);
-  const [initializing, setInitializing] = useState(false);
 
   // Refs
   const watchIdRef = useRef(null);
@@ -187,10 +149,6 @@ function BusTracker() {
   }, [baseLat, baseLng]);
 
   const getRoutePoints = useCallback((name) => {
-    if (SIM_ROUTES[name]) {
-      return SIM_ROUTES[name];
-    }
-    
     const dbRoute = routesList.find(r => r.routeName === name);
     if (dbRoute) {
       const points = [];
@@ -213,7 +171,7 @@ function BusTracker() {
       return points;
     }
     
-    return SIM_ROUTES['Route A - North City'];
+    return [];
   }, [routesList, getCoordsForLocation]);
 
 
@@ -388,78 +346,7 @@ function BusTracker() {
 
 
 
-  // --- INITIALIZE DEMO VEHICLES & ROUTES ---
-  const handleInitDemo = async () => {
-    try {
-      setInitializing(true);
-      
-      // Create Route A
-      const routeARes = await createRoute({
-        variables: {
-          routeName: 'Route A - North City',
-          startLocation: 'Terminal A - Sector 12',
-          endLocation: 'School Main Gate',
-          routeFee: 1500,
-          stops: [
-            { stopName: 'Terminal A - Sector 12', arrivalTime: '07:30 AM' },
-            { stopName: 'Stop 1 - Sector 15 Metro', arrivalTime: '07:45 AM' },
-            { stopName: 'Stop 2 - Rajeev Chowk Hub', arrivalTime: '07:55 AM' },
-            { stopName: 'Stop 3 - Connaught Place', arrivalTime: '08:05 AM' },
-            { stopName: 'School Main Gate', arrivalTime: '08:15 AM' }
-          ]
-        }
-      });
-      const routeAId = routeARes.data.createTransportRoute.id;
-
-      // Create Route B
-      const routeBRes = await createRoute({
-        variables: {
-          routeName: 'Route B - South Hub',
-          startLocation: 'Terminal B - Vasant Kunj',
-          endLocation: 'School Main Gate',
-          routeFee: 1800,
-          stops: [
-            { stopName: 'Terminal B - Vasant Kunj', arrivalTime: '07:20 AM' },
-            { stopName: 'Stop 1 - Saket City Mall', arrivalTime: '07:40 AM' },
-            { stopName: 'Stop 2 - Hauz Khas Metro', arrivalTime: '07:50 AM' },
-            { stopName: 'Stop 3 - AIIMS Crossing', arrivalTime: '08:00 AM' },
-            { stopName: 'School Main Gate', arrivalTime: '08:15 AM' }
-          ]
-        }
-      });
-      const routeBId = routeBRes.data.createTransportRoute.id;
-
-      // Create Vehicles
-      await createVehicle({
-        variables: {
-          vehicleNo: 'NY-1234',
-          model: 'Tata Marcopolo School Bus',
-          capacity: 40,
-          driverName: 'Robert Oppenheimer',
-          driverPhone: '+1 555-0199',
-          routeId: routeAId
-        }
-      });
-
-      await createVehicle({
-        variables: {
-          vehicleNo: 'NY-5678',
-          model: 'Mahindra Cruiser',
-          capacity: 15,
-          driverName: 'Albert Einstein',
-          driverPhone: '+1 555-0245',
-          routeId: routeBId
-        }
-      });
-
-      refetch();
-      refetchRoutes();
-    } catch (err) {
-      console.error('Error seeding demo data:', err);
-    } finally {
-      setInitializing(false);
-    }
-  };
+  // Demo initialization removed.
 
   // --- DRIVER CONSOLE TRIP REAL GPS STREAMER ---
   const handleToggleSimulation = () => {
@@ -620,19 +507,12 @@ function BusTracker() {
                   <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}><CircularProgress /></Box>
                 ) : vehiclesList.length === 0 ? (
                   <Box sx={{ textAlign: 'center', py: 6 }}>
-                    <Typography color="text.secondary" variant="body2" sx={{ mb: 3 }}>
+                    <Typography color="text.secondary" variant="body2" sx={{ mb: 1 }}>
                       No vehicles or routes are configured in the database yet.
                     </Typography>
-                    <Button
-                      variant="contained"
-                      color="primary"
-                      onClick={handleInitDemo}
-                      disabled={initializing}
-                      startIcon={initializing ? <CircularProgress size={20} /> : <AddIcon />}
-                      sx={{ borderRadius: 2, textTransform: 'none', fontWeight: 700 }}
-                    >
-                      Initialize Demo Vehicles & Routes
-                    </Button>
+                    <Typography color="text.secondary" variant="caption">
+                      Go to the Fleet Manager tab to configure routes and register vehicles.
+                    </Typography>
                   </Box>
                 ) : (
                   <Stack spacing={2.5}>
