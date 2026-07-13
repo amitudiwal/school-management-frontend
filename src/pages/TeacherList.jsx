@@ -6,14 +6,14 @@ import {
   DialogContent, DialogTitle, Grid, MenuItem, Paper, Table,
   TableBody, TableCell, TableContainer, TableHead, TableRow,
   TextField, Typography, IconButton, Tabs, Tab, Avatar, InputAdornment,
-  TablePagination
+  TablePagination, Chip
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Visibility, VisibilityOff } from '@mui/icons-material';
 import { useDispatch, useSelector } from 'react-redux';
 import { showToast } from '../store/slices/uiSlice';
 import {
   GET_TEACHERS, REGISTER_TEACHER, UPDATE_TEACHER, DELETE_TEACHER,
-  GET_STAFF, REGISTER_STAFF, UPDATE_STAFF, DELETE_STAFF
+  GET_STAFF, REGISTER_STAFF, UPDATE_STAFF, DELETE_STAFF, GET_SHIFTS
 } from '../graphql/operations';
 import CustomDatePicker from '../components/CustomDatePicker';
 import { BACKEND_URL } from '../graphql/client';
@@ -53,6 +53,7 @@ function TeacherList() {
 
   // Common/Teacher Form Fields
   const [firstName, setFirstName] = useState('');
+  const [shiftId, setShiftId] = useState('');
   const [lastName, setLastName] = useState('');
   const [email, setEmail] = useState('');
   const [gender, setGender] = useState('MALE');
@@ -105,6 +106,7 @@ function TeacherList() {
   // Queries
   const { loading: teachersLoading, error: teachersError, data: teachersData, refetch: refetchTeachers } = useQuery(GET_TEACHERS);
   const { loading: staffLoading, error: staffError, data: staffData, refetch: refetchStaff } = useQuery(GET_STAFF);
+  const { data: shiftsData } = useQuery(GET_SHIFTS);
 
   const filteredTeachers = (teachersData?.getTeachers || []).filter(t => t.userId?.role !== 'SUPER_TEACHER');
 
@@ -198,6 +200,7 @@ function TeacherList() {
     setErrors({});
     setSelectedTeacher(null);
     setAvatar('');
+    setShiftId('');
     setShowPassword(false);
   };
 
@@ -225,6 +228,7 @@ function TeacherList() {
     setPhone(teacher.phone);
     setQualification(teacher.qualification);
     setDesignation(teacher.designation || '');
+    setShiftId(teacher.shiftId?.id || '');
     setPassword('dummy_pass');
     setAvatar(teacher.userId?.avatar || '');
     setFormError('');
@@ -293,7 +297,8 @@ function TeacherList() {
           dateOfBirth: dob,
           phone: phone.trim(),
           qualification: qualification.trim(),
-          designation: designation.trim()
+          designation: designation.trim(),
+          shiftId: shiftId || null
         }
       });
     } else {
@@ -308,7 +313,8 @@ function TeacherList() {
           qualification: qualification.trim(),
           designation: designation.trim(),
           password,
-          avatar
+          avatar,
+          shiftId: shiftId || null
         }
       });
     }
@@ -436,6 +442,7 @@ function TeacherList() {
                     <TableCell sx={{ fontWeight: 700 }}>Phone</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Qualification</TableCell>
                     <TableCell sx={{ fontWeight: 700 }}>Designation</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Assigned Shift</TableCell>
                     <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>
                   </TableRow>
                 </TableHead>
@@ -454,6 +461,13 @@ function TeacherList() {
                         <TableCell>{teacher.phone}</TableCell>
                         <TableCell>{teacher.qualification}</TableCell>
                         <TableCell>{teacher.designation || '-'}</TableCell>
+                         <TableCell>
+                           {teacher.shiftId ? (
+                             <Chip label={teacher.shiftId.name} size="small" color="primary" variant="outlined" sx={{ fontWeight: 600 }} />
+                           ) : (
+                             <Typography variant="caption" color="text.secondary">Default</Typography>
+                           )}
+                         </TableCell>
                         <TableCell align="right">
                           <IconButton color="primary" onClick={() => handleTeacherEdit(teacher)}><EditIcon /></IconButton>
                           <IconButton color="error" onClick={() => setTeacherToDelete(teacher)}><DeleteIcon /></IconButton>
@@ -648,6 +662,22 @@ function TeacherList() {
               </Grid>
               <Grid item xs={12} sm={6}>
                 <TextField fullWidth label="Designation" value={designation} onChange={(e) => setDesignation(e.target.value)} />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  select
+                  label="Assign Shift (Optional)"
+                  value={shiftId}
+                  onChange={(e) => setShiftId(e.target.value)}
+                >
+                  <MenuItem value="">No Shift / Default</MenuItem>
+                  {shiftsData?.getShifts?.map((shift) => (
+                    <MenuItem key={shift.id} value={shift.id}>
+                      {shift.name} ({shift.startTime} - {shift.endTime})
+                    </MenuItem>
+                  ))}
+                </TextField>
               </Grid>
               {!selectedTeacher && (
                 <Grid item xs={12} sm={6}>

@@ -150,11 +150,19 @@ function PrintCertificate() {
                 <Typography variant="body1" sx={{ color: '#475569', fontSize: '1.1rem' }}>
                   This is to certify that
                 </Typography>
-                <Typography sx={{ fontStyle: 'normal', fontFamily: "'Great Vibes', cursive", fontSize: '4.5rem', color: '#1E293B', my: 2.5 }}>
+                <Typography sx={{ fontStyle: 'normal', fontFamily: "'Great Vibes', cursive", fontSize: '4rem', color: '#1E293B', my: 1.5 }}>
                   {student.firstName} {student.lastName}
                 </Typography>
-                <Typography variant="body1" sx={{ color: '#475569', maxWidth: '800px', lineHeight: 1.8, fontSize: '1.05rem', margin: '0 auto' }}>
-                  Admission No: <strong>{student.admissionNo}</strong>, son/daughter of <strong>{student.parentId ? `${student.parentId.firstName} ${student.parentId.lastName}` : 'Marie Curie'}</strong>, was admitted to this institution in Class <strong>{student.classId?.name || 'Class 10'}</strong> on {student.admissionDate ? new Date(student.admissionDate).toLocaleDateString() : 'June 1, 2025'}. All dues have been cleared. His/Her conduct during his/her tenure at this school has been <strong>Exemplary</strong>. He/She is hereby granted Transfer Certificate.
+                <Typography variant="body1" sx={{ color: '#475569', maxWidth: '850px', lineHeight: 2.0, fontSize: '1.05rem', margin: '0 auto' }}>
+                  Certificate Number: <strong>{student.transferInfo?.tcNumber || 'TC/N-A'}</strong> <br/>
+                  Admission No: <strong>{student.admissionNo}</strong>, son/daughter of <strong>{student.parentId ? `${student.parentId.firstName} ${student.parentId.lastName}` : 'Not Specified'}</strong>, was admitted to this institution in Class <strong>{student.classId?.name || 'Class 10'}</strong> on {student.admissionDate ? new Date(student.admissionDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'June 1, 2025'}. <br/>
+                  He/She has cleared all school dues and officially left the school on <strong>{student.transferInfo?.transferDate ? new Date(student.transferInfo.transferDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : new Date().toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}</strong>. <br/>
+                  Reason for Leaving: <strong>{student.transferInfo?.reason || 'Transfer'}</strong>.
+                  {student.transferInfo?.destinationSchool && (
+                    <> Proposed Destination: <strong>{student.transferInfo.destinationSchool}</strong>.</>
+                  )}
+                  <br/>
+                  His/Her conduct during his/her tenure at this school was observed to be <strong>Exemplary</strong>.
                 </Typography>
               </>
             )}

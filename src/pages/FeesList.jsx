@@ -6,10 +6,10 @@ import {
   DialogTitle, Grid, TextField, MenuItem, Table, TableBody, TableCell, 
   TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress, 
   Alert, IconButton, TablePagination, Tabs, Tab, Chip, Tooltip, Checkbox,
-  Stack
+  Stack, Divider
 } from '@mui/material';
 import { useDispatch } from 'react-redux';
-import { Add as AddIcon, FileDownload as ExportIcon, Settings as SettingsIcon, Edit as EditIcon, Delete as DeleteIcon, FilterList as FilterListIcon } from '@mui/icons-material';
+import { Add as AddIcon, FileDownload as ExportIcon, Settings as SettingsIcon, Edit as EditIcon, Delete as DeleteIcon, FilterList as FilterListIcon, AutoAwesome as AutoIcon } from '@mui/icons-material';
 import { GET_FEES_LIST, GET_STUDENT_FEE_LEDGER, GET_CLASSES, GET_STUDENTS, COLLECT_STUDENT_FEE, CREATE_FEE_STRUCTURE, UPDATE_FEE_STRUCTURE, DELETE_FEE_STRUCTURE, GET_STUDENT_FEE_STRUCTURE, SAVE_STUDENT_FEE_STRUCTURE } from '../graphql/operations';
 import { showToast } from '../store/slices/uiSlice';
 import CustomDatePicker from '../components/CustomDatePicker';
@@ -72,6 +72,7 @@ function FeesList() {
   const [paymentStudentComponents, setPaymentStudentComponents] = useState([]);
   const [feePaymentsState, setFeePaymentsState] = useState({});
   const [isSubmittingPayment, setIsSubmittingPayment] = useState(false);
+  const [quickPayAmount, setQuickPayAmount] = useState('');
 
   // Form States for fee structure creation
   const [structTitle, setStructTitle] = useState('');
@@ -174,15 +175,31 @@ function FeesList() {
           };
         });
         setFeePaymentsState(initialPayments);
+        setQuickPayAmount('');
       } else {
         setPaymentStudentComponents([]);
         setFeePaymentsState({});
+        setQuickPayAmount('');
       }
     },
     onError: (err) => {
       dispatch(showToast({ message: err.message, severity: 'error' }));
     }
   });
+
+  // Financial metrics stats
+  const stats = React.useMemo(() => {
+    let totalBilled = 0;
+    let totalCollected = 0;
+    let outstanding = 0;
+    const ledger = ledgerData?.getStudentFeeLedger || [];
+    ledger.forEach(item => {
+      totalBilled += item.totalPayable || 0;
+      totalCollected += item.totalPaid || 0;
+      outstanding += item.outstanding || 0;
+    });
+    return { totalBilled, totalCollected, outstanding };
+  }, [ledgerData]);
 
   React.useEffect(() => {
     if (selectedStudent) {
@@ -194,6 +211,7 @@ function FeesList() {
     } else {
       setPaymentStudentComponents([]);
       setFeePaymentsState({});
+      setQuickPayAmount('');
     }
   }, [selectedStudent, getStudentFeeLedgerForPayment]);
 
@@ -300,6 +318,45 @@ function FeesList() {
     setStructDescription('');
     setStructFormError('');
     setSelectedFeeStruct(null);
+  };
+
+  const handleApplyQuickPay = () => {
+    const amount = parseFloat(quickPayAmount) || 0;
+    if (amount <= 0) return;
+
+    let remaining = amount;
+    const updatedState = {};
+
+    // Initial state
+    paymentStudentComponents.forEach(comp => {
+      updatedState[comp.componentId] = {
+        checked: false,
+        amountPaid: '0'
+      };
+    });
+
+    // Distribute among unpaid items
+    for (const comp of paymentStudentComponents) {
+      if (remaining <= 0) break;
+      const compRemaining = comp.remaining;
+      if (compRemaining <= 0) continue;
+
+      if (remaining >= compRemaining) {
+        updatedState[comp.componentId] = {
+          checked: true,
+          amountPaid: compRemaining.toString()
+        };
+        remaining -= compRemaining;
+      } else {
+        updatedState[comp.componentId] = {
+          checked: true,
+          amountPaid: remaining.toFixed(2).toString()
+        };
+        remaining = 0;
+      }
+    }
+
+    setFeePaymentsState(updatedState);
   };
 
   const handlePaySubmit = async (e) => {
@@ -497,6 +554,7 @@ function FeesList() {
 
   return (
     <Box>
+      {/* Title & Action Buttons Header */}
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: { xs: 'stretch', sm: 'center' }, flexDirection: { xs: 'column', sm: 'row' }, gap: 2, mb: 3 }}>
         <Typography variant="h4" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, fontSize: { xs: '1.75rem', sm: '2.125rem' } }}>
           Fees Ledger & Collection
@@ -519,22 +577,94 @@ function FeesList() {
           <Button 
             variant="contained" 
             startIcon={<AddIcon />} 
-            onClick={() => setOpenModal(true)}
-            sx={{ width: { xs: '100%', sm: 'auto' }, background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)', color: '#FFFFFF' }}
+            onClick={() => {
+              setSelectedStudent('');
+              setOpenModal(true);
+            }}
+            sx={{ width: { xs: '100%', sm: 'auto' }, background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)', color: '#FFFFFF', fontWeight: 700 }}
           >
             Collect Fee Payment
           </Button>
         </Box>
       </Box>
 
-      {/* Filter Card */}
-      <Card sx={{ mb: 3 }}>
-        <CardContent>
-          <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} sm={6}>
+      {/* Financial Summary Dashboard Cards */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={4}>
+          <Card sx={{ 
+            background: 'linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)', 
+            color: '#FFFFFF', 
+            borderRadius: 3,
+            boxShadow: '0 8px 16px 0 rgba(0,0,0,0.4)',
+            border: '1px solid rgba(255,255,255,0.08)'
+          }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="subtitle2" sx={{ opacity: 0.8, textTransform: 'uppercase', fontWeight: 700, letterSpacing: 1 }}>
+                Total Fees Billed
+              </Typography>
+              <Typography variant="h3" sx={{ mt: 1, fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
+                ₹{stats.totalBilled.toLocaleString()}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <Card sx={{ 
+            background: 'linear-gradient(135deg, #064E3B 0%, #065F46 100%)', 
+            color: '#FFFFFF', 
+            borderRadius: 3,
+            boxShadow: '0 8px 16px 0 rgba(0,0,0,0.4)',
+            border: '1px solid rgba(255,255,255,0.08)'
+          }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="subtitle2" sx={{ opacity: 0.8, textTransform: 'uppercase', fontWeight: 700, letterSpacing: 1 }}>
+                Total Fees Collected
+              </Typography>
+              <Typography variant="h3" sx={{ mt: 1, fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
+                ₹{stats.totalCollected.toLocaleString()}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <Card sx={{ 
+            background: 'linear-gradient(135deg, #991B1B 0%, #7F1D1D 100%)', 
+            color: '#FFFFFF', 
+            borderRadius: 3,
+            boxShadow: '0 8px 16px 0 rgba(0,0,0,0.4)',
+            border: '1px solid rgba(255,255,255,0.08)'
+          }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="subtitle2" sx={{ opacity: 0.8, textTransform: 'uppercase', fontWeight: 700, letterSpacing: 1 }}>
+                Outstanding Balance
+              </Typography>
+              <Typography variant="h3" sx={{ mt: 1, fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
+                ₹{stats.outstanding.toLocaleString()}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Filter and Tab Select Layout */}
+      <Card sx={{ mb: 3, borderRadius: 3 }}>
+        <CardContent sx={{ py: 2 }}>
+          <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+            <Grid item xs={12} sm={8}>
+              <Tabs 
+                value={activeTab} 
+                onChange={(e, newValue) => setActiveTab(newValue)} 
+                sx={{ borderBottom: 0 }}
+              >
+                <Tab label="Fee Structures & Invoices" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700 }} />
+                <Tab label="Student Payment Ledger" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700 }} />
+              </Tabs>
+            </Grid>
+            <Grid item xs={12} sm={4}>
               <TextField
                 fullWidth
                 select
+                size="small"
                 label="Filter Fees by Class"
                 value={classId}
                 onChange={(e) => setClassId(e.target.value)}
@@ -549,16 +679,6 @@ function FeesList() {
         </CardContent>
       </Card>
 
-      {/* Tabs Selector */}
-      <Tabs 
-        value={activeTab} 
-        onChange={(e, newValue) => setActiveTab(newValue)} 
-        sx={{ mb: 3, borderBottom: 1, borderColor: 'divider' }}
-      >
-        <Tab label="Fee Structures & Invoices" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600 }} />
-        <Tab label="Student Payment Ledger" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 600 }} />
-      </Tabs>
-
       {/* Data Table */}
       {activeTab === 0 ? (
         feesLoading ? (
@@ -567,17 +687,17 @@ function FeesList() {
           <Alert severity="error">{feesError.message}</Alert>
         ) : (
           <>
-            <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+            <TableContainer component={Paper} sx={{ overflowX: 'auto', borderRadius: 3 }}>
               <Table sx={{ minWidth: 760 }}>
-                <TableHead>
+                <TableHead sx={{ backgroundColor: 'action.hover' }}>
                   <TableRow>
-                    <TableCell>Fee Invoice Title</TableCell>
-                    <TableCell>Category</TableCell>
-                    <TableCell>Billing Amount</TableCell>
-                    <TableCell>Target Class</TableCell>
-                    <TableCell>Due Date</TableCell>
-                    <TableCell>Academic Term</TableCell>
-                    {isAdmin && <TableCell align="right">Actions</TableCell>}
+                    <TableCell sx={{ fontWeight: 700 }}>Fee Invoice Title</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Category</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Billing Amount</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Target Class</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Due Date</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Academic Term</TableCell>
+                    {isAdmin && <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>}
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -601,7 +721,7 @@ function FeesList() {
                     ))}
                   {(!feesData?.getFeesList || feesData.getFeesList.length === 0) && (
                     <TableRow>
-                      <TableCell colSpan={isAdmin ? 7 : 6} align="center">No data</TableCell>
+                      <TableCell colSpan={isAdmin ? 7 : 6} align="center">No fee structures registered for this class.</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
@@ -717,18 +837,18 @@ function FeesList() {
               </Box>
             )}
 
-            <TableContainer component={Paper} sx={{ overflowX: 'auto' }}>
+            <TableContainer component={Paper} sx={{ overflowX: 'auto', borderRadius: 3 }}>
               <Table sx={{ minWidth: 760 }}>
-                <TableHead>
+                <TableHead sx={{ backgroundColor: 'action.hover' }}>
                   <TableRow>
-                    <TableCell>Student Name</TableCell>
-                    <TableCell>Admission No.</TableCell>
-                    <TableCell>Class</TableCell>
-                    <TableCell>Total Payable</TableCell>
-                    <TableCell>Total Paid</TableCell>
-                    <TableCell>Outstanding Balance</TableCell>
-                    <TableCell>Status</TableCell>
-                    {isAdmin && <TableCell align="right">Actions</TableCell>}
+                    <TableCell sx={{ fontWeight: 700 }}>Student Name</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Admission No.</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Class</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Total Payable</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Total Paid</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Outstanding Balance</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                    {isAdmin && <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>}
                   </TableRow>
                 </TableHead>
                 <TableBody>
@@ -804,7 +924,7 @@ function FeesList() {
                     })}
                   {filteredLedger.length === 0 && (
                     <TableRow>
-                      <TableCell colSpan={isAdmin ? 8 : 7} align="center">No student ledger data found</TableCell>
+                      <TableCell colSpan={isAdmin ? 8 : 7} align="center">No student ledger matches the filters.</TableCell>
                     </TableRow>
                   )}
                 </TableBody>
@@ -828,9 +948,9 @@ function FeesList() {
       <Dialog open={openModal} onClose={() => setOpenModal(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 800 }}>Record Student Fee Payment</DialogTitle>
         <form onSubmit={handlePaySubmit}>
-          <DialogContent>
+          <DialogContent dividers>
             {formError && <Alert severity="error" sx={{ mb: 2 }}>{formError}</Alert>}
-            <Grid container spacing={2}>
+            <Grid container spacing={2.5}>
               <Grid item xs={12}>
                 <TextField 
                   fullWidth required select label="Select Student" 
@@ -844,6 +964,37 @@ function FeesList() {
                   ))}
                 </TextField>
               </Grid>
+
+              {paymentStudentComponents.length > 0 && (
+                <Grid item xs={12}>
+                  <Paper sx={{ p: 2, bgcolor: 'action.hover', border: '1.5px dashed', borderColor: 'primary.main', borderRadius: 2 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1, fontFamily: "'Outfit', sans-serif", display: 'flex', alignItems: 'center', gap: 1 }}>
+                      <AutoIcon color="secondary" /> Quick Pay Auto-Fill (Optional)
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1.5 }}>
+                      <TextField
+                        size="small"
+                        type="number"
+                        label="Enter Total Cash Received (₹)"
+                        value={quickPayAmount}
+                        onChange={(e) => setQuickPayAmount(e.target.value)}
+                        fullWidth
+                      />
+                      <Button 
+                        variant="contained" 
+                        color="secondary"
+                        onClick={handleApplyQuickPay}
+                        sx={{ textTransform: 'none', fontWeight: 700, minWidth: '120px' }}
+                      >
+                        Auto-Fill
+                      </Button>
+                    </Box>
+                    <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mt: 1 }}>
+                      Tip: Enter the total amount paid by parent. The system will distribute it automatically to the oldest unpaid components.
+                    </Typography>
+                  </Paper>
+                </Grid>
+              )}
 
               <Grid item xs={12}>
                 <Typography variant="subtitle2" sx={{ mb: 1.5, fontWeight: 700, fontFamily: "'Outfit', sans-serif" }}>
@@ -931,10 +1082,10 @@ function FeesList() {
               {Object.values(feePaymentsState).filter(c => c.checked).reduce((sum, c) => sum + (parseFloat(c.amountPaid) || 0), 0) > 0 && (
                 <Grid item xs={12}>
                   <Box sx={{ p: 2, bgcolor: 'primary.light', borderRadius: 2, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <Typography variant="subtitle2" sx={{ fontWeight: 700, color: 'primary.contrastText' }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'primary.contrastText' }}>
                       Total Amount to Collect
                     </Typography>
-                    <Typography variant="h6" sx={{ fontWeight: 800, color: 'primary.contrastText' }}>
+                    <Typography variant="h6" sx={{ fontWeight: 800, color: 'primary.contrastText', fontFamily: "'Outfit', sans-serif" }}>
                       ₹{Object.values(feePaymentsState).filter(c => c.checked).reduce((sum, c) => sum + (parseFloat(c.amountPaid) || 0), 0)}
                     </Typography>
                   </Box>
@@ -954,7 +1105,7 @@ function FeesList() {
                 </TextField>
               </Grid>
 
-              <Grid item xs={12}>
+              <Grid item xs={12} sm={6}>
                 <TextField 
                   fullWidth label="Reference/Transaction ID" 
                   value={referenceNo} 
@@ -971,9 +1122,9 @@ function FeesList() {
               </Grid>
             </Grid>
           </DialogContent>
-          <DialogActions sx={{ p: { xs: 2, sm: 3 }, flexDirection: { xs: 'column-reverse', sm: 'row' }, alignItems: { xs: 'stretch', sm: 'center' } }}>
+          <DialogActions sx={{ p: 3 }}>
             <Button onClick={() => setOpenModal(false)} variant="outlined">Cancel</Button>
-            <Button type="submit" variant="contained" disabled={isSubmittingPayment}>
+            <Button type="submit" variant="contained" color="secondary" disabled={isSubmittingPayment} sx={{ fontWeight: 700 }}>
               {isSubmittingPayment ? 'Saving...' : 'Record Payment'}
             </Button>
           </DialogActions>
@@ -984,7 +1135,7 @@ function FeesList() {
       <Dialog open={openStructureModal} onClose={() => setOpenStructureModal(false)} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 800 }}>{selectedFeeStruct ? 'Update Fee Structure' : 'Create New Fee Structure'}</DialogTitle>
         <form onSubmit={handleStructSubmit}>
-          <DialogContent>
+          <DialogContent dividers>
             {structFormError && <Alert severity="error" sx={{ mb: 2 }}>{structFormError}</Alert>}
             <Grid container spacing={2}>
               <Grid item xs={12}>
@@ -1057,10 +1208,10 @@ function FeesList() {
               </Grid>
             </Grid>
           </DialogContent>
-          <DialogActions sx={{ p: { xs: 2, sm: 3 }, flexDirection: { xs: 'column-reverse', sm: 'row' }, alignItems: { xs: 'stretch', sm: 'center' } }}>
+          <DialogActions sx={{ p: 3 }}>
             <Button onClick={() => setOpenStructureModal(false)} variant="outlined">Cancel</Button>
-            <Button type="submit" variant="contained" disabled={structLoading}>
-              {structLoading ? 'Creating...' : 'Create Structure'}
+            <Button type="submit" variant="contained" color="secondary" disabled={structLoading} sx={{ fontWeight: 700 }}>
+              {structLoading ? 'Creating...' : selectedFeeStruct ? 'Update Structure' : 'Create Structure'}
             </Button>
           </DialogActions>
         </form>
@@ -1074,7 +1225,7 @@ function FeesList() {
             Are you sure you want to delete fee structure "{feeStructToDelete?.title}"?
           </Typography>
         </DialogContent>
-        <DialogActions sx={{ p: { xs: 2, sm: 3 }, flexDirection: { xs: 'column-reverse', sm: 'row' }, alignItems: { xs: 'stretch', sm: 'center' } }}>
+        <DialogActions sx={{ p: 3 }}>
           <Button onClick={() => setFeeStructToDelete(null)} variant="outlined">Cancel</Button>
           <Button onClick={handleConfirmDelete} variant="contained" color="error" disabled={deleteLoading}>
             {deleteLoading ? 'Deleting...' : 'Delete'}
@@ -1227,7 +1378,7 @@ function FeesList() {
             </Box>
           )}
         </DialogContent>
-        <DialogActions sx={{ p: { xs: 2, sm: 3 } }}>
+        <DialogActions sx={{ p: 3 }}>
           <Button onClick={() => setOpenCustomizeModal(false)} variant="outlined">
             Cancel
           </Button>
@@ -1235,7 +1386,7 @@ function FeesList() {
             onClick={handleSaveCustomize} 
             variant="contained" 
             disabled={saveStructureLoading || structureLoading}
-            sx={{ background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)', color: '#FFFFFF' }}
+            sx={{ background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)', color: '#FFFFFF', fontWeight: 700 }}
           >
             {saveStructureLoading ? 'Saving Changes...' : 'Save Structure'}
           </Button>
@@ -1245,8 +1396,8 @@ function FeesList() {
       {/* Ledger Filter Modal */}
       <Dialog open={openFilterModal} onClose={() => setOpenFilterModal(false)} maxWidth="xs" fullWidth>
         <DialogTitle sx={{ fontWeight: 800 }}>Filter Student Ledger</DialogTitle>
-        <DialogContent>
-          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1.5 }}>
+        <DialogContent dividers>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2.5, pt: 1 }}>
             <TextField
               fullWidth
               label="Student Name"
@@ -1304,14 +1455,15 @@ function FeesList() {
             </Stack>
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: 2.5, borderTop: '1px solid', borderColor: 'divider' }}>
-          <Button onClick={clearAllFilters} variant="outlined" color="secondary">
+        <DialogActions sx={{ p: 3 }}>
+          <Button onClick={clearAllFilters} variant="outlined">
             Reset All
           </Button>
           <Button 
             onClick={handleApplyFilters} 
             variant="contained"
-            sx={{ background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)', color: '#FFFFFF' }}
+            color="secondary"
+            sx={{ fontWeight: 700 }}
           >
             Apply Filters
           </Button>

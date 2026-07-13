@@ -7,7 +7,7 @@ import {
   TablePagination
 } from '@mui/material';
 import { useSelector } from 'react-redux';
-import { GET_CLASSES, GET_SECTIONS, GET_STUDENTS, MARK_BULK_ATTENDANCE, GET_SCHOOL_ADMIN_DASHBOARD } from '../graphql/operations';
+import { GET_CLASSES, GET_SECTIONS, GET_STUDENTS, MARK_BULK_ATTENDANCE, GET_SCHOOL_ADMIN_DASHBOARD, GET_SHIFTS } from '../graphql/operations';
 import CustomDatePicker from '../components/CustomDatePicker';
 
 function AttendanceMark() {
@@ -15,6 +15,7 @@ function AttendanceMark() {
   const isAdminOrPrincipal = ['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role);
   const [classId, setClassId] = useState('');
   const [sectionId, setSectionId] = useState('');
+  const [selectedShiftId, setSelectedShiftId] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [attendanceRecords, setAttendanceRecords] = useState({});
   const [remarksRecords, setRemarksRecords] = useState({});
@@ -37,10 +38,15 @@ function AttendanceMark() {
 
   // Queries
   const { data: classesData } = useQuery(GET_CLASSES);
+  const { data: shiftsData } = useQuery(GET_SHIFTS);
   
   const { data: sectionsData } = useQuery(GET_SECTIONS, {
     variables: { classId: classId || undefined }
   });
+
+  const filteredSections = (sectionsData?.getSections || []).filter(
+    (sec) => !selectedShiftId || sec.shiftId?.id === selectedShiftId
+  );
 
   const { loading: studentsLoading, error: studentsError, data: studentsData } = useQuery(GET_STUDENTS, {
     skip: !classId || !sectionId,
@@ -127,7 +133,27 @@ function AttendanceMark() {
       <Card sx={{ mb: 3 }}>
         <CardContent>
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={3}>
+              <TextField
+                fullWidth
+                select
+                label="Select Shift (Optional)"
+                value={selectedShiftId}
+                onChange={(e) => {
+                  setSelectedShiftId(e.target.value);
+                  setSectionId('');
+                }}
+              >
+                <MenuItem value="">All Shifts</MenuItem>
+                {shiftsData?.getShifts?.map((shift) => (
+                  <MenuItem key={shift.id} value={shift.id}>
+                    {shift.name} ({shift.startTime} - {shift.endTime})
+                  </MenuItem>
+                ))}
+              </TextField>
+            </Grid>
+
+            <Grid item xs={12} sm={3}>
               <TextField
                 fullWidth
                 select
@@ -144,7 +170,7 @@ function AttendanceMark() {
               </TextField>
             </Grid>
 
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={3}>
               <TextField
                 fullWidth
                 select
@@ -153,13 +179,15 @@ function AttendanceMark() {
                 disabled={!classId}
                 onChange={(e) => setSectionId(e.target.value)}
               >
-                {sectionsData?.getSections.map((sec) => (
-                  <MenuItem key={sec.id} value={sec.id}>{sec.name}</MenuItem>
+                {filteredSections.map((sec) => (
+                  <MenuItem key={sec.id} value={sec.id}>
+                    {sec.name} {sec.shiftId ? `(${sec.shiftId.name})` : '(Default)'}
+                  </MenuItem>
                 ))}
               </TextField>
             </Grid>
 
-            <Grid item xs={12} sm={4}>
+            <Grid item xs={12} sm={3}>
               <CustomDatePicker
                 fullWidth
                 label="Attendance Date"
@@ -168,6 +196,31 @@ function AttendanceMark() {
               />
             </Grid>
           </Grid>
+
+          {sectionId && (
+            (() => {
+              const selectedSecObj = sectionsData?.getSections?.find(sec => sec.id === sectionId);
+              if (selectedSecObj?.shiftId) {
+                return (
+                  <Box sx={{ mt: 2, display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <Typography variant="body2" color="primary" sx={{ fontWeight: 700 }}>
+                      Selected Shift:
+                    </Typography>
+                    <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                      {selectedSecObj.shiftId.name} ({selectedSecObj.shiftId.startTime} - {selectedSecObj.shiftId.endTime})
+                    </Typography>
+                  </Box>
+                );
+              }
+              return (
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    Selected Shift: Default Shift
+                  </Typography>
+                </Box>
+              );
+            })()
+          )}
         </CardContent>
       </Card>
 

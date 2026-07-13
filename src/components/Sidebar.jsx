@@ -30,7 +30,9 @@ import {
   Campaign as AnnouncementIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
-  Menu as MenuIcon
+  Menu as MenuIcon,
+  Schedule as ScheduleIcon,
+  History as HistoryIcon
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
 import { toggleTheme, toggleSidebar } from '../store/slices/uiSlice';
@@ -183,7 +185,9 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
       { text: 'Accountant Register', icon: <PeopleIcon />, path: '/accountants' },
       { text: 'Teacher Registration', icon: <TeacherIcon />, path: '/teachers' },
       { text: 'Student Registration', icon: <PeopleIcon />, path: '/students' },
+      { text: 'Alumni Directory', icon: <HistoryIcon />, path: '/alumni' },
       { text: 'Class Management', icon: <SchoolIcon />, path: '/classes' },
+      { text: 'Shift Management', icon: <ScheduleIcon />, path: '/shifts' },
       { text: 'Weekly Timetable', icon: <GradesIcon />, path: '/timetable' },
       { text: 'Exam Schedule', icon: <GradesIcon />, path: '/exams' },
       { text: 'Daily Attendance', icon: <AttendanceIcon />, path: '/attendance' },

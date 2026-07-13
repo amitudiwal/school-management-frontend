@@ -41,6 +41,8 @@ import AnnouncementPortal from './pages/AnnouncementPortal';
 import Settings from './pages/Settings';
 import PrintReportCard from './pages/PrintReportCard';
 import PrintCertificate from './pages/PrintCertificate';
+import ShiftManagement from './pages/ShiftManagement';
+import AlumniManagement from './pages/AlumniManagement';
 import { useQuery } from '@apollo/client';
 import { GET_SCHOOL } from './graphql/operations';
 
@@ -323,6 +325,16 @@ function App() {
             <Route 
               path="/permissions" 
               element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) ? <FeaturePermissions /> : <Navigate to="/" />} 
+            />
+
+            <Route 
+              path="/shifts" 
+              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) ? <ShiftManagement /> : <Navigate to="/" />} 
+            />
+
+            <Route 
+              path="/alumni" 
+              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) ? <AlumniManagement /> : <Navigate to="/" />} 
             />
 
             <Route 

@@ -7,7 +7,7 @@ import {
   TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress,
   Alert, IconButton, InputAdornment, Avatar, TablePagination, Tabs, Tab,
   Switch, FormControlLabel, Accordion, AccordionSummary, AccordionDetails,
-  Chip, Stack, Menu
+  Chip, Stack, Menu, Tooltip
 } from '@mui/material';
 import {
   Search as SearchIcon, Add as AddIcon, FileDownload as ExportIcon,
@@ -16,7 +16,8 @@ import {
   Close as CloseIcon, Person as PersonIcon, Email as EmailIcon, Phone as PhoneIcon,
   CalendarToday as CalendarIcon, School as SchoolIcon, Home as HomeIcon,
   LocationOn as LocationIcon, AttachMoney as MoneyIcon, Description as DocumentIcon,
-  Group as GroupIcon, Info as InfoIcon, Badge as BadgeIcon
+  Group as GroupIcon, Info as InfoIcon, Badge as BadgeIcon,
+  AssignmentReturned as TCIcon
 } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { showToast } from '../store/slices/uiSlice';
@@ -29,7 +30,8 @@ import {
   UPDATE_STUDENT,
   DELETE_STUDENT,
   GET_PARENTS,
-  GET_EXAMS
+  GET_EXAMS,
+  ISSUE_TC
 } from '../graphql/operations';
 import { BACKEND_URL } from '../graphql/client';
 
@@ -229,6 +231,8 @@ function StudentList() {
   const [dueDate, setDueDate] = useState(new Date().toISOString().split('T')[0]);
   const [totalDiscount, setTotalDiscount] = useState(0);
   const [discountType, setDiscountType] = useState('None');
+  const [discountReason, setDiscountReason] = useState('');
+  const [filterDiscountType, setFilterDiscountType] = useState('');
   const [installmentPlan, setInstallmentPlan] = useState('1');
 
   // Previous school details
@@ -323,9 +327,58 @@ function StudentList() {
     }
   };
 
+  // TC issuance states
+  const [openTCModal, setOpenTCModal] = useState(false);
+  const [tcStudent, setTcStudent] = useState(null);
+  const [tcNumber, setTcNumber] = useState('');
+  const [tcDate, setTcDate] = useState(new Date().toISOString().split('T')[0]);
+  const [tcReason, setTcReason] = useState('');
+  const [tcDestination, setTcDestination] = useState('');
+
+  const [issueTCMutation, { loading: tcLoading }] = useMutation(ISSUE_TC, {
+    onCompleted: () => {
+      setOpenTCModal(false);
+      setTcStudent(null);
+      setTcNumber('');
+      setTcReason('');
+      setTcDestination('');
+      refetch();
+      dispatch(showToast({ message: 'Transfer Certificate issued successfully!', severity: 'success' }));
+    },
+    onError: (err) => {
+      dispatch(showToast({ message: err.message, severity: 'error' }));
+    }
+  });
+
+  const handleTCSubmit = (e) => {
+    e.preventDefault();
+    if (!tcNumber || !tcReason) {
+      dispatch(showToast({ message: 'TC Number and Reason are required.', severity: 'error' }));
+      return;
+    }
+    issueTCMutation({
+      variables: {
+        studentId: tcStudent.id,
+        tcNumber: tcNumber.trim(),
+        transferDate: tcDate,
+        reason: tcReason.trim(),
+        destinationSchool: tcDestination.trim()
+      }
+    });
+  };
+
+  const handleOpenTCModal = (student) => {
+    setTcStudent(student);
+    setTcNumber(`TC-${student.admissionNo}-${new Date().getFullYear()}`);
+    setTcDate(new Date().toISOString().split('T')[0]);
+    setTcReason('');
+    setTcDestination('');
+    setOpenTCModal(true);
+  };
+
   // Queries
   const { loading: studentsLoading, error: studentsError, data: studentsData, refetch } = useQuery(GET_STUDENTS, {
-    variables: { classId: classId || undefined, sectionId: sectionId || undefined, search: search || undefined }
+    variables: { classId: classId || undefined, sectionId: sectionId || undefined, search: search || undefined, status: "ACTIVE", discountType: filterDiscountType || undefined }
   });
 
   const { data: classesData } = useQuery(GET_CLASSES);
@@ -424,6 +477,7 @@ function StudentList() {
     setDueDate(new Date().toISOString().split('T')[0]);
     setTotalDiscount(0);
     setDiscountType('None');
+    setDiscountReason('');
     setInstallmentPlan('1');
     setPrevSchoolName('');
     setPrevClass('');
@@ -492,6 +546,7 @@ function StudentList() {
     setDueDate(student.dueDate ? student.dueDate.slice(0, 10) : new Date().toISOString().split('T')[0]);
     setTotalDiscount(student.totalDiscount || 0);
     setDiscountType(student.discountType || 'None');
+    setDiscountReason(student.discountReason || '');
     setInstallmentPlan(student.installmentPlan || '1');
     setPrevSchoolName(student.prevSchoolName || '');
     setPrevClass(student.prevClass || '');
@@ -589,6 +644,7 @@ function StudentList() {
       dueDate: new Date(dueDate),
       totalDiscount: parseFloat(totalDiscount) || 0,
       discountType,
+      discountReason: discountType !== 'None' ? discountReason.trim() : '',
       installmentPlan,
       prevSchoolName: prevSchoolName.trim(),
       prevClass: prevClass.trim(),
@@ -1255,7 +1311,10 @@ function StudentList() {
                   <TextField 
                     fullWidth select label="Discount Type" 
                     value={discountType} 
-                    onChange={(e) => setDiscountType(e.target.value)}
+                    onChange={(e) => {
+                      setDiscountType(e.target.value);
+                      if (e.target.value === 'None') setDiscountReason('');
+                    }}
                   >
                     <MenuItem value="None">None</MenuItem>
                     <MenuItem value="Scholarship">Scholarship</MenuItem>
@@ -1263,6 +1322,18 @@ function StudentList() {
                     <MenuItem value="Staff Discount">Staff Discount</MenuItem>
                   </TextField>
                 </Grid>
+
+                {discountType !== 'None' && (
+                  <Grid item xs={12} sm={6} md={3}>
+                    <TextField
+                      fullWidth
+                      label={discountType === 'Scholarship' ? "Scholarship Name / Category" : "Discount Detail / Reason"}
+                      value={discountReason}
+                      onChange={(e) => setDiscountReason(e.target.value)}
+                      placeholder={discountType === 'Scholarship' ? "e.g. Sports Merit, EWS" : "e.g. Staff child discount"}
+                    />
+                  </Grid>
+                )}
 
                 <Grid item xs={12} sm={4}>
                   <TextField 
@@ -1343,7 +1414,7 @@ function StudentList() {
           <Card sx={{ mb: 3 }}>
             <CardContent>
               <Grid container spacing={2} alignItems="center">
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={3}>
                   <TextField
                     fullWidth
                     label="Search Student Name / Adm No..."
@@ -1360,7 +1431,7 @@ function StudentList() {
                   />
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={3}>
                   <TextField
                     fullWidth
                     select
@@ -1378,7 +1449,7 @@ function StudentList() {
                   </TextField>
                 </Grid>
 
-                <Grid item xs={12} sm={4}>
+                <Grid item xs={12} sm={3}>
                   <TextField
                     fullWidth
                     select
@@ -1391,6 +1462,22 @@ function StudentList() {
                     {sectionsData?.getSections?.map((sec) => (
                       <MenuItem key={sec.id} value={sec.id}>{sec.name}</MenuItem>
                     ))}
+                  </TextField>
+                </Grid>
+
+                <Grid item xs={12} sm={3}>
+                  <TextField
+                    fullWidth
+                    select
+                    label="Filter by Scholarship"
+                    value={filterDiscountType}
+                    onChange={(e) => setFilterDiscountType(e.target.value)}
+                  >
+                    <MenuItem value="">All Students</MenuItem>
+                    <MenuItem value="None">No Scholarship / Regular</MenuItem>
+                    <MenuItem value="Scholarship">Scholarship Holders</MenuItem>
+                    <MenuItem value="Sibling">Sibling Discount</MenuItem>
+                    <MenuItem value="Staff Discount">Staff Discount</MenuItem>
                   </TextField>
                 </Grid>
               </Grid>
@@ -1443,6 +1530,11 @@ function StudentList() {
                               </IconButton>
                               <IconButton aria-label="Edit student" color="primary" onClick={() => handleOpenEdit(st)}>
                                 <EditIcon />
+                              </IconButton>
+                              <IconButton aria-label="Issue Transfer Certificate" color="secondary" onClick={() => handleOpenTCModal(st)}>
+                                <Tooltip title="Issue Transfer Certificate (TC)">
+                                  <TCIcon />
+                                </Tooltip>
                               </IconButton>
                               <IconButton aria-label="Delete student" color="error" onClick={() => setStudentToDelete(st)}>
                                 <DeleteIcon />
@@ -1814,6 +1906,9 @@ function StudentList() {
                     <DetailField label="Other Fee" value={viewingStudent.otherFee ? `₹${viewingStudent.otherFee}` : '₹0'} icon={<MoneyIcon />} />
                     <DetailField label="Installment Plan" value={viewingStudent.installmentPlan ? `${viewingStudent.installmentPlan} Installment(s)` : '-'} icon={<InfoIcon />} />
                     <DetailField label="Discount Type" value={viewingStudent.discountType || 'None'} icon={<InfoIcon />} />
+                    {viewingStudent.discountReason && (
+                      <DetailField label="Scholarship / Discount Reason" value={viewingStudent.discountReason} icon={<InfoIcon />} />
+                    )}
                     <DetailField label="Total Discount (%)" value={viewingStudent.totalDiscount ? `${viewingStudent.totalDiscount}%` : '0%'} icon={<InfoIcon />} />
                     <DetailField label="Due Date" value={viewingStudent.dueDate ? new Date(viewingStudent.dueDate).toLocaleDateString() : '-'} icon={<CalendarIcon />} />
                     
@@ -1966,6 +2061,69 @@ function StudentList() {
             Close
           </Button>
         </DialogActions>
+      </Dialog>
+
+      {/* TC Issue Modal */}
+      <Dialog open={openTCModal} onClose={() => setOpenTCModal(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
+          Issue Transfer Certificate (TC)
+        </DialogTitle>
+        <form onSubmit={handleTCSubmit}>
+          <DialogContent dividers>
+            {tcStudent && (
+              <Typography variant="body2" sx={{ mb: 2, fontWeight: 600 }}>
+                Issuing TC for: {tcStudent.firstName} {tcStudent.lastName} (Adm No: {tcStudent.admissionNo})
+              </Typography>
+            )}
+            <Grid container spacing={2}>
+              <Grid item xs={12} sm={6}>
+                <TextField
+                  fullWidth
+                  required
+                  label="TC Certificate Number"
+                  value={tcNumber}
+                  onChange={(e) => setTcNumber(e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12} sm={6}>
+                <CustomDatePicker
+                  fullWidth
+                  required
+                  label="Transfer Date"
+                  value={tcDate}
+                  onChange={(e) => setTcDate(e.target.value)}
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  required
+                  label="Reason for Leaving / Transfer"
+                  value={tcReason}
+                  onChange={(e) => setTcReason(e.target.value)}
+                  placeholder="e.g. Completed Course, Parent relocated"
+                />
+              </Grid>
+              <Grid item xs={12}>
+                <TextField
+                  fullWidth
+                  label="Destination School / Institute (Optional)"
+                  value={tcDestination}
+                  onChange={(e) => setTcDestination(e.target.value)}
+                  placeholder="e.g. Greenfield Higher Secondary School"
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, pb: 3 }}>
+            <Button onClick={() => setOpenTCModal(false)} variant="outlined">
+              Cancel
+            </Button>
+            <Button type="submit" variant="contained" color="secondary" disabled={tcLoading}>
+              {tcLoading ? 'Issuing...' : 'Issue TC & Mark Alumni'}
+            </Button>
+          </DialogActions>
+        </form>
       </Dialog>
     </Box>
   );
