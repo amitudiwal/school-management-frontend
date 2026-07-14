@@ -25,7 +25,8 @@ import {
   UPDATE_SECTION,
   DELETE_SECTION,
   UPDATE_SUBJECT,
-  DELETE_SUBJECT
+  DELETE_SUBJECT,
+  GET_SHIFTS
 } from '../graphql/operations';
 
 function ClassManagement() {
@@ -52,6 +53,7 @@ function ClassManagement() {
   const [roomNumber, setRoomNumber] = useState('');
   const [capacity, setCapacity] = useState('');
   const [classTeacherId, setClassTeacherId] = useState('');
+  const [secShiftId, setSecShiftId] = useState('');
   const [sectionError, setSectionError] = useState('');
   const [selectedSection, setSelectedSection] = useState(null);
   const [sectionToDelete, setSectionToDelete] = useState(null);
@@ -71,6 +73,7 @@ function ClassManagement() {
   const { loading: sectionLoading, error: sectionQueryError, data: sectionsData, refetch: refetchSections } = useQuery(GET_SECTIONS);
   const { loading: subjectLoading, error: subjectQueryError, data: subjectsData, refetch: refetchSubjects } = useQuery(GET_SUBJECTS);
   const { data: teachersData } = useQuery(GET_TEACHERS);
+  const { data: shiftsData } = useQuery(GET_SHIFTS);
 
   // Mutations
   const [createClassMutation, { loading: addClassLoading }] = useMutation(CREATE_CLASS);
@@ -100,6 +103,7 @@ function ClassManagement() {
     setRoomNumber('');
     setCapacity('');
     setClassTeacherId('');
+    setSecShiftId('');
     setSectionError('');
     setSelectedSection(null);
   };
@@ -137,6 +141,7 @@ function ClassManagement() {
     setRoomNumber(sec.roomNumber || '');
     setCapacity(sec.capacity || '');
     setClassTeacherId(sec.classTeacherId?.id || '');
+    setSecShiftId(sec.shiftId?.id || '');
     setFormMode('EDIT_SECTION');
     setOpenClassModal(true);
   };
@@ -193,7 +198,8 @@ function ClassManagement() {
             name: sectionName,
             roomNumber: roomNumber || null,
             capacity: capacity ? parseInt(capacity, 10) : 30,
-            classTeacherId: classTeacherId || null
+            classTeacherId: classTeacherId || null,
+            shiftId: secShiftId || null
           }
         });
         setOpenClassModal(false);
@@ -230,7 +236,8 @@ function ClassManagement() {
             name: sectionName,
             roomNumber: roomNumber || null,
             capacity: capacity ? parseInt(capacity, 10) : 30,
-            classTeacherId: classTeacherId || null
+            classTeacherId: classTeacherId || null,
+            shiftId: secShiftId || null
           }
         });
 
@@ -259,7 +266,8 @@ function ClassManagement() {
             name: sectionName,
             roomNumber: roomNumber || null,
             capacity: capacity ? parseInt(capacity, 10) : 30,
-            classTeacherId: classTeacherId || null
+            classTeacherId: classTeacherId || null,
+            shiftId: secShiftId || null
           }
         });
 
@@ -449,6 +457,7 @@ function ClassManagement() {
                       <TableCell>Room Number</TableCell>
                       <TableCell>Seat Capacity</TableCell>
                       <TableCell>Class Teacher</TableCell>
+                      <TableCell>Shift Timings</TableCell>
                       <TableCell align="right">Actions</TableCell>
                     </TableRow>
                   </TableHead>
@@ -509,6 +518,18 @@ function ClassManagement() {
                                 `${sec.classTeacherId.firstName} ${sec.classTeacherId.lastName}`
                               ) : sec ? (
                                 <Typography variant="caption" color="text.secondary">Not Assigned</Typography>
+                              ) : (
+                                '-'
+                              )}
+                            </TableCell>
+                            <TableCell>
+                              {sec?.shiftId ? (
+                                <Box>
+                                  <Typography variant="body2" sx={{ fontWeight: 600, fontSize: '0.85rem' }}>{sec.shiftId.name}</Typography>
+                                  <Typography variant="caption" color="text.secondary" display="block">{sec.shiftId.startTime} - {sec.shiftId.endTime}</Typography>
+                                </Box>
+                              ) : sec ? (
+                                <Typography variant="caption" color="text.secondary">Default</Typography>
                               ) : (
                                 '-'
                               )}
@@ -803,6 +824,22 @@ function ClassManagement() {
                       {teachersData?.getTeachers.map((teach) => (
                         <MenuItem key={teach.id} value={teach.id}>
                           {teach.firstName} {teach.lastName} ({teach.qualification})
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                  </Grid>
+                  <Grid item xs={12} sm={6}>
+                    <TextField
+                      fullWidth
+                      select
+                      label="Assign Shift (Optional)"
+                      value={secShiftId}
+                      onChange={(e) => setSecShiftId(e.target.value)}
+                    >
+                      <MenuItem value="">No Shift / Default</MenuItem>
+                      {shiftsData?.getShifts?.map((shift) => (
+                        <MenuItem key={shift.id} value={shift.id}>
+                          {shift.name} ({shift.startTime} - {shift.endTime})
                         </MenuItem>
                       ))}
                     </TextField>

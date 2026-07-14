@@ -252,6 +252,12 @@ export const GET_SECTIONS = gql`
         firstName
         lastName
       }
+      shiftId {
+        id
+        name
+        startTime
+        endTime
+      }
     }
   }
 `;
@@ -272,8 +278,8 @@ export const GET_SUBJECTS = gql`
 `;
 
 export const GET_STUDENTS = gql`
-  query GetStudents($classId: ID, $sectionId: ID, $search: String) {
-    getStudents(classId: $classId, sectionId: $sectionId, search: $search) {
+  query GetStudents($classId: ID, $sectionId: ID, $search: String, $status: String, $discountType: String) {
+    getStudents(classId: $classId, sectionId: $sectionId, search: $search, status: $status, discountType: $discountType) {
       id
       userId {
         id
@@ -330,6 +336,26 @@ export const GET_STUDENTS = gql`
       prevClass
       passingYear
       bloodGroup
+      status
+      discountReason
+      transferInfo {
+        transferDate
+        reason
+        tcNumber
+        destinationSchool
+      }
+      promotionHistory {
+        fromClassId {
+          id
+          name
+        }
+        toClassId {
+          id
+          name
+        }
+        academicYear
+        promotedAt
+      }
       address {
         street
         city
@@ -388,6 +414,7 @@ export const REGISTER_STUDENT = gql`
     $dueDate: Date
     $totalDiscount: Float
     $discountType: String
+    $discountReason: String
     $installmentPlan: String
     $prevSchoolName: String
     $prevClass: String
@@ -440,6 +467,7 @@ export const REGISTER_STUDENT = gql`
       dueDate: $dueDate
       totalDiscount: $totalDiscount
       discountType: $discountType
+      discountReason: $discountReason
       installmentPlan: $installmentPlan
       prevSchoolName: $prevSchoolName
       prevClass: $prevClass
@@ -493,6 +521,7 @@ export const UPDATE_STUDENT = gql`
     $dueDate: Date
     $totalDiscount: Float
     $discountType: String
+    $discountReason: String
     $installmentPlan: String
     $prevSchoolName: String
     $prevClass: String
@@ -537,6 +566,7 @@ export const UPDATE_STUDENT = gql`
       dueDate: $dueDate
       totalDiscount: $totalDiscount
       discountType: $discountType
+      discountReason: $discountReason
       installmentPlan: $installmentPlan
       prevSchoolName: $prevSchoolName
       prevClass: $prevClass
@@ -577,6 +607,60 @@ export const DELETE_STUDENT = gql`
   }
 `;
 
+export const ISSUE_TC = gql`
+  mutation IssueTC($studentId: ID!, $transferDate: Date!, $reason: String!, $tcNumber: String!, $destinationSchool: String) {
+    issueTC(studentId: $studentId, transferDate: $transferDate, reason: $reason, tcNumber: $tcNumber, destinationSchool: $destinationSchool) {
+      id
+      firstName
+      lastName
+      status
+      transferInfo {
+        transferDate
+        reason
+        tcNumber
+        destinationSchool
+      }
+    }
+  }
+`;
+
+export const REGISTER_ALUMNI = gql`
+  mutation RegisterAlumni(
+    $admissionNo: String!
+    $rollNo: String
+    $firstName: String!
+    $lastName: String!
+    $gender: String!
+    $dateOfBirth: Date!
+    $classId: ID!
+    $sectionId: ID!
+    $tcNumber: String!
+    $transferDate: Date!
+    $reason: String!
+    $destinationSchool: String
+  ) {
+    registerAlumni(
+      admissionNo: $admissionNo
+      rollNo: $rollNo
+      firstName: $firstName
+      lastName: $lastName
+      gender: $gender
+      dateOfBirth: $dateOfBirth
+      classId: $classId
+      sectionId: $sectionId
+      tcNumber: $tcNumber
+      transferDate: $transferDate
+      reason: $reason
+      destinationSchool: $destinationSchool
+    ) {
+      id
+      firstName
+      lastName
+      status
+    }
+  }
+`;
+
 export const GET_TEACHERS = gql`
   query GetTeachers {
     getTeachers {
@@ -592,6 +676,10 @@ export const GET_TEACHERS = gql`
         email
         avatar
         role
+      }
+      shiftId {
+        id
+        name
       }
     }
   }
@@ -630,6 +718,7 @@ export const REGISTER_TEACHER = gql`
     $password: String!
     $avatar: String
     $role: String
+    $shiftId: ID
   ) {
     registerTeacher(
       email: $email
@@ -643,11 +732,16 @@ export const REGISTER_TEACHER = gql`
       password: $password
       avatar: $avatar
       role: $role
+      shiftId: $shiftId
     ) {
       id
       firstName
       lastName
       email
+      shiftId {
+        id
+        name
+      }
     }
   }
 `;
@@ -954,10 +1048,14 @@ export const CREATE_CLASS = gql`
 `;
 
 export const CREATE_SECTION = gql`
-  mutation CreateSection($classId: ID!, $name: String!, $roomNumber: String, $capacity: Int, $classTeacherId: ID) {
-    createSection(classId: $classId, name: $name, roomNumber: $roomNumber, capacity: $capacity, classTeacherId: $classTeacherId) {
+  mutation CreateSection($classId: ID!, $name: String!, $roomNumber: String, $capacity: Int, $classTeacherId: ID, $shiftId: ID) {
+    createSection(classId: $classId, name: $name, roomNumber: $roomNumber, capacity: $capacity, classTeacherId: $classTeacherId, shiftId: $shiftId) {
       id
       name
+      shiftId {
+        id
+        name
+      }
     }
   }
 `;
@@ -1224,8 +1322,8 @@ export const DELETE_CLASS = gql`
 `;
 
 export const UPDATE_SECTION = gql`
-  mutation UpdateSection($id: ID!, $classId: ID, $name: String, $roomNumber: String, $capacity: Int, $classTeacherId: ID) {
-    updateSection(id: $id, classId: $classId, name: $name, roomNumber: $roomNumber, capacity: $capacity, classTeacherId: $classTeacherId) {
+  mutation UpdateSection($id: ID!, $classId: ID, $name: String, $roomNumber: String, $capacity: Int, $classTeacherId: ID, $shiftId: ID) {
+    updateSection(id: $id, classId: $classId, name: $name, roomNumber: $roomNumber, capacity: $capacity, classTeacherId: $classTeacherId, shiftId: $shiftId) {
       id
       name
       classId {
@@ -1236,6 +1334,12 @@ export const UPDATE_SECTION = gql`
         id
         firstName
         lastName
+      }
+      shiftId {
+        id
+        name
+        startTime
+        endTime
       }
     }
   }
@@ -1269,8 +1373,8 @@ export const DELETE_SUBJECT = gql`
 `;
 
 export const UPDATE_TEACHER = gql`
-  mutation UpdateTeacher($id: ID!, $email: String, $firstName: String, $lastName: String, $gender: String, $dateOfBirth: Date, $phone: String, $qualification: String, $designation: String) {
-    updateTeacher(id: $id, email: $email, firstName: $firstName, lastName: $lastName, gender: $gender, dateOfBirth: $dateOfBirth, phone: $phone, qualification: $qualification, designation: $designation) {
+  mutation UpdateTeacher($id: ID!, $email: String, $firstName: String, $lastName: String, $gender: String, $dateOfBirth: Date, $phone: String, $qualification: String, $designation: String, $shiftId: ID) {
+    updateTeacher(id: $id, email: $email, firstName: $firstName, lastName: $lastName, gender: $gender, dateOfBirth: $dateOfBirth, phone: $phone, qualification: $qualification, designation: $designation, shiftId: $shiftId) {
       id
       firstName
       lastName
@@ -1278,6 +1382,10 @@ export const UPDATE_TEACHER = gql`
       phone
       qualification
       designation
+      shiftId {
+        id
+        name
+      }
     }
   }
 `;
@@ -2868,6 +2976,51 @@ export const GET_TEACHER_CONTACTS = gql`
       subjectName
       isClassTeacher
     }
+  }
+`;
+
+export const GET_SHIFTS = gql`
+  query GetShifts {
+    getShifts {
+      id
+      name
+      startTime
+      endTime
+      description
+      status
+    }
+  }
+`;
+
+export const CREATE_SHIFT = gql`
+  mutation CreateShift($name: String!, $startTime: String!, $endTime: String!, $description: String) {
+    createShift(name: $name, startTime: $startTime, endTime: $endTime, description: $description) {
+      id
+      name
+      startTime
+      endTime
+      description
+      status
+    }
+  }
+`;
+
+export const UPDATE_SHIFT = gql`
+  mutation UpdateShift($id: ID!, $name: String, $startTime: String, $endTime: String, $description: String) {
+    updateShift(id: $id, name: $name, startTime: $startTime, endTime: $endTime, description: $description) {
+      id
+      name
+      startTime
+      endTime
+      description
+      status
+    }
+  }
+`;
+
+export const DELETE_SHIFT = gql`
+  mutation DeleteShift($id: ID!) {
+    deleteShift(id: $id)
   }
 `;
 

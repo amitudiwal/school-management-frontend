@@ -41,6 +41,8 @@ import AnnouncementPortal from './pages/AnnouncementPortal';
 import Settings from './pages/Settings';
 import PrintReportCard from './pages/PrintReportCard';
 import PrintCertificate from './pages/PrintCertificate';
+import ShiftManagement from './pages/ShiftManagement';
+import AlumniManagement from './pages/AlumniManagement';
 import { useQuery } from '@apollo/client';
 import { GET_SCHOOL } from './graphql/operations';
 
@@ -227,12 +229,12 @@ function App() {
 
             <Route 
               path="/attendance" 
-              element={isAuthenticated && (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'attendance')) ? <AttendanceMark /> : <Navigate to="/" />} 
+              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'attendance'))) ? <AttendanceMark /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/copy-submission" 
-              element={isAuthenticated && (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'copy-submission')) ? <CopySubmission /> : <Navigate to="/" />} 
+              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'copy-submission'))) ? <CopySubmission /> : <Navigate to="/" />} 
             />
 
             <Route 
@@ -242,27 +244,27 @@ function App() {
 
             <Route 
               path="/self-attendance" 
-              element={isAuthenticated && (['TEACHER', 'CLASS_TEACHER', 'SUPER_TEACHER', 'ACCOUNTANT'].includes(user?.role)) ? <SelfAttendance /> : <Navigate to="/" />} 
+              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'TEACHER', 'CLASS_TEACHER', 'SUPER_TEACHER', 'ACCOUNTANT'].includes(user?.role)) ? <SelfAttendance /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/homework" 
-              element={isAuthenticated && (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'homework')) ? <HomeworkList /> : <Navigate to="/login" />} 
+              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'homework'))) ? <HomeworkList /> : <Navigate to="/login" />} 
             />
 
             <Route 
               path="/grades" 
-              element={isAuthenticated && (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'grades')) ? <GradesEntry /> : <Navigate to="/" />} 
+              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'grades'))) ? <GradesEntry /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/analytics" 
-              element={isAuthenticated && (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'analytics')) ? <ClassAnalytics /> : <Navigate to="/" />} 
+              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'analytics'))) ? <ClassAnalytics /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/pending-jobs" 
-              element={isAuthenticated && (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'pending-jobs')) ? <PendingJobs /> : <Navigate to="/" />} 
+              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'pending-jobs'))) ? <PendingJobs /> : <Navigate to="/" />} 
             />
 
             <Route 
@@ -323,6 +325,16 @@ function App() {
             <Route 
               path="/permissions" 
               element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) ? <FeaturePermissions /> : <Navigate to="/" />} 
+            />
+
+            <Route 
+              path="/shifts" 
+              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) ? <ShiftManagement /> : <Navigate to="/" />} 
+            />
+
+            <Route 
+              path="/alumni" 
+              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) ? <AlumniManagement /> : <Navigate to="/" />} 
             />
 
             <Route 

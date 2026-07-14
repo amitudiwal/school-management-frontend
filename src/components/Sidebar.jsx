@@ -30,7 +30,9 @@ import {
   Campaign as AnnouncementIcon,
   ChevronLeft as ChevronLeftIcon,
   ChevronRight as ChevronRightIcon,
-  Menu as MenuIcon
+  Menu as MenuIcon,
+  Schedule as ScheduleIcon,
+  History as HistoryIcon
 } from '@mui/icons-material';
 import { logout } from '../store/slices/authSlice';
 import { toggleTheme, toggleSidebar } from '../store/slices/uiSlice';
@@ -181,9 +183,25 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
       { text: 'Feature Permissions', icon: <SettingsIcon />, path: '/permissions' },
       { text: 'Academics Management Register', icon: <PeopleIcon />, path: '/super-teachers' },
       { text: 'Accountant Register', icon: <PeopleIcon />, path: '/accountants' },
-      { text: 'Bus Tracker', icon: <BusIcon />, path: '/bus-tracker' },
-      { text: 'Leave Management', icon: <LeaveIcon />, path: '/leaves' },
+      { text: 'Teacher Registration', icon: <TeacherIcon />, path: '/teachers' },
+      { text: 'Student Registration', icon: <PeopleIcon />, path: '/students' },
+      { text: 'Alumni Directory', icon: <HistoryIcon />, path: '/alumni' },
+      { text: 'Class Management', icon: <SchoolIcon />, path: '/classes' },
+      { text: 'Shift Management', icon: <ScheduleIcon />, path: '/shifts' },
       { text: 'Weekly Timetable', icon: <GradesIcon />, path: '/timetable' },
+      { text: 'Exam Schedule', icon: <GradesIcon />, path: '/exams' },
+      { text: 'Daily Attendance', icon: <AttendanceIcon />, path: '/attendance' },
+      { text: 'Staff Attendance', icon: <AttendanceIcon />, path: '/staff-attendance' },
+      { text: 'Mark Attendance', icon: <AttendanceIcon />, path: '/self-attendance' },
+      { text: 'Leave Management', icon: <LeaveIcon />, path: '/leaves' },
+      { text: 'Pending jobs', icon: <PendingJobsIcon />, path: '/pending-jobs' },
+      { text: 'Homework Board', icon: <HomeworkIcon />, path: '/homework' },
+      { text: 'Copy Submission', icon: <HomeworkIcon />, path: '/copy-submission' },
+      { text: 'Grades Entry', icon: <GradesIcon />, path: '/grades' },
+      { text: 'Performance Analytics', icon: <DashboardIcon />, path: '/analytics' },
+      { text: 'Fees Accounting', icon: <FeesIcon />, path: '/fees' },
+      { text: 'Payroll & Payslips', icon: <PayrollIcon />, path: '/payroll' },
+      { text: 'Bus Tracker', icon: <BusIcon />, path: '/bus-tracker' },
       { text: 'Events & Holidays', icon: <EventsIcon />, path: '/events' },
       { text: 'School Inventory', icon: <InventoryIcon />, path: '/inventory' },
       { text: 'Library Bookshelf', icon: <LibraryIcon />, path: '/library' },
