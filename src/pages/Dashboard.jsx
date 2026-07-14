@@ -918,7 +918,19 @@ function Dashboard() {
               <AlertIcon color="warning" /> Absent / On-Leave Faculty
             </Typography>
             <Box sx={{ flexGrow: 1, overflowY: 'auto' }}>
-              {(!stats?.absentTeachers || stats.absentTeachers.length === 0) ? (
+              {!stats?.isTeacherAttendanceTaken ? (
+                <Box sx={{ py: 8, textAlign: 'center' }}>
+                  <Typography variant="body1" sx={{ color: 'text.secondary', fontWeight: 700 }}>
+                    📋 Attendance for the teachers is yet to be taken today.
+                  </Typography>
+                </Box>
+              ) : stats?.teacherCount === 0 ? (
+                <Box sx={{ py: 8, textAlign: 'center' }}>
+                  <Typography variant="body1" sx={{ color: 'text.secondary', fontWeight: 700 }}>
+                    No teachers registered in this school yet.
+                  </Typography>
+                </Box>
+              ) : (!stats?.absentTeachers || stats.absentTeachers.length === 0) ? (
                 <Box sx={{ py: 8, textAlign: 'center' }}>
                   <Typography variant="body1" sx={{ color: 'success.main', fontWeight: 700 }}>
                     🎉 All teachers are present today!

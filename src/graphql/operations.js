@@ -143,6 +143,8 @@ export const GET_SCHOOL_ADMIN_DASHBOARD = gql`
       studentCount
       teacherCount
       staffCount
+      isTeacherAttendanceTaken
+      isStaffAttendanceTaken
       attendanceSummary {
         presentPercent
         absentPercent
