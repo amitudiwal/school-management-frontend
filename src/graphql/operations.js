@@ -601,6 +601,16 @@ export const UPDATE_STUDENT = gql`
   }
 `;
 
+export const UPDATE_STUDENT_AADHAAR = gql`
+  mutation UpdateStudentAadhaar($id: ID!, $aadhaarFront: String, $aadhaarBack: String) {
+    updateStudent(id: $id, aadhaarFront: $aadhaarFront, aadhaarBack: $aadhaarBack) {
+      id
+      aadhaarFront
+      aadhaarBack
+    }
+  }
+`;
+
 export const DELETE_STUDENT = gql`
   mutation DeleteStudent($id: ID!) {
     deleteStudent(id: $id)
@@ -2719,6 +2729,12 @@ export const RESOLVE_COMPLAINT = gql`
       complaintStatus
       feedback
     }
+  }
+`;
+
+export const DELETE_COMPLAINT = gql`
+  mutation DeleteComplaint($id: ID!) {
+    deleteComplaint(id: $id)
   }
 `;
 

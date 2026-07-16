@@ -17,7 +17,7 @@ import {
   CalendarToday as CalendarIcon, School as SchoolIcon, Home as HomeIcon,
   LocationOn as LocationIcon, AttachMoney as MoneyIcon, Description as DocumentIcon,
   Group as GroupIcon, Info as InfoIcon, Badge as BadgeIcon,
-  AssignmentReturned as TCIcon
+  AssignmentReturned as TCIcon, Warning as WarningIcon
 } from '@mui/icons-material';
 import { useDispatch } from 'react-redux';
 import { showToast } from '../store/slices/uiSlice';
@@ -31,7 +31,8 @@ import {
   DELETE_STUDENT,
   GET_PARENTS,
   GET_EXAMS,
-  ISSUE_TC
+  ISSUE_TC,
+  UPDATE_STUDENT_AADHAAR
 } from '../graphql/operations';
 import { BACKEND_URL } from '../graphql/client';
 
@@ -324,6 +325,65 @@ function StudentList() {
     } finally {
       if (side === 'front') setUploadingAadhaarFront(false);
       else setUploadingAadhaarBack(false);
+    }
+  };
+
+  // Aadhaar upload states for details view
+  const [uploadingViewFront, setUploadingViewFront] = useState(false);
+  const [uploadingViewBack, setUploadingViewBack] = useState(false);
+
+  const [updateStudentAadhaarMutation] = useMutation(UPDATE_STUDENT_AADHAAR, {
+    onCompleted: () => {
+      refetch();
+      dispatch(showToast({ message: 'Aadhaar document updated successfully!', severity: 'success' }));
+    },
+    onError: (err) => {
+      dispatch(showToast({ message: err.message, severity: 'error' }));
+    }
+  });
+
+  const handleViewAadhaarUpload = async (e, side) => {
+    const file = e.target.files[0];
+    if (!file || !viewingStudent) return;
+
+    const formData = new FormData();
+    formData.append('file', file);
+
+    if (side === 'front') setUploadingViewFront(true);
+    else setUploadingViewBack(true);
+
+    try {
+      const response = await fetch(`${BACKEND_URL}/api/upload`, {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        },
+        body: formData
+      });
+      const result = await response.json();
+      if (response.ok) {
+        // Run mutation
+        const variables = { id: viewingStudent.id };
+        if (side === 'front') variables.aadhaarFront = result.url;
+        else variables.aadhaarBack = result.url;
+
+        await updateStudentAadhaarMutation({ variables });
+
+        // Update local viewing state so UI updates
+        setViewingStudent(prev => ({
+          ...prev,
+          aadhaarFront: side === 'front' ? result.url : prev.aadhaarFront,
+          aadhaarBack: side === 'back' ? result.url : prev.aadhaarBack
+        }));
+      } else {
+        dispatch(showToast({ message: result.error || 'Upload failed', severity: 'error' }));
+      }
+    } catch (err) {
+      console.error(err);
+      dispatch(showToast({ message: 'Error uploading document', severity: 'error' }));
+    } finally {
+      if (side === 'front') setUploadingViewFront(false);
+      else setUploadingViewBack(false);
     }
   };
 
@@ -1518,7 +1578,25 @@ function StudentList() {
                           </TableCell>
                           <TableCell sx={{ fontWeight: 700 }}>{st.admissionNo}</TableCell>
                           <TableCell>{st.rollNo || '-'}</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>{`${st.firstName} ${st.lastName}`}</TableCell>
+                          <TableCell>
+                            <Box sx={{ display: 'flex', flexDirection: 'column' }}>
+                              <Typography variant="body2" sx={{ fontWeight: 600 }}>
+                                {`${st.firstName} ${st.lastName}`}
+                              </Typography>
+                              {(!st.aadhaarFront || !st.aadhaarBack) && (
+                                <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: 0.5 }}>
+                                  <WarningIcon sx={{ fontSize: 13, color: 'warning.main' }} />
+                                  <Typography variant="caption" color="warning.main" sx={{ fontWeight: 700, fontSize: '0.7rem' }}>
+                                    {!st.aadhaarFront && !st.aadhaarBack
+                                      ? 'Missing Aadhaar Front & Back'
+                                      : !st.aadhaarFront
+                                      ? 'Missing Aadhaar Front'
+                                      : 'Missing Aadhaar Back'}
+                                  </Typography>
+                                </Box>
+                              )}
+                            </Box>
+                          </TableCell>
                           <TableCell>{st.gender}</TableCell>
                           <TableCell>{st.classId?.name}</TableCell>
                           <TableCell>{st.sectionId?.name}</TableCell>
@@ -1951,23 +2029,39 @@ function StudentList() {
                         <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '0.65rem', color: 'text.secondary' }}>
                           Aadhaar Card Front
                         </Typography>
-                        {viewingStudent.aadhaarFront ? (
-                          <Button 
-                            variant="outlined" 
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                          {viewingStudent.aadhaarFront ? (
+                            <Button 
+                              variant="outlined" 
+                              size="small"
+                              startIcon={<DocumentIcon />} 
+                              href={getAvatarUrl(viewingStudent.aadhaarFront)} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                            >
+                              View Document
+                            </Button>
+                          ) : (
+                            <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.disabled' }}>
+                              Not Uploaded
+                            </Typography>
+                          )}
+                          <Button
+                            variant="contained"
                             size="small"
-                            startIcon={<DocumentIcon />} 
-                            href={getAvatarUrl(viewingStudent.aadhaarFront)} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            sx={{ alignSelf: 'flex-start' }}
+                            component="label"
+                            disabled={uploadingViewFront}
+                            sx={{ textTransform: 'none', borderRadius: 2 }}
                           >
-                            View Document
+                            {uploadingViewFront ? 'Uploading...' : viewingStudent.aadhaarFront ? 'Replace' : 'Upload'}
+                            <input 
+                              type="file" 
+                              hidden 
+                              accept="image/*,application/pdf" 
+                              onChange={(e) => handleViewAadhaarUpload(e, 'front')} 
+                            />
                           </Button>
-                        ) : (
-                          <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.disabled' }}>
-                            Not Uploaded
-                          </Typography>
-                        )}
+                        </Box>
                       </Box>
                     </Grid>
 
@@ -1976,23 +2070,39 @@ function StudentList() {
                         <Typography variant="caption" sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '0.65rem', color: 'text.secondary' }}>
                           Aadhaar Card Back
                         </Typography>
-                        {viewingStudent.aadhaarBack ? (
-                          <Button 
-                            variant="outlined" 
+                        <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5, flexWrap: 'wrap' }}>
+                          {viewingStudent.aadhaarBack ? (
+                            <Button 
+                              variant="outlined" 
+                              size="small"
+                              startIcon={<DocumentIcon />} 
+                              href={getAvatarUrl(viewingStudent.aadhaarBack)} 
+                              target="_blank" 
+                              rel="noopener noreferrer"
+                            >
+                              View Document
+                            </Button>
+                          ) : (
+                            <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.disabled' }}>
+                              Not Uploaded
+                            </Typography>
+                          )}
+                          <Button
+                            variant="contained"
                             size="small"
-                            startIcon={<DocumentIcon />} 
-                            href={getAvatarUrl(viewingStudent.aadhaarBack)} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            sx={{ alignSelf: 'flex-start' }}
+                            component="label"
+                            disabled={uploadingViewBack}
+                            sx={{ textTransform: 'none', borderRadius: 2 }}
                           >
-                            View Document
+                            {uploadingViewBack ? 'Uploading...' : viewingStudent.aadhaarBack ? 'Replace' : 'Upload'}
+                            <input 
+                              type="file" 
+                              hidden 
+                              accept="image/*,application/pdf" 
+                              onChange={(e) => handleViewAadhaarUpload(e, 'back')} 
+                            />
                           </Button>
-                        ) : (
-                          <Typography variant="body2" sx={{ fontWeight: 600, color: 'text.disabled' }}>
-                            Not Uploaded
-                          </Typography>
-                        )}
+                        </Box>
                       </Box>
                     </Grid>
                   </Grid>

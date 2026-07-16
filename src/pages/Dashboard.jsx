@@ -7,16 +7,18 @@ import {
   Box, Grid, Card, CardContent, Typography, Avatar,
   Table, TableBody, TableCell, TableContainer, TableHead, TableRow,
   Paper, CircularProgress, Alert, Button, useTheme, LinearProgress, Chip,
-  Tabs, Tab, TextField, TablePagination, Stack, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions
+  Tabs, Tab, TextField, TablePagination, Stack, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions,
+  IconButton, Tooltip
 } from '@mui/material';
 import Chart from 'react-apexcharts';
 import {
   School as SchoolIcon, People as PeopleIcon, LocalLibrary as LibraryIcon,
   AttachMoney as FeesIcon, AssignmentTurnedIn as AttendanceIcon,
   Warning as AlertIcon, Security as AuditIcon, DateRange as LeaveIcon,
-  Assignment as HomeworkIcon, CalendarMonth as CalendarIcon, RateReview as ComplaintIcon
+  Assignment as HomeworkIcon, CalendarMonth as CalendarIcon, RateReview as ComplaintIcon,
+  Delete as DeleteIcon
 } from '@mui/icons-material';
-import { GET_SUPER_ADMIN_DASHBOARD, GET_SCHOOL_ADMIN_DASHBOARD, GET_AUDIT_LOGS, GET_PENDING_JOBS, GET_EVENTS, GET_CLASSES, GET_SECTIONS, GET_GRADE_DISTRIBUTION, GET_COPY_SUBMISSION_ANALYTICS, GET_INVENTORY_LIST, GET_COMPLAINTS, RESOLVE_COMPLAINT } from '../graphql/operations';
+import { GET_SUPER_ADMIN_DASHBOARD, GET_SCHOOL_ADMIN_DASHBOARD, GET_AUDIT_LOGS, GET_PENDING_JOBS, GET_EVENTS, GET_CLASSES, GET_SECTIONS, GET_GRADE_DISTRIBUTION, GET_COPY_SUBMISSION_ANALYTICS, GET_INVENTORY_LIST, GET_COMPLAINTS, RESOLVE_COMPLAINT, DELETE_COMPLAINT } from '../graphql/operations';
 import CustomDatePicker from '../components/CustomDatePicker';
 import { showToast } from '../store/slices/uiSlice';
 
@@ -92,6 +94,22 @@ function Dashboard() {
       dispatch(showToast({ message: err.message, severity: 'error' }));
     }
   });
+
+  const [deleteComplaintMutation, { loading: deletingComplaint }] = useMutation(DELETE_COMPLAINT, {
+    onCompleted: () => {
+      refetchComplaints();
+      dispatch(showToast({ message: 'Complaint deleted successfully!', severity: 'success' }));
+    },
+    onError: (err) => {
+      dispatch(showToast({ message: err.message, severity: 'error' }));
+    }
+  });
+
+  const handleDeleteComplaint = (id) => {
+    if (window.confirm('Are you sure you want to delete this complaint?')) {
+      deleteComplaintMutation({ variables: { id } });
+    }
+  };
 
   const { data: classesData } = useQuery(GET_CLASSES, { skip: isSuperAdmin });
   const [getGradeSections, { data: gradeSectionsData }] = useLazyQuery(GET_SECTIONS);
@@ -1500,20 +1518,32 @@ function Dashboard() {
                               />
                             </TableCell>
                             <TableCell align="right">
-                              {!isResolved && (
-                                <Button
-                                  variant="contained"
-                                  size="small"
-                                  onClick={() => {
-                                    setSelectedComplaint(c);
-                                    setFeedbackText('');
-                                    setOpenComplaintDialog(true);
-                                  }}
-                                  sx={{ textTransform: 'none', borderRadius: 2 }}
-                                >
-                                  Resolve
-                                </Button>
-                              )}
+                              <Box sx={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: 1 }}>
+                                {!isResolved && (
+                                  <Button
+                                    variant="contained"
+                                    size="small"
+                                    onClick={() => {
+                                      setSelectedComplaint(c);
+                                      setFeedbackText('');
+                                      setOpenComplaintDialog(true);
+                                    }}
+                                    sx={{ textTransform: 'none', borderRadius: 2 }}
+                                  >
+                                    Resolve
+                                  </Button>
+                                )}
+                                <Tooltip title="Delete Complaint">
+                                  <IconButton
+                                    size="small"
+                                    color="error"
+                                    onClick={() => handleDeleteComplaint(c.id)}
+                                    disabled={deletingComplaint}
+                                  >
+                                    <DeleteIcon fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
+                              </Box>
                             </TableCell>
                           </TableRow>
                         );
