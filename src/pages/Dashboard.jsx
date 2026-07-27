@@ -10,7 +10,10 @@ import {
   Tabs, Tab, TextField, TablePagination, Stack, MenuItem, Dialog, DialogTitle, DialogContent, DialogActions,
   IconButton, Tooltip
 } from '@mui/material';
-import Chart from 'react-apexcharts';
+import AmAreaChart from '../components/charts/AmAreaChart';
+import AmColumnChart from '../components/charts/AmColumnChart';
+import AmBarChartHorizontal from '../components/charts/AmBarChartHorizontal';
+import AmDonutChart from '../components/charts/AmDonutChart';
 import {
   School as SchoolIcon, People as PeopleIcon, LocalLibrary as LibraryIcon,
   AttachMoney as FeesIcon, AssignmentTurnedIn as AttendanceIcon,
@@ -297,23 +300,15 @@ function Dashboard() {
                 SaaS Monthly Subscription Revenue
               </Typography>
               <Box sx={{ width: '100%' }}>
-                <Chart
-                  options={{
-                    chart: { id: 'monthly-revenue', type: 'area', toolbar: { show: false }, background: 'transparent' },
-                    xaxis: { categories: (stats?.monthlyRevenueSeries || []).map(x => x.month), labels: { style: { colors: theme.palette.text.secondary } } },
-                    yaxis: { labels: { style: { colors: theme.palette.text.secondary } } },
-                    colors: ['#6366F1'],
-                    stroke: { curve: 'smooth', width: 3 },
-                    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: 0.35, opacityTo: 0, stops: [0, 90, 100] } },
-                    theme: { mode: theme.palette.mode },
-                    tooltip: { theme: theme.palette.mode }
-                  }}
+                <AmAreaChart
+                  categories={(stats?.monthlyRevenueSeries || []).map(x => x.month)}
                   series={[{
                     name: 'Revenue',
-                    data: (stats?.monthlyRevenueSeries || []).map(x => x.revenue)
+                    data: (stats?.monthlyRevenueSeries || []).map(x => x.revenue),
+                    color: '#6366F1'
                   }]}
-                  type="area"
                   height={300}
+                  valuePrefix="₹"
                 />
               </Box>
             </Card>
@@ -602,17 +597,15 @@ function Dashboard() {
                   Student Gender Strength
                 </Typography>
                 <Box sx={{ flexGrow: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-                  <Chart
-                    options={{
-                      chart: { id: 'gender-split', type: 'pie', background: 'transparent' },
-                      labels: ['Boys', 'Girls'],
-                      colors: ['#3B82F6', '#EC4899'],
-                      legend: { position: 'bottom', labels: { colors: theme.palette.text.primary } },
-                      theme: { mode: theme.palette.mode }
-                    }}
-                    series={[stats?.totalBoys ?? 0, stats?.totalGirls ?? 0]}
-                    type="pie"
+                  <AmDonutChart
+                    data={[
+                      { name: 'Boys', value: stats?.totalBoys ?? 0, color: '#3B82F6' },
+                      { name: 'Girls', value: stats?.totalGirls ?? 0, color: '#EC4899' }
+                    ]}
+                    innerRadius={0}
                     height={220}
+                    showLegend={true}
+                    valueSuffix=""
                   />
                 </Box>
               </Card>
@@ -813,23 +806,15 @@ function Dashboard() {
               Fee Collection Status
             </Typography>
             <Box sx={{ flexGrow: 1, width: '100%' }}>
-              <Chart
-                options={{
-                  chart: { id: 'fee-collection', type: 'bar', toolbar: { show: false }, background: 'transparent' },
-                  plotOptions: { bar: { columnWidth: '45%', distributed: true, borderRadius: 8 } },
-                  xaxis: { categories: ['Collected', 'Outstanding'], labels: { style: { colors: theme.palette.text.secondary, fontWeight: 600 } } },
-                  yaxis: { labels: { style: { colors: theme.palette.text.secondary }, formatter: (val) => `₹${val.toLocaleString()}` } },
-                  colors: ['#10B981', '#EF4444'],
-                  legend: { show: false },
-                  theme: { mode: theme.palette.mode },
-                  tooltip: { theme: theme.palette.mode, y: { formatter: (val) => `₹${val.toLocaleString()}` } }
-                }}
+              <AmColumnChart
+                categories={['Collected', 'Outstanding']}
                 series={[{
                   name: 'Amount',
                   data: [stats?.feeCollectionSummary?.totalCollected || 0, stats?.feeCollectionSummary?.totalOutstanding || 0]
                 }]}
-                type="bar"
+                colors={['#10B981', '#EF4444']}
                 height={280}
+                valuePrefix="₹"
               />
             </Box>
             <Box sx={{ textAlign: 'center', mt: 1 }}>
@@ -874,42 +859,13 @@ function Dashboard() {
                 </Box>
               ) : (
                 <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-                  <Chart
-                    options={{
-                      chart: { id: 'attendance-donut', type: 'donut', background: 'transparent' },
-                      labels: currentAttendanceData.map(d => d.name),
-                      colors: currentAttendanceData.map(d => d.color),
-                      stroke: { show: false },
-                      legend: { show: false },
-                      plotOptions: {
-                        pie: {
-                          donut: {
-                            size: '72%',
-                            labels: {
-                              show: true,
-                              name: { show: true, fontSize: '0.8rem', fontWeight: 600, color: theme.palette.text.secondary },
-                              value: { show: true, fontSize: '1.2rem', fontWeight: 800, color: theme.palette.text.primary, formatter: (val) => `${Number(val).toFixed(1)}%` },
-                              total: {
-                                show: true,
-                                label: 'Attendance',
-                                color: theme.palette.text.secondary,
-                                formatter: (w) => {
-                                  const present = w.globals.series[0] || 0;
-                                  const late = w.globals.series[2] || 0;
-                                  return `${(present + late).toFixed(1)}%`;
-                                }
-                              }
-                            }
-                          }
-                        }
-                      },
-                      theme: { mode: theme.palette.mode },
-                      tooltip: { theme: theme.palette.mode, y: { formatter: (val) => `${val.toFixed(1)}%` } }
-                    }}
-                    series={currentAttendanceData.map(d => d.value)}
-                    type="donut"
+                  <AmDonutChart
+                    data={currentAttendanceData.map(d => ({ name: d.name, value: d.value, color: d.color }))}
+                    innerRadius={70}
                     height={260}
-                    width="100%"
+                    centerLabel="Attendance"
+                    centerValue={`${((currentAttendanceData[0]?.value || 0) + (currentAttendanceData[1]?.value || 0)).toFixed(1)}%`}
+                    valueSuffix="%"
                   />
                 </Box>
               )}
@@ -1037,24 +993,11 @@ function Dashboard() {
                 }
 
                 return (
-                  <Chart
-                    options={{
-                      chart: { id: 'inventory-chart', type: 'bar', toolbar: { show: false }, background: 'transparent' },
-                      plotOptions: { bar: { horizontal: true, borderRadius: 4, barHeight: '55%', distributed: true } },
-                      xaxis: { categories: inventoryChartData.map(d => d.category), labels: { style: { colors: theme.palette.text.secondary, fontWeight: 600 } } },
-                      yaxis: { labels: { style: { colors: theme.palette.text.secondary } } },
-                      colors: ['#6366F1', '#10B981', '#F59E0B', '#14B8A6', '#EC4899', '#3B82F6', '#6B7280'],
-                      legend: { show: false },
-                      theme: { mode: theme.palette.mode },
-                      tooltip: { theme: theme.palette.mode, y: { formatter: (val) => `${val} items` } }
-                    }}
-                    series={[{
-                      name: 'Quantity',
-                      data: inventoryChartData.map(d => d.quantity)
-                    }]}
-                    type="bar"
+                  <AmBarChartHorizontal
+                    categories={inventoryChartData.map(d => d.category)}
+                    series={[{ name: 'Quantity', data: inventoryChartData.map(d => d.quantity) }]}
                     height={280}
-                    width="100%"
+                    valueSuffix=" items"
                   />
                 );
               })()}
@@ -1072,25 +1015,14 @@ function Dashboard() {
                 Faculty & Staff Attendance Trend (Last 7 Days)
               </Typography>
               <Box sx={{ width: '100%', height: { xs: 260, sm: 320 } }}>
-                <Chart
-                  options={{
-                    chart: { id: 'attendance-trend', type: 'area', toolbar: { show: false }, background: 'transparent' },
-                    stroke: { curve: 'smooth', width: [3, 3, 2, 2], dashArray: [0, 0, 5, 5] },
-                    colors: ['#10B981', '#6366F1', '#EF4444', '#F59E0B'],
-                    xaxis: { categories: trendData.map(d => d.date), labels: { style: { colors: theme.palette.text.secondary } } },
-                    yaxis: { labels: { style: { colors: theme.palette.text.secondary } } },
-                    legend: { position: 'top', horizontalAlign: 'right', labels: { colors: theme.palette.text.primary } },
-                    fill: { type: 'gradient', gradient: { shadeIntensity: 1, opacityFrom: [0.35, 0.35, 0, 0], opacityTo: 0, stops: [0, 90, 100] } },
-                    theme: { mode: theme.palette.mode },
-                    tooltip: { theme: theme.palette.mode }
-                  }}
+                <AmAreaChart
+                  categories={trendData.map(d => d.date)}
                   series={[
-                    { name: 'Present Teachers', data: trendData.map(d => d.presentTeachers) },
-                    { name: 'Present Staff', data: trendData.map(d => d.presentStaff) },
-                    { name: 'Absent Teachers', data: trendData.map(d => d.absentTeachers) },
-                    { name: 'Absent Staff', data: trendData.map(d => d.absentStaff) }
+                    { name: 'Present Teachers', data: trendData.map(d => d.presentTeachers), color: '#10B981' },
+                    { name: 'Present Staff', data: trendData.map(d => d.presentStaff), color: '#6366F1' },
+                    { name: 'Absent Teachers', data: trendData.map(d => d.absentTeachers), color: '#EF4444', dashed: true },
+                    { name: 'Absent Staff', data: trendData.map(d => d.absentStaff), color: '#F59E0B', dashed: true }
                   ]}
-                  type="area"
                   height={280}
                 />
               </Box>
@@ -1137,38 +1069,16 @@ function Dashboard() {
                     <Box sx={{ flexGrow: 1, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                       <Box sx={{ height: 220, position: 'relative' }}>
                         <Box sx={{ width: '100%', display: 'flex', justifyContent: 'center' }}>
-                          <Chart
-                            options={{
-                              chart: { id: 'activity-breakdown', type: 'donut', background: 'transparent' },
-                              labels: ['Lectures / Study', 'Other Activities'],
-                              colors: ['#6366F1', '#F59E0B'],
-                              stroke: { show: false },
-                              legend: { show: false },
-                              plotOptions: {
-                                pie: {
-                                  donut: {
-                                    size: '72%',
-                                    labels: {
-                                      show: true,
-                                      name: { show: true, fontSize: '0.8rem', color: theme.palette.text.secondary },
-                                      value: { show: true, fontSize: '1.2rem', fontWeight: 800, color: theme.palette.text.primary },
-                                      total: {
-                                        show: true,
-                                        label: 'Total Active',
-                                        color: theme.palette.text.secondary,
-                                        formatter: () => `${studyCount + othersCount}`
-                                      }
-                                    }
-                                  }
-                                }
-                              },
-                              theme: { mode: theme.palette.mode },
-                              tooltip: { theme: theme.palette.mode }
-                            }}
-                            series={[studyCount, othersCount]}
-                            type="donut"
+                          <AmDonutChart
+                            data={[
+                              { name: 'Lectures / Study', value: studyCount, color: '#6366F1' },
+                              { name: 'Other Activities', value: othersCount, color: '#F59E0B' }
+                            ]}
+                            innerRadius={70}
                             height={200}
-                            width="100%"
+                            centerLabel="Total Active"
+                            centerValue={`${studyCount + othersCount}`}
+                            valueSuffix=""
                           />
                         </Box>
                       </Box>
@@ -1231,22 +1141,13 @@ function Dashboard() {
 
                   return (
                     <Box sx={{ flexGrow: 1, width: '100%', height: 320 }}>
-                      <Chart
-                        options={{
-                          chart: { id: 'activity-tracker', type: 'bar', stacked: true, toolbar: { show: false }, background: 'transparent' },
-                          plotOptions: { bar: { horizontal: false, columnWidth: '40%', borderRadius: 4 } },
-                          xaxis: { categories: chartData.map(c => c.name), labels: { style: { colors: theme.palette.text.secondary, fontSize: '0.75rem', fontWeight: 600 } } },
-                          yaxis: { labels: { style: { colors: theme.palette.text.secondary } } },
-                          colors: ['#10B981', '#6366F1'],
-                          legend: { position: 'top', horizontalAlign: 'right', labels: { colors: theme.palette.text.primary } },
-                          theme: { mode: theme.palette.mode },
-                          tooltip: { theme: theme.palette.mode }
-                        }}
+                      <AmColumnChart
+                        categories={chartData.map(c => c.name)}
                         series={[
-                          { name: 'Running', data: chartData.map(c => c.Running) },
-                          { name: 'Completed', data: chartData.map(c => c.Complete) }
+                          { name: 'Running', data: chartData.map(c => c.Running), color: '#10B981' },
+                          { name: 'Completed', data: chartData.map(c => c.Complete), color: '#6366F1' }
                         ]}
-                        type="bar"
+                        stacked={true}
                         height={280}
                       />
                     </Box>
@@ -1268,22 +1169,11 @@ function Dashboard() {
                 Class-wise Student Enrollment
               </Typography>
               <Box sx={{ width: '100%', height: 280, flexGrow: 1 }}>
-                <Chart
-                  options={{
-                    chart: { id: 'class-enrollment', type: 'bar', toolbar: { show: false }, background: 'transparent' },
-                    plotOptions: { bar: { columnWidth: '45%', borderRadius: 6 } },
-                    xaxis: { categories: classEnrollmentData.map(c => c.name), labels: { style: { colors: theme.palette.text.secondary } } },
-                    yaxis: { labels: { style: { colors: theme.palette.text.secondary } } },
-                    colors: ['#6366F1'],
-                    theme: { mode: theme.palette.mode },
-                    tooltip: { theme: theme.palette.mode, y: { formatter: (val) => `${val} Students` } }
-                  }}
-                  series={[{
-                    name: 'Students',
-                    data: classEnrollmentData.map(c => c.students)
-                  }]}
-                  type="bar"
+                <AmColumnChart
+                  categories={classEnrollmentData.map(c => c.name)}
+                  series={[{ name: 'Students', data: classEnrollmentData.map(c => c.students), color: '#6366F1' }]}
                   height={280}
+                  valueSuffix=" Students"
                 />
               </Box>
             </Card>
@@ -1338,22 +1228,11 @@ function Dashboard() {
                   No grading data found for the selected filters.
                 </Typography>
               ) : (
-                <Chart
-                  options={{
-                    chart: { id: 'grade-distribution', type: 'bar', toolbar: { show: false }, background: 'transparent' },
-                    plotOptions: { bar: { columnWidth: '45%', borderRadius: 6 } },
-                    xaxis: { categories: gradeDistributionData.map(g => g.name), labels: { style: { colors: theme.palette.text.secondary } } },
-                    yaxis: { labels: { style: { colors: theme.palette.text.secondary } } },
-                    colors: ['#10B981'],
-                    theme: { mode: theme.palette.mode },
-                    tooltip: { theme: theme.palette.mode, y: { formatter: (val) => `${val} Students` } }
-                  }}
-                  series={[{
-                    name: 'Students',
-                    data: gradeDistributionData.map(g => g.count)
-                  }]}
-                  type="bar"
+                <AmColumnChart
+                  categories={gradeDistributionData.map(g => g.name)}
+                  series={[{ name: 'Students', data: gradeDistributionData.map(g => g.count), color: '#10B981' }]}
                   height={280}
+                  valueSuffix=" Students"
                 />
               )}
             </Box>
@@ -1411,22 +1290,11 @@ function Dashboard() {
                   No copy records found for the selected filters.
                 </Typography>
               ) : (
-                <Chart
-                  options={{
-                    chart: { id: 'copy-completion', type: 'bar', toolbar: { show: false }, background: 'transparent' },
-                    plotOptions: { bar: { columnWidth: '45%', borderRadius: 6 } },
-                    xaxis: { categories: persistentCopyData.map(item => `${item.subjectName} (${item.className})`), labels: { style: { colors: theme.palette.text.secondary, fontSize: '0.75rem', fontWeight: 600 } } },
-                    yaxis: { max: 100, labels: { style: { colors: theme.palette.text.secondary }, formatter: (val) => `${val}%` } },
-                    colors: ['#D946EF'],
-                    theme: { mode: theme.palette.mode },
-                    tooltip: { theme: theme.palette.mode, y: { formatter: (val) => `${val}% Completed` } }
-                  }}
-                  series={[{
-                    name: 'Completion Rate',
-                    data: persistentCopyData.map(item => item.completionRate)
-                  }]}
-                  type="bar"
+                <AmColumnChart
+                  categories={persistentCopyData.map(item => `${item.subjectName} (${item.className})`)}
+                  series={[{ name: 'Completion Rate', data: persistentCopyData.map(item => item.completionRate), color: '#D946EF' }]}
                   height={280}
+                  valueSuffix="%"
                 />
               )}
             </Box>

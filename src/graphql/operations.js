@@ -2220,6 +2220,8 @@ export const GET_VEHICLES_TRACKING = gql`
       status
       currentLatitude
       currentLongitude
+      sosMessage
+      sosTimestamp
       lastUpdated
       routeId {
         id
@@ -2245,7 +2247,31 @@ export const UPDATE_VEHICLE_LOCATION = gql`
       status
       currentLatitude
       currentLongitude
+      sosMessage
+      sosTimestamp
       lastUpdated
+    }
+  }
+`;
+
+export const TRIGGER_SOS = gql`
+  mutation TriggerSOS($id: ID!, $message: String!) {
+    triggerSOS(id: $id, message: $message) {
+      id
+      vehicleNo
+      sosMessage
+      sosTimestamp
+    }
+  }
+`;
+
+export const CLEAR_SOS = gql`
+  mutation ClearSOS($id: ID!) {
+    clearSOS(id: $id) {
+      id
+      vehicleNo
+      sosMessage
+      sosTimestamp
     }
   }
 `;
@@ -3037,6 +3063,18 @@ export const UPDATE_SHIFT = gql`
 export const DELETE_SHIFT = gql`
   mutation DeleteShift($id: ID!) {
     deleteShift(id: $id)
+  }
+`;
+
+export const DELETE_TRANSPORT_ROUTE = gql`
+  mutation DeleteTransportRoute($id: ID!) {
+    deleteTransportRoute(id: $id)
+  }
+`;
+
+export const DELETE_VEHICLE = gql`
+  mutation DeleteVehicle($id: ID!) {
+    deleteVehicle(id: $id)
   }
 `;
 

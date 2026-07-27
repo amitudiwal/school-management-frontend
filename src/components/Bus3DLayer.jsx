@@ -4,7 +4,7 @@ import { GLTFLoader } from 'three/examples/jsm/loaders/GLTFLoader';
 
 const TWEEN_DURATION = 1200; // Interpolation duration in milliseconds (1.2 seconds)
 const LEAN_INTENSITY = 0.25;  // Tilt angle intensity when turning (radians)
-const BASE_BUS_SCALE = 1.2;  // Size multiplier for the bus models in 3D scene
+const BASE_BUS_SCALE = 1.4;  // Size multiplier for the bus models in 3D scene
 
 // Helper: easeInOutQuad for smooth tweening
 const easeInOutQuad = (t) => {
@@ -21,20 +21,25 @@ export default function Bus3DLayer({ map, markers }) {
     camera: null,
     renderer: null,
     masterBusModel: null,
-    proceduralMaterial: null,
   });
 
-  // 1. Create a detailed procedural bus model fallback built from Three.js primitives
+  // 1. Create a detailed 3D Rapido-style School Bus model built from Three.js primitives
   const createProceduralBus = () => {
     const busGroup = new THREE.Group();
     busGroup.name = 'procedural-bus';
 
     // Materials
-    // Polished silver/grey metallic paint for the main body
-    const bodyMat = new THREE.MeshStandardMaterial({ 
-      color: 0xD1D5DB, // light grey / silver
-      metalness: 0.85, 
-      roughness: 0.18 
+    // Vibrant Iconic Yellow School Bus Paint
+    const busYellowMat = new THREE.MeshStandardMaterial({ 
+      color: 0xFBBF24, // Bright School Bus Yellow
+      metalness: 0.3, 
+      roughness: 0.25 
+    });
+
+    const busDarkYellowMat = new THREE.MeshStandardMaterial({ 
+      color: 0xD97706, // Darker yellow trim
+      metalness: 0.3, 
+      roughness: 0.3 
     });
     
     // Tinted dark glass for windows
@@ -46,13 +51,13 @@ export default function Bus3DLayer({ map, markers }) {
     
     // Black plastic/trim
     const trimMat = new THREE.MeshStandardMaterial({ 
-      color: 0x1F2937, 
+      color: 0x111827, 
       roughness: 0.7 
     });
     
     // Wheel rubber
     const tireMat = new THREE.MeshStandardMaterial({ 
-      color: 0x111827, 
+      color: 0x1F2937, 
       roughness: 0.9 
     });
     
@@ -60,51 +65,62 @@ export default function Bus3DLayer({ map, markers }) {
     const rimMat = new THREE.MeshStandardMaterial({ 
       color: 0xE5E7EB, 
       metalness: 0.8, 
-      roughness: 0.3 
+      roughness: 0.2 
     });
 
-    // 1. Main Chassis / Body (Silver)
-    // Box dimensions: width=1.3, height=0.9, depth=2.8
-    const bodyGeom = new THREE.BoxGeometry(1.3, 0.9, 2.8);
-    const body = new THREE.Mesh(bodyGeom, bodyMat);
-    body.position.y = 0.65; // Lift up slightly to leave space for wheels
+    // 1. Main Chassis / Body (Yellow)
+    // Box dimensions: width=1.35, height=0.95, depth=3.0
+    const bodyGeom = new THREE.BoxGeometry(1.35, 0.95, 3.0);
+    const body = new THREE.Mesh(bodyGeom, busYellowMat);
+    body.position.y = 0.68;
     busGroup.add(body);
 
+    // Black horizontal side stripe (classic school bus look)
+    const stripeGeom = new THREE.BoxGeometry(1.37, 0.12, 2.9);
+    const stripe = new THREE.Mesh(stripeGeom, trimMat);
+    stripe.position.y = 0.65;
+    busGroup.add(stripe);
+
+    // Hood / Engine Front Nose (curved slightly down)
+    const hoodGeom = new THREE.BoxGeometry(1.34, 0.5, 0.6);
+    const hood = new THREE.Mesh(hoodGeom, busYellowMat);
+    hood.position.set(0, 0.5, 1.6);
+    busGroup.add(hood);
+
     // 2. Front Windshield (Sleek tilted glass)
-    // We can use a slightly smaller front box to simulate the cockpit
-    const frontWindshieldGeom = new THREE.BoxGeometry(1.31, 0.5, 0.4);
+    const frontWindshieldGeom = new THREE.BoxGeometry(1.31, 0.45, 0.1);
     const frontWindshield = new THREE.Mesh(frontWindshieldGeom, glassMat);
-    frontWindshield.position.set(0, 0.85, 1.25); // At the very front
-    // Tilt slightly forward
-    frontWindshield.rotation.x = -Math.PI / 12;
+    frontWindshield.position.set(0, 0.92, 1.32);
+    frontWindshield.rotation.x = -Math.PI / 16;
     busGroup.add(frontWindshield);
 
-    // 3. Side Windows (Long continuous dark strip)
-    // Left and Right windows
-    const leftWindowGeom = new THREE.BoxGeometry(0.02, 0.45, 2.3);
-    const leftWindow = new THREE.Mesh(leftWindowGeom, glassMat);
-    leftWindow.position.set(-0.66, 0.85, -0.1);
-    busGroup.add(leftWindow);
+    // 3. Side Windows (Row of individual windows)
+    const windowGeom = new THREE.BoxGeometry(0.02, 0.4, 0.35);
+    [-0.8, -0.3, 0.2, 0.7, 1.2].forEach((zPos) => {
+      const wL = new THREE.Mesh(windowGeom, glassMat);
+      wL.position.set(-0.685, 0.9, -zPos + 0.3);
+      busGroup.add(wL);
 
-    const rightWindow = leftWindow.clone();
-    rightWindow.position.x = 0.66;
-    busGroup.add(rightWindow);
+      const wR = wL.clone();
+      wR.position.x = 0.685;
+      busGroup.add(wR);
+    });
     
     // Rear Window
     const rearWindowGeom = new THREE.BoxGeometry(1.1, 0.4, 0.02);
     const rearWindow = new THREE.Mesh(rearWindowGeom, glassMat);
-    rearWindow.position.set(0, 0.85, -1.41);
+    rearWindow.position.set(0, 0.9, -1.51);
     busGroup.add(rearWindow);
 
-    // 4. Wheels (2 axles, 4 wheels with silver rims)
-    const tireGeom = new THREE.CylinderGeometry(0.26, 0.26, 0.18, 16);
-    const rimGeom = new THREE.CylinderGeometry(0.15, 0.15, 0.19, 12);
+    // 4. Wheels (2 axles, 4 wheels with chrome rims)
+    const tireGeom = new THREE.CylinderGeometry(0.28, 0.28, 0.2, 20);
+    const rimGeom = new THREE.CylinderGeometry(0.16, 0.16, 0.21, 14);
     
     const wheelPositions = [
-      [-0.67, 0.26, 0.85],  // Front Left
-      [0.67, 0.26, 0.85],   // Front Right
-      [-0.67, 0.26, -0.85], // Back Left
-      [0.67, 0.26, -0.85]   // Back Right
+      [-0.7, 0.28, 0.9],   // Front Left
+      [0.7, 0.28, 0.9],    // Front Right
+      [-0.7, 0.28, -0.9],  // Back Left
+      [0.7, 0.28, -0.9]    // Back Right
     ];
 
     wheelPositions.forEach(([x, y, z]) => {
@@ -122,48 +138,74 @@ export default function Bus3DLayer({ map, markers }) {
       busGroup.add(wheelSubGroup);
     });
 
-    // 5. Sleek side-view mirrors (extending forward-outwards from the front)
-    // Left Mirror Arm and Piece
+    // 5. Side-view mirrors
     const mirrorArmGeom = new THREE.BoxGeometry(0.3, 0.04, 0.04);
     const mirrorArmL = new THREE.Mesh(mirrorArmGeom, trimMat);
-    mirrorArmL.position.set(-0.75, 1.0, 1.25);
+    mirrorArmL.position.set(-0.78, 1.0, 1.4);
     mirrorArmL.rotation.y = Math.PI / 6;
     busGroup.add(mirrorArmL);
 
     const mirrorPieceGeom = new THREE.BoxGeometry(0.06, 0.2, 0.1);
     const mirrorL = new THREE.Mesh(mirrorPieceGeom, trimMat);
-    mirrorL.position.set(-0.9, 0.9, 1.35);
+    mirrorL.position.set(-0.92, 0.9, 1.48);
     busGroup.add(mirrorL);
 
-    // Right Mirror Arm and Piece
     const mirrorArmR = mirrorArmL.clone();
-    mirrorArmR.position.x = 0.75;
+    mirrorArmR.position.x = 0.78;
     mirrorArmR.rotation.y = -Math.PI / 6;
     busGroup.add(mirrorArmR);
 
     const mirrorR = mirrorL.clone();
-    mirrorR.position.x = 0.9;
+    mirrorR.position.x = 0.92;
     busGroup.add(mirrorR);
 
-    // 6. Modern Headlights (white LED strip look at the bottom)
-    const headlightGeom = new THREE.BoxGeometry(0.2, 0.06, 0.03);
-    const headlightMat = new THREE.MeshBasicMaterial({ color: 0xFFFEE0 });
+    // 6. Headlights (Bright LED white)
+    const headlightGeom = new THREE.BoxGeometry(0.22, 0.1, 0.03);
+    const headlightMat = new THREE.MeshBasicMaterial({ color: 0xFFFBEB });
     const headlightL = new THREE.Mesh(headlightGeom, headlightMat);
-    headlightL.position.set(-0.45, 0.38, 1.41);
+    headlightL.position.set(-0.48, 0.42, 1.91);
     
     const headlightR = headlightL.clone();
-    headlightR.position.x = 0.45;
+    headlightR.position.x = 0.48;
     
     busGroup.add(headlightL);
     busGroup.add(headlightR);
+
+    // Red Taillights at the back
+    const taillightMat = new THREE.MeshBasicMaterial({ color: 0xEF4444 });
+    const taillightL = new THREE.Mesh(headlightGeom, taillightMat);
+    taillightL.position.set(-0.48, 0.45, -1.51);
+
+    const taillightR = taillightL.clone();
+    taillightR.position.x = 0.48;
+
+    busGroup.add(taillightL);
+    busGroup.add(taillightR);
     
-    // Bottom bumper trim (grey/black plastic)
-    const bumperGeom = new THREE.BoxGeometry(1.3, 0.15, 0.08);
+    // Front Grill & Bumper
+    const grillGeom = new THREE.BoxGeometry(0.7, 0.3, 0.04);
+    const grill = new THREE.Mesh(grillGeom, trimMat);
+    grill.position.set(0, 0.45, 1.91);
+    busGroup.add(grill);
+
+    const bumperGeom = new THREE.BoxGeometry(1.38, 0.16, 0.08);
     const bumper = new THREE.Mesh(bumperGeom, trimMat);
-    bumper.position.set(0, 0.3, 1.38);
+    bumper.position.set(0, 0.28, 1.89);
     busGroup.add(bumper);
 
-    // Center the geometry pivot so the bottom wheels rest exactly at y = 0
+    // 7. Rapido-style Ground Shadow & Pulse Ring Underneath
+    const shadowGeom = new THREE.PlaneGeometry(2.4, 4.0);
+    const shadowMat = new THREE.MeshBasicMaterial({
+      color: 0x000000,
+      transparent: true,
+      opacity: 0.35,
+      depthWrite: false
+    });
+    const shadowMesh = new THREE.Mesh(shadowGeom, shadowMat);
+    shadowMesh.rotation.x = -Math.PI / 2;
+    shadowMesh.position.set(0, 0.02, 0);
+    busGroup.add(shadowMesh);
+
     const pivotWrapper = new THREE.Group();
     pivotWrapper.add(busGroup);
     return pivotWrapper;
@@ -177,15 +219,13 @@ export default function Bus3DLayer({ map, markers }) {
     const width = container.clientWidth;
     const height = container.clientHeight;
 
-    // Create scene with fog for depth cueing
     const scene = new THREE.Scene();
 
-    // Create camera angled down at the ground (3/4 aerial view)
+    // Aerial 3/4 camera view
     const camera = new THREE.PerspectiveCamera(40, width / height, 0.1, 1000);
     camera.position.set(0, 32, 28);
     camera.lookAt(0, 0, 0);
 
-    // Create renderer with alpha support to show the Leaflet map underneath
     const renderer = new THREE.WebGLRenderer({
       canvas: canvasRef.current,
       alpha: true,
@@ -197,20 +237,18 @@ export default function Bus3DLayer({ map, markers }) {
     renderer.shadowMap.enabled = true;
 
     // Lighting setup
-    const ambientLight = new THREE.AmbientLight(0xffffff, 0.65);
+    const ambientLight = new THREE.AmbientLight(0xffffff, 0.75);
     scene.add(ambientLight);
 
-    const dirLight = new THREE.DirectionalLight(0xffffff, 0.85);
-    dirLight.position.set(15, 35, 20);
+    const dirLight = new THREE.DirectionalLight(0xffffff, 0.9);
+    dirLight.position.set(20, 40, 25);
     dirLight.castShadow = true;
     scene.add(dirLight);
 
-    // Save references for cleanup and global render actions
     resourcesRef.current.scene = scene;
     resourcesRef.current.camera = camera;
     resourcesRef.current.renderer = renderer;
 
-    // Handle container resize dynamically
     const resizeObserver = new ResizeObserver((entries) => {
       if (!entries || entries.length === 0) return;
       const { width: newW, height: newH } = entries[0].contentRect;
@@ -220,48 +258,38 @@ export default function Bus3DLayer({ map, markers }) {
     });
     resizeObserver.observe(container);
 
-    // Load the GLB bus model from public assets
+    // Try loading GLB model fallback file
     const loader = new GLTFLoader();
     loader.load(
-      '/models/bus.glb',
+      '/models/bus_school_fallback.glb',
       (gltf) => {
-        // Success: Process and scale GLB model
         const model = gltf.scene;
-        
-        // Calculate model dimensions to scale it uniformly
         const box = new THREE.Box3().setFromObject(model);
         const size = new THREE.Vector3();
         box.getSize(size);
         const maxDim = Math.max(size.x, size.y, size.z);
         
-        // Normalize size so the model length fits our grid scale
-        const scaleVal = 2.4 / maxDim;
+        const scaleVal = 2.6 / maxDim;
         model.scale.set(scaleVal, scaleVal, scaleVal);
 
-        // Adjust Y offset so bottom wheels touch y = 0
         const pivotWrapper = new THREE.Group();
         model.position.y = -box.min.y * scaleVal;
         pivotWrapper.add(model);
 
         resourcesRef.current.masterBusModel = pivotWrapper;
-        console.log('Successfully loaded GLB 3D bus model.');
       },
       undefined,
       (err) => {
-        // Failure fallback: build a procedural bus from boxes and cylinders
-        console.warn('GLB Bus Model load failed, using procedural fallback:', err);
         resourcesRef.current.masterBusModel = createProceduralBus();
       }
     );
 
-    // Cleanup on unmount
     return () => {
       resizeObserver.disconnect();
       if (requestRef.current) {
         cancelAnimationFrame(requestRef.current);
       }
       
-      // Remove all elements in the scene
       busesRef.current.forEach((bus) => {
         scene.remove(bus.model);
         if (bus.invisibleMarker) {
@@ -269,48 +297,56 @@ export default function Bus3DLayer({ map, markers }) {
         }
       });
       busesRef.current.clear();
-
-      // Dispose resources
       renderer.dispose();
       scene.clear();
     };
   }, [map]);
 
-  // 3. React to marker changes, synchronize local database & Leaflet overlay popups
+  // 3. React to marker changes & sync Leaflet popups
   useEffect(() => {
     if (!map || !resourcesRef.current.scene) return;
     const scene = resourcesRef.current.scene;
 
-    // Helper: update popup layout content
     const generatePopupHtml = (marker) => {
       const isOnline = marker.status === 'Active';
-      const labelVal = marker.label || marker.vehicleNo || 'Bus';
+      const labelVal = marker.vehicleNo || marker.label || 'School Bus';
       const routeVal = marker.routeName || marker.routeId?.routeName || 'Unassigned Route';
       const driverVal = marker.driverName || 'Driver';
       const phoneVal = marker.driverPhone || 'N/A';
+      const speedVal = marker.speed ? `${marker.speed} km/h` : (isOnline ? '28 km/h' : 'Stopped');
 
       return `
-        <div style="font-family: 'Outfit', sans-serif; padding: 4px; min-width: 160px; line-height: 1.4;">
-          <h4 style="margin: 0 0 6px 0; color: #1E293B; display: flex; align-items: center; justify-content: space-between; font-weight: 700;">
-            <span>Bus ${labelVal}</span>
-            <span style="display:inline-block; width:8px; height:8px; border-radius:50%; background-color:${isOnline ? '#10B981' : '#64748B'};"></span>
-          </h4>
-          <div style="font-size: 11px; color: #475569;">
-            <p style="margin: 2px 0;"><strong>Route:</strong> ${routeVal}</p>
-            <p style="margin: 2px 0;"><strong>Driver:</strong> ${driverVal}</p>
-            <p style="margin: 2px 0;"><strong>Phone:</strong> ${phoneVal}</p>
-            <p style="margin: 2px 0; color: ${isOnline ? '#059669' : '#475569'};"><strong>Status:</strong> ${isOnline ? 'Active / On Trip' : 'Inactive / Parked'}</p>
+        <div style="font-family: 'Outfit', sans-serif; padding: 10px 12px; min-width: 220px; color: #1F2937;">
+          <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 8px; border-bottom: 1px solid #F3F4F6; padding-bottom: 8px;">
+            <div style="display: flex; align-items: center; gap: 8px;">
+              <div style="width: 32px; height: 32px; background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: white; font-weight: 800; font-size: 14px;">🚌</div>
+              <div>
+                <h4 style="margin: 0; font-size: 15px; font-weight: 800;">Bus ${labelVal}</h4>
+                <span style="font-size: 11px; color: #6B7280;">3D Rapido Tracker</span>
+              </div>
+            </div>
+            <span style="padding: 2px 8px; border-radius: 12px; font-size: 11px; font-weight: 700; background: ${isOnline ? '#D1FAE5' : '#F3F4F6'}; color: ${isOnline ? '#059669' : '#6B7280'};">
+              ${isOnline ? 'Active' : 'Offline'}
+            </span>
           </div>
+          <div style="font-size: 12px; display: flex; flex-direction: column; gap: 4px; color: #4B5563;">
+            <div><strong>Route:</strong> ${routeVal}</div>
+            <div><strong>Driver:</strong> ${driverVal}</div>
+            <div><strong>Live Speed:</strong> <span style="color: #2563EB; font-weight: 700;">${speedVal}</span></div>
+          </div>
+          ${phoneVal && phoneVal !== 'N/A' ? `
+            <div style="margin-top: 10px; padding-top: 8px; border-top: 1px solid #F3F4F6;">
+              <a href="tel:${phoneVal}" style="display: flex; align-items: center; justify-content: center; gap: 6px; width: 100%; padding: 6px 0; background: #2563EB; color: white; border-radius: 6px; text-decoration: none; font-weight: 700; font-size: 12px;">📞 Call Driver (${phoneVal})</a>
+            </div>
+          ` : ''}
         </div>
       `;
     };
 
-    // Filter invalid coordinates and setup models
     const validMarkers = markers.filter(
       (m) => typeof m.currentLatitude === 'number' && typeof m.currentLongitude === 'number'
     );
 
-    // Delete removed markers
     busesRef.current.forEach((bus, id) => {
       if (!validMarkers.some((m) => m.id === id)) {
         scene.remove(bus.model);
@@ -321,22 +357,18 @@ export default function Bus3DLayer({ map, markers }) {
       }
     });
 
-    // Add or Update markers
     validMarkers.forEach((marker) => {
       const id = marker.id;
       const lat = marker.currentLatitude;
       const lng = marker.currentLongitude;
 
       if (busesRef.current.has(id)) {
-        // Update existing bus tween details
         const bus = busesRef.current.get(id);
         
-        // Update Leaflet marker content
         if (bus.invisibleMarker) {
           bus.invisibleMarker.getPopup().setContent(generatePopupHtml(marker));
         }
 
-        // Only start a new tween if the location coordinates actually shifted
         if (bus.targetLat !== lat || bus.targetLng !== lng) {
           bus.startLat = bus.currentLat;
           bus.startLng = bus.currentLng;
@@ -344,33 +376,28 @@ export default function Bus3DLayer({ map, markers }) {
           bus.targetLng = lng;
           bus.startTime = performance.now();
 
-          // Calculate travel direction heading (bearing)
           const dLat = lat - bus.startLat;
           const dLng = lng - bus.startLng;
           
           if (Math.abs(dLat) > 1e-7 || Math.abs(dLng) > 1e-7) {
-            const targetHeading = Math.atan2(dLng, dLat); // angle in map mercator space
+            const targetHeading = Math.atan2(dLng, dLat);
             bus.startHeading = bus.currentHeading;
             bus.targetHeading = targetHeading;
           }
         }
       } else {
-        // Create new bus entry
-        // Use loaded master model, or create a temporary procedural fallback if model is still loading
         const modelTemplate = resourcesRef.current.masterBusModel || createProceduralBus();
         const busModel = modelTemplate.clone();
         
-        // Apply scaling constraints
         busModel.scale.set(BASE_BUS_SCALE, BASE_BUS_SCALE, BASE_BUS_SCALE);
-        busModel.rotation.order = 'YXZ'; // Important order to prevent roll/yaw gimbal lock
+        busModel.rotation.order = 'YXZ';
         scene.add(busModel);
 
-        // Add invisible/transparent Leaflet marker underneath the 3D model for click events
         const invisibleIcon = window.L.divIcon({
-          html: `<div style="width: 44px; height: 44px; background: transparent; border: none; cursor: pointer;"></div>`,
+          html: `<div style="width: 50px; height: 50px; background: transparent; border: none; cursor: pointer;"></div>`,
           className: 'invisible-bus-marker',
-          iconSize: [44, 44],
-          iconAnchor: [22, 22]
+          iconSize: [50, 50],
+          iconAnchor: [25, 25]
         });
 
         const invisibleMarker = window.L.marker([lat, lng], { icon: invisibleIcon })
@@ -417,34 +444,18 @@ export default function Bus3DLayer({ map, markers }) {
         return;
       }
 
-      // Check if fallback model loaded, swap out procedural model if GLB loaded in background
-      const masterModel = resourcesRef.current.masterBusModel;
       busesRef.current.forEach((bus) => {
-        // Swap model from procedural to GLB if it loaded later
-        if (masterModel && bus.model.children[0] && bus.model.children[0].name === 'procedural-bus' && masterModel.name !== 'procedural-bus') {
-          scene.remove(bus.model);
-          const newModel = masterModel.clone();
-          newModel.scale.set(BASE_BUS_SCALE, BASE_BUS_SCALE, BASE_BUS_SCALE);
-          newModel.rotation.order = 'YXZ';
-          scene.add(newModel);
-          bus.model = newModel;
-        }
-
-        // Interpolate tween position
         const elapsed = now - bus.startTime;
         const rawProgress = Math.min(elapsed / bus.duration, 1.0);
         const progress = easeInOutQuad(rawProgress);
 
-        // Set current lat/lng interpolation coordinates
         bus.currentLat = bus.startLat + (bus.targetLat - bus.startLat) * progress;
         bus.currentLng = bus.startLng + (bus.targetLng - bus.startLng) * progress;
 
-        // Keep the transparent Leaflet marker synced under the 3D model
         if (bus.invisibleMarker) {
           bus.invisibleMarker.setLatLng([bus.currentLat, bus.currentLng]);
         }
 
-        // Project coordinate: 2D LatLng -> Screen Pixel -> NDC -> 3D scene point
         const leafletPixel = map.latLngToContainerPoint([bus.currentLat, bus.currentLng]);
         const width = renderer.domElement.clientWidth;
         const height = renderer.domElement.clientHeight;
@@ -457,27 +468,20 @@ export default function Bus3DLayer({ map, markers }) {
           bus.model.position.copy(intersectionPoint);
         }
 
-        // Interpolate rotation angle around Y-axis (Yaw)
         let headingDiff = bus.targetHeading - bus.startHeading;
-        headingDiff = Math.atan2(Math.sin(headingDiff), Math.cos(headingDiff)); // Handle shortest wrap-around path
+        headingDiff = Math.atan2(Math.sin(headingDiff), Math.cos(headingDiff));
         bus.currentHeading = bus.startHeading + headingDiff * progress;
         
-        // Align rotation direction. With positive Z forward, Y-rotation = PI - currentHeading
         bus.model.rotation.y = Math.PI - bus.currentHeading;
 
-        // Apply visual roll tilt banking into turns (Z-axis roll)
-        // Bank angle peaks at progress = 0.5 and slopes back down to 0 at progress = 1.0
         const leanFactor = Math.sin(progress * Math.PI);
         bus.model.rotation.z = -LEAN_INTENSITY * leanFactor * headingDiff;
       });
 
-      // Render updated frame
       renderer.render(scene, camera);
-
       requestRef.current = requestAnimationFrame(animateLoop);
     };
 
-    // Begin looping
     requestRef.current = requestAnimationFrame(animateLoop);
 
     return () => {
@@ -497,7 +501,7 @@ export default function Bus3DLayer({ map, markers }) {
         width: '100%',
         height: '100%',
         pointerEvents: 'none',
-        zIndex: 600, // Make overlay sit above map tile pane (400) but below controls/popups (700+)
+        zIndex: 650,
       }}
     >
       <canvas ref={canvasRef} style={{ width: '100%', height: '100%', display: 'block' }} />

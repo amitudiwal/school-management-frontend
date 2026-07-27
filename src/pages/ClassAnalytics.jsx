@@ -17,10 +17,7 @@ import {
   HelpOutline as HelpIcon,
   ArrowForward as ArrowIcon
 } from '@mui/icons-material';
-import {
-  BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip as ChartTooltip,
-  ResponsiveContainer, Cell
-} from 'recharts';
+import AmColumnChart from '../components/charts/AmColumnChart';
 import {
   GET_CLASSES, GET_SECTIONS, GET_EXAMS,
   GET_CLASS_PERFORMANCE_ANALYTICS
@@ -289,22 +286,16 @@ function ClassAnalytics() {
                   <AnalyticsIcon color="primary" /> Academic Grade Distributions
                 </Typography>
                 <Box sx={{ width: '100%', height: 280, flexGrow: 1 }}>
-                  <ResponsiveContainer>
-                    <BarChart data={analytics?.gradeDistribution || []}>
-                      <CartesianGrid strokeDasharray="3 3" stroke={theme.palette.divider} />
-                      <XAxis dataKey="grade" stroke={theme.palette.text.secondary} />
-                      <YAxis stroke={theme.palette.text.secondary} allowDecimals={false} />
-                      <ChartTooltip formatter={(value) => [`${value} Students`, 'Total']} />
-                      <Bar dataKey="count" fill={theme.palette.primary.main} radius={[6, 6, 0, 0]}>
-                        {analytics?.gradeDistribution.map((entry, index) => (
-                          <Cell 
-                            key={`cell-${index}`} 
-                            fill={gradeColors[entry.grade] || theme.palette.primary.main} 
-                          />
-                        ))}
-                      </Bar>
-                    </BarChart>
-                  </ResponsiveContainer>
+                  <AmColumnChart
+                    categories={(analytics?.gradeDistribution || []).map(g => g.grade)}
+                    series={[{
+                      name: 'Students',
+                      data: (analytics?.gradeDistribution || []).map(g => g.count)
+                    }]}
+                    colors={['#10B981', '#3B82F6', '#6366F1', '#F59E0B', '#EF4444']}
+                    height={280}
+                    valueSuffix=" Students"
+                  />
                 </Box>
               </Card>
             </Grid>
