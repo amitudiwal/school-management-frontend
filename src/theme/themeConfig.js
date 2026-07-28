@@ -52,35 +52,58 @@ const getDesignTokens = (mode) => ({
         }),
   },
   typography: {
-    fontFamily: "'Inter', 'Outfit', 'Marcellus', sans-serif",
+    fontFamily: "'Plus Jakarta Sans', 'Outfit', 'Inter', sans-serif",
     h1: {
-      fontFamily: "'Marcellus', serif",
-      fontWeight: 400,
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
+      fontWeight: 800,
+      letterSpacing: '-0.03em',
     },
     h2: {
-      fontFamily: "'Marcellus', serif",
-      fontWeight: 400,
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
+      fontWeight: 800,
+      letterSpacing: '-0.025em',
     },
     h3: {
-      fontFamily: "'Marcellus', serif",
-      fontWeight: 400,
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
+      fontWeight: 800,
+      letterSpacing: '-0.02em',
     },
     h4: {
-      fontFamily: "'Marcellus', serif",
-      fontWeight: 400,
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
+      fontWeight: 800,
+      letterSpacing: '-0.02em',
     },
     h5: {
-      fontFamily: "'Marcellus', serif",
-      fontWeight: 400,
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
+      fontWeight: 700,
+      letterSpacing: '-0.015em',
     },
     h6: {
-      fontFamily: "'Marcellus', serif",
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
+      fontWeight: 700,
+      letterSpacing: '-0.01em',
+    },
+    subtitle1: {
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
+      fontWeight: 600,
+    },
+    subtitle2: {
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
+      fontWeight: 600,
+    },
+    body1: {
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
+      fontWeight: 400,
+    },
+    body2: {
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
       fontWeight: 400,
     },
     button: {
-      fontFamily: "'Outfit', sans-serif",
-      fontWeight: 600,
+      fontFamily: "'Plus Jakarta Sans', sans-serif",
+      fontWeight: 700,
       textTransform: 'none',
+      letterSpacing: '0.01em',
     },
   },
   shape: {

@@ -549,7 +549,10 @@ function BusTracker() {
               const parts = item.display_name.split(',');
               const place = parts[0].trim();
               const cityOrDistrict = parts[1] ? parts[1].trim() : '';
-              return cityOrDistrict ? `${place}, ${cityOrDistrict}` : place;
+              const cleanName = cityOrDistrict ? `${place}, ${cityOrDistrict}` : place;
+              const latVal = parseFloat(item.lat).toFixed(6);
+              const lonVal = parseFloat(item.lon).toFixed(6);
+              return `${cleanName} @ ${latVal}, ${lonVal}`;
             });
 
             // If biased search returns fewer results, try exact global query
@@ -564,7 +567,10 @@ function BusTracker() {
                   const parts = item.display_name.split(',');
                   const place = parts[0].trim();
                   const cityOrDistrict = parts[1] ? parts[1].trim() : '';
-                  liveNames.push(cityOrDistrict ? `${place}, ${cityOrDistrict}` : place);
+                  const cleanName = cityOrDistrict ? `${place}, ${cityOrDistrict}` : place;
+                  const latVal = parseFloat(item.lat).toFixed(6);
+                  const lonVal = parseFloat(item.lon).toFixed(6);
+                  liveNames.push(`${cleanName} @ ${latVal}, ${lonVal}`);
                 });
               }
             }
@@ -648,6 +654,18 @@ function BusTracker() {
       return;
     }
 
+    // Auto-include stop if user entered text in newStopName but forgot to click "+ Add"
+    let finalStops = [...stops];
+    if (newStopName.trim()) {
+      const pendingStop = {
+        stopName: newStopName.trim(),
+        arrivalTime: newStopTime.trim() || '08:00 AM'
+      };
+      if (!finalStops.some(s => s.stopName.toLowerCase() === pendingStop.stopName.toLowerCase())) {
+        finalStops.push(pendingStop);
+      }
+    }
+
     try {
       await createRoute({
         variables: {
@@ -655,7 +673,7 @@ function BusTracker() {
           startLocation: startLocation.trim(),
           endLocation: endLocation.trim(),
           routeFee: feeVal,
-          stops: stops.map(s => ({ stopName: s.stopName, arrivalTime: s.arrivalTime }))
+          stops: finalStops.map(s => ({ stopName: s.stopName, arrivalTime: s.arrivalTime }))
         }
       });
       setFormSuccess('Transport Route created successfully!');
@@ -664,6 +682,8 @@ function BusTracker() {
       setEndLocation('');
       setRouteFee('');
       setStops([]);
+      setNewStopName('');
+      setNewStopTime('');
       refetchRoutes();
     } catch (err) {
       console.error('Error creating route:', err);
@@ -1089,6 +1109,7 @@ function BusTracker() {
               <MapView 
                 vehiclesList={vehiclesList}
                 getRoutePoints={getRoutePoints}
+                getMainStops={getMainStops}
                 center={mapCenter}
               />
             </Card>

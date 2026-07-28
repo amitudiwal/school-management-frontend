@@ -4,18 +4,24 @@ export const CITIES_AND_STATES_DB = [
   // Direct Short Names & Popular Locations
   { name: 'Ujjain', city: 'Ujjain', state: 'Madhya Pradesh', lat: 23.1765, lng: 75.7885, category: 'City' },
   { name: 'Ujjain, Madhya Pradesh', city: 'Ujjain', state: 'Madhya Pradesh', lat: 23.1765, lng: 75.7885, category: 'City' },
+  { name: 'Ujjain Junction', city: 'Ujjain', state: 'Madhya Pradesh', lat: 23.1812, lng: 75.7836, category: 'Landmark' },
   { name: 'Ujjain Railway Station, Ujjain, Madhya Pradesh', city: 'Ujjain', state: 'Madhya Pradesh', lat: 23.1812, lng: 75.7836, category: 'Landmark' },
   { name: 'Freeganj, Ujjain, Madhya Pradesh', city: 'Ujjain', state: 'Madhya Pradesh', lat: 23.1880, lng: 75.7920, category: 'Landmark' },
   { name: 'Nanakheda Bus Stand, Ujjain, Madhya Pradesh', city: 'Ujjain', state: 'Madhya Pradesh', lat: 23.1550, lng: 75.7850, category: 'Landmark' },
 
   { name: 'Nagda', city: 'Nagda', state: 'Madhya Pradesh', lat: 23.4533, lng: 75.4140, category: 'City' },
   { name: 'Nagda, Madhya Pradesh', city: 'Nagda', state: 'Madhya Pradesh', lat: 23.4533, lng: 75.4140, category: 'City' },
+  { name: 'Nagda Junction', city: 'Nagda', state: 'Madhya Pradesh', lat: 23.4510, lng: 75.4120, category: 'Landmark' },
+  { name: 'Nagda Junction, Nagda', city: 'Nagda', state: 'Madhya Pradesh', lat: 23.4510, lng: 75.4120, category: 'Landmark' },
   { name: 'Nagda Junction, Nagda, Madhya Pradesh', city: 'Nagda', state: 'Madhya Pradesh', lat: 23.4510, lng: 75.4120, category: 'Landmark' },
+  { name: 'Nagda Railway Station', city: 'Nagda', state: 'Madhya Pradesh', lat: 23.4510, lng: 75.4120, category: 'Landmark' },
+  { name: 'Nagda Bus Stand', city: 'Nagda', state: 'Madhya Pradesh', lat: 23.4550, lng: 75.4150, category: 'Landmark' },
 
   { name: 'Khachrod', city: 'Khachrod', state: 'Madhya Pradesh', lat: 23.4300, lng: 75.2800, category: 'City' },
   { name: 'khachrod', city: 'Khachrod', state: 'Madhya Pradesh', lat: 23.4300, lng: 75.2800, category: 'City' },
   { name: 'Khachrod, Madhya Pradesh', city: 'Khachrod', state: 'Madhya Pradesh', lat: 23.4300, lng: 75.2800, category: 'City' },
   { name: 'Khachrod City', city: 'Khachrod', state: 'Madhya Pradesh', lat: 23.4300, lng: 75.2800, category: 'City' },
+  { name: 'Khachrod Junction', city: 'Khachrod', state: 'Madhya Pradesh', lat: 23.4320, lng: 75.2810, category: 'Landmark' },
   { name: 'Khachrod Railway Station, Khachrod, Madhya Pradesh', city: 'Khachrod', state: 'Madhya Pradesh', lat: 23.4320, lng: 75.2810, category: 'Landmark' },
 
   // Ghudawan & Rama Talai (Khachrod Region)

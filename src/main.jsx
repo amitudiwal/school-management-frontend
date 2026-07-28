@@ -5,6 +5,7 @@ import { BrowserRouter } from 'react-router-dom';
 import { ApolloProvider } from '@apollo/client';
 import { store } from './store';
 import client from './graphql/client';
+import './index.css';
 import App from './App';
 
 ReactDOM.createRoot(document.getElementById('root')).render(

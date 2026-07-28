@@ -9,7 +9,7 @@ const GOOGLE_TILE_SERVERS = {
   terrain: 'https://{s}.google.com/vt/lyrs=p&x={x}&y={y}&z={z}'
 };
 
-export default function MapView({ vehiclesList, getRoutePoints, center }) {
+export default function MapView({ vehiclesList, getRoutePoints, getMainStops, center }) {
   const mapRef = useRef(null);
   const tileLayerRef = useRef(null);
   const routesLinesRef = useRef([]);
@@ -164,14 +164,19 @@ export default function MapView({ vehiclesList, getRoutePoints, center }) {
             }).addTo(mapInstance);
             routesLinesRef.current.push(polyline);
 
-            // Draw Google-styled circular pin stops
-            routePoints.forEach((stop, index) => {
+            // Draw Google-styled circular pin stops only for actual main stops
+            const mainStops = getMainStops 
+              ? getMainStops(v.routeId.routeName) 
+              : routePoints.filter(p => !p.name.includes('➔'));
+
+            mainStops.forEach((stop, index) => {
+              const cleanName = stop.name ? stop.name.replace(/@\s*-?\d+(?:\.\d+)?,\s*-?\d+(?:\.\d+)?$/, '').trim() : '';
               const stopIconHtml = `
                 <div style="
                   background-color: #FFFFFF;
                   color: #1A73E8;
-                  width: 22px;
-                  height: 22px;
+                  width: 24px;
+                  height: 24px;
                   border-radius: 50%;
                   display: flex;
                   align-items: center;
@@ -179,7 +184,7 @@ export default function MapView({ vehiclesList, getRoutePoints, center }) {
                   box-shadow: 0 3px 6px rgba(0,0,0,0.3);
                   border: 2px solid #4285F4;
                   font-weight: 800;
-                  font-size: 10px;
+                  font-size: 11px;
                   font-family: sans-serif;
                 ">
                   ${index + 1}
@@ -188,12 +193,12 @@ export default function MapView({ vehiclesList, getRoutePoints, center }) {
               const stopIcon = L.divIcon({
                 html: stopIconHtml,
                 className: 'google-stop-icon',
-                iconSize: [22, 22],
-                iconAnchor: [11, 11]
+                iconSize: [24, 24],
+                iconAnchor: [12, 12]
               });
 
               const stopMarker = L.marker([stop.lat, stop.lng], { icon: stopIcon })
-                .bindPopup(`<div style="padding: 4px; font-family: sans-serif;"><b>Bus Stop ${index + 1}:</b> ${stop.name}</div>`)
+                .bindPopup(`<div style="padding: 4px; font-family: sans-serif;"><b>Bus Stop ${index + 1}:</b> ${cleanName}</div>`)
                 .addTo(mapInstance);
               stopsMarkersRef.current.push(stopMarker);
             });
@@ -203,7 +208,7 @@ export default function MapView({ vehiclesList, getRoutePoints, center }) {
     } catch (err) {
       console.error('Error drawing Google Maps route lines and stops:', err);
     }
-  }, [mapLoaded, mapInstance, vehiclesList, getRoutePoints]);
+  }, [mapLoaded, mapInstance, vehiclesList, getRoutePoints, getMainStops]);
 
   if (leafletError) {
     return (
