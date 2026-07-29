@@ -17,6 +17,35 @@ import { GET_SCHOOL, UPDATE_SCHOOL_PERMISSIONS } from '../graphql/operations';
 import { showToast } from '../store/slices/uiSlice';
 
 const ROLE_FEATURES = {
+  PRINCIPAL: [
+    { key: 'dashboard', label: 'Dashboard View', desc: 'Allows access to the business/school metrics dashboard.' },
+    { key: 'super-teachers', label: 'Academics Management Register', desc: 'Allows registering and managing academic coordinators.' },
+    { key: 'accountants', label: 'Accountant Register', desc: 'Allows registering and managing school accountants.' },
+    { key: 'teachers', label: 'Teacher Registration', desc: 'Allows registering new teachers and updating details.' },
+    { key: 'students', label: 'Student Registration', desc: 'Allows onboarding new students and modifying records.' },
+    { key: 'alumni', label: 'Alumni Directory', desc: 'Access and review historical alumni directories.' },
+    { key: 'classes', label: 'Class Management', desc: 'Enables managing class groups and student sections.' },
+    { key: 'shifts', label: 'Shift Management', desc: 'Provides capability to schedule staff shifts.' },
+    { key: 'timetable', label: 'Weekly Timetable', desc: 'Allows scheduling and viewing timetables.' },
+    { key: 'exams', label: 'Exam Schedule', desc: 'Allows managing examination schedules.' },
+    { key: 'attendance', label: 'Daily Attendance', desc: 'Allows tracking and marking student daily attendance rolls.' },
+    { key: 'staff-attendance', label: 'Staff Attendance', desc: 'Allows tracking teacher and staff attendance logs.' },
+    { key: 'self-attendance', label: 'Mark Attendance', desc: 'Enables staff to check-in/check-out.' },
+    { key: 'leaves', label: 'Leave Management', desc: 'Allows managing employee leaves of absence.' },
+    { key: 'pending-jobs', label: 'Pending Jobs', desc: 'Enables submitting and tracking backend operations.' },
+    { key: 'homework', label: 'Homework Board', desc: 'Enables assigning homework assignments to classes.' },
+    { key: 'copy-submission', label: 'Copy Submission', desc: 'Enables teachers to track fair copy submission for students.' },
+    { key: 'grades', label: 'Grades Entry', desc: 'Allows inputting marks and grades for exams.' },
+    { key: 'analytics', label: 'Performance Analytics', desc: 'Provides analytical graphs of student grade trends.' },
+    { key: 'fees', label: 'Fees Accounting', desc: 'Enables managing fee structures, invoicing, and receipts.' },
+    { key: 'payroll', label: 'Payroll & Payslips', desc: 'Allows processing employee salaries.' },
+    { key: 'bus-tracker', label: 'Bus Tracker', desc: 'Provides real-time GPS school bus location tracking.' },
+    { key: 'events', label: 'Events & Holidays', desc: 'Allows managing school events and holidays.' },
+    { key: 'inventory', label: 'School Inventory', desc: 'Allows tracking school assets and stock.' },
+    { key: 'library', label: 'Library Bookshelf', desc: 'Allows managing library catalogs and returns.' },
+    { key: 'announcements', label: 'Circular Portal', desc: 'Allows broadcasting notice board updates and circulars.' },
+    { key: 'settings', label: 'Settings', desc: 'Access general school settings and configuration.' }
+  ],
   SUPER_TEACHER: [
     { key: 'teachers', label: 'Teacher Registration', desc: 'Allows registering new teachers and updating their details.' },
     { key: 'classes', label: 'Class Management', desc: 'Enables managing class groups and student sections.' },
@@ -60,7 +89,13 @@ const DEFAULT_PERMISSIONS = {
   SUPER_TEACHER: ['teachers', 'classes', 'timetable', 'exams', 'staff-attendance', 'leaves', 'copy-submission', 'events', 'inventory', 'library', 'announcements'],
   ACCOUNTANT: ['students', 'fees', 'payroll'],
   TEACHER: ['pending-jobs', 'timetable', 'bus-tracker', 'attendance', 'leaves', 'homework', 'grades', 'analytics', 'payroll', 'copy-submission', 'library', 'announcements'],
-  PARENT: ['parent-portal', 'bus-tracker', 'announcements']
+  PARENT: ['parent-portal', 'bus-tracker', 'announcements'],
+  PRINCIPAL: [
+    'dashboard', 'super-teachers', 'accountants', 'teachers', 'students', 'alumni', 'classes',
+    'shifts', 'timetable', 'exams', 'attendance', 'staff-attendance', 'self-attendance',
+    'leaves', 'pending-jobs', 'homework', 'copy-submission', 'grades', 'analytics',
+    'fees', 'payroll', 'bus-tracker', 'events', 'inventory', 'library', 'announcements', 'settings'
+  ]
 };
 
 function FeaturePermissions() {
@@ -74,7 +109,8 @@ function FeaturePermissions() {
     SUPER_TEACHER: [],
     ACCOUNTANT: [],
     TEACHER: [],
-    PARENT: []
+    PARENT: [],
+    PRINCIPAL: []
   });
 
   const { loading, error, data } = useQuery(GET_SCHOOL, {
@@ -100,7 +136,8 @@ function FeaturePermissions() {
         SUPER_TEACHER: perms.SUPER_TEACHER || [],
         ACCOUNTANT: perms.ACCOUNTANT || [],
         TEACHER: perms.TEACHER || [],
-        PARENT: perms.PARENT || []
+        PARENT: perms.PARENT || [],
+        PRINCIPAL: perms.PRINCIPAL || []
       });
     }
   }, [data]);
@@ -149,7 +186,8 @@ function FeaturePermissions() {
           SUPER_TEACHER: localPermissions.SUPER_TEACHER,
           ACCOUNTANT: localPermissions.ACCOUNTANT,
           TEACHER: localPermissions.TEACHER,
-          PARENT: localPermissions.PARENT
+          PARENT: localPermissions.PARENT,
+          PRINCIPAL: localPermissions.PRINCIPAL
         }
       }
     });
@@ -160,7 +198,8 @@ function FeaturePermissions() {
       SUPER_TEACHER: [...DEFAULT_PERMISSIONS.SUPER_TEACHER],
       ACCOUNTANT: [...DEFAULT_PERMISSIONS.ACCOUNTANT],
       TEACHER: [...DEFAULT_PERMISSIONS.TEACHER],
-      PARENT: [...DEFAULT_PERMISSIONS.PARENT]
+      PARENT: [...DEFAULT_PERMISSIONS.PARENT],
+      PRINCIPAL: [...DEFAULT_PERMISSIONS.PRINCIPAL]
     });
     dispatch(showToast({ message: 'Reset local state to defaults. Remember to Save!', severity: 'info' }));
   };
@@ -199,6 +238,7 @@ function FeaturePermissions() {
             }
           }}
         >
+          <Tab label="Principal" />
           <Tab label="Academics Management" />
           <Tab label="Accountant" />
           <Tab label="Faculty Teacher" />

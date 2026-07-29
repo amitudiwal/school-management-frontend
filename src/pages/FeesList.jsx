@@ -6,14 +6,30 @@ import {
   DialogTitle, Grid, TextField, MenuItem, Table, TableBody, TableCell, 
   TableContainer, TableHead, TableRow, Paper, Typography, CircularProgress, 
   Alert, IconButton, TablePagination, Tabs, Tab, Chip, Tooltip, Checkbox,
-  Stack, Divider
+  Stack, Divider, Avatar, LinearProgress
 } from '@mui/material';
 import { useDispatch } from 'react-redux';
-import { Add as AddIcon, FileDownload as ExportIcon, Settings as SettingsIcon, Edit as EditIcon, Delete as DeleteIcon, FilterList as FilterListIcon, AutoAwesome as AutoIcon } from '@mui/icons-material';
+import { 
+  Add as AddIcon, FileDownload as ExportIcon, Settings as SettingsIcon, 
+  Edit as EditIcon, Delete as DeleteIcon, FilterList as FilterListIcon, 
+  AutoAwesome as AutoIcon, School as SchoolIcon, DirectionsBus as BusIcon, 
+  Assessment as AssessmentIcon, LocalLibrary as LibraryIcon, EmojiEvents as SportsIcon, 
+  TrendingUp as TrendingIcon, PieChart as ChartIcon, Class as ClassIcon, Payment as PaymentIcon
+} from '@mui/icons-material';
 import { GET_FEES_LIST, GET_STUDENT_FEE_LEDGER, GET_CLASSES, GET_STUDENTS, COLLECT_STUDENT_FEE, CREATE_FEE_STRUCTURE, UPDATE_FEE_STRUCTURE, DELETE_FEE_STRUCTURE, GET_STUDENT_FEE_STRUCTURE, SAVE_STUDENT_FEE_STRUCTURE } from '../graphql/operations';
 import { showToast } from '../store/slices/uiSlice';
 import CustomDatePicker from '../components/CustomDatePicker';
 import { BACKEND_URL } from '../graphql/client';
+
+const PRESETS = [
+  { title: 'Tuition Fee - Q1', category: 'TUITION', amount: 6500, desc: 'Quarter 1 Tuition Fee billing' },
+  { title: 'Tuition Fee - Q2', category: 'TUITION', amount: 6500, desc: 'Quarter 2 Tuition Fee billing' },
+  { title: 'Mid-Term Exam Fee', category: 'EXAMINATION', amount: 1500, desc: 'Mid-Term Exam charges' },
+  { title: 'Final Exam Fee', category: 'EXAMINATION', amount: 2000, desc: 'Final Exam charges' },
+  { title: 'Monthly Bus Fee', category: 'TRANSPORT', amount: 1200, desc: 'School bus transport monthly pass' },
+  { title: 'Annual Sports Fee', category: 'SPORTS', amount: 1000, desc: 'Annual sports meet and amenities charge' },
+  { title: 'Library Access Fee', category: 'LIBRARY', amount: 800, desc: 'Library membership and resource fee' },
+];
 
 function FeesList() {
   const dispatch = useDispatch();
@@ -192,13 +208,38 @@ function FeesList() {
     let totalBilled = 0;
     let totalCollected = 0;
     let outstanding = 0;
+    const classStats = {};
+    const categoryStats = {};
+    
     const ledger = ledgerData?.getStudentFeeLedger || [];
     ledger.forEach(item => {
       totalBilled += item.totalPayable || 0;
       totalCollected += item.totalPaid || 0;
       outstanding += item.outstanding || 0;
+      
+      // Class breakdown
+      if (item.className) {
+        if (!classStats[item.className]) {
+          classStats[item.className] = { billed: 0, collected: 0, outstanding: 0, count: 0 };
+        }
+        classStats[item.className].billed += item.totalPayable || 0;
+        classStats[item.className].collected += item.totalPaid || 0;
+        classStats[item.className].outstanding += item.outstanding || 0;
+        classStats[item.className].count += 1;
+      }
+      
+      // Category breakdown
+      (item.componentsBreakdown || []).forEach(comp => {
+        const cat = comp.category || 'OTHER';
+        if (!categoryStats[cat]) {
+          categoryStats[cat] = { billed: 0, collected: 0, outstanding: 0 };
+        }
+        categoryStats[cat].billed += comp.totalDue || 0;
+        categoryStats[cat].collected += comp.totalPaid || 0;
+        categoryStats[cat].outstanding += comp.remaining || 0;
+      });
     });
-    return { totalBilled, totalCollected, outstanding };
+    return { totalBilled, totalCollected, outstanding, classStats, categoryStats };
   }, [ledgerData]);
 
   React.useEffect(() => {
@@ -560,19 +601,10 @@ function FeesList() {
           Fees Ledger & Collection
         </Typography>
         <Box sx={{ display: 'flex', gap: 1.5, flexDirection: { xs: 'column', sm: 'row' }, width: { xs: '100%', sm: 'auto' } }}>
-          <Button variant="outlined" startIcon={<ExportIcon />} onClick={() => handleExport('pdf')} sx={{ width: { xs: '100%', sm: 'auto' } }}>PDF Report</Button>
-          <Button variant="outlined" startIcon={<ExportIcon />} onClick={() => handleExport('excel')} sx={{ width: { xs: '100%', sm: 'auto' } }}>Excel Sheet</Button>
+          <Button variant="outlined" startIcon={<ExportIcon />} onClick={() => handleExport('pdf')} sx={{ width: { xs: '100%', sm: 'auto' }, borderRadius: 2, fontWeight: 700 }}>PDF Report</Button>
+          <Button variant="outlined" startIcon={<ExportIcon />} onClick={() => handleExport('excel')} sx={{ width: { xs: '100%', sm: 'auto' }, borderRadius: 2, fontWeight: 700 }}>Excel Sheet</Button>
           
-          {isAdmin && (
-            <Button 
-              variant="outlined" 
-              startIcon={<SettingsIcon />} 
-              onClick={() => { clearStructureForm(); setOpenStructureModal(true); }}
-              sx={{ width: { xs: '100%', sm: 'auto' } }}
-            >
-              Add Fee Structure
-            </Button>
-          )}
+
 
           <Button 
             variant="contained" 
@@ -581,74 +613,22 @@ function FeesList() {
               setSelectedStudent('');
               setOpenModal(true);
             }}
-            sx={{ width: { xs: '100%', sm: 'auto' }, background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)', color: '#FFFFFF', fontWeight: 700 }}
+            sx={{ 
+              width: { xs: '100%', sm: 'auto' }, 
+              background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)', 
+              color: '#FFFFFF', 
+              fontWeight: 700,
+              borderRadius: 2
+            }}
           >
             Collect Fee Payment
           </Button>
         </Box>
       </Box>
 
-      {/* Financial Summary Dashboard Cards */}
-      <Grid container spacing={3} sx={{ mb: 4 }}>
-        <Grid item xs={12} sm={4}>
-          <Card sx={{ 
-            background: 'linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)', 
-            color: '#FFFFFF', 
-            borderRadius: 3,
-            boxShadow: '0 8px 16px 0 rgba(0,0,0,0.4)',
-            border: '1px solid rgba(255,255,255,0.08)'
-          }}>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="subtitle2" sx={{ opacity: 0.8, textTransform: 'uppercase', fontWeight: 700, letterSpacing: 1 }}>
-                Total Fees Billed
-              </Typography>
-              <Typography variant="h3" sx={{ mt: 1, fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
-                ₹{stats.totalBilled.toLocaleString()}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <Card sx={{ 
-            background: 'linear-gradient(135deg, #064E3B 0%, #065F46 100%)', 
-            color: '#FFFFFF', 
-            borderRadius: 3,
-            boxShadow: '0 8px 16px 0 rgba(0,0,0,0.4)',
-            border: '1px solid rgba(255,255,255,0.08)'
-          }}>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="subtitle2" sx={{ opacity: 0.8, textTransform: 'uppercase', fontWeight: 700, letterSpacing: 1 }}>
-                Total Fees Collected
-              </Typography>
-              <Typography variant="h3" sx={{ mt: 1, fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
-                ₹{stats.totalCollected.toLocaleString()}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-        <Grid item xs={12} sm={4}>
-          <Card sx={{ 
-            background: 'linear-gradient(135deg, #991B1B 0%, #7F1D1D 100%)', 
-            color: '#FFFFFF', 
-            borderRadius: 3,
-            boxShadow: '0 8px 16px 0 rgba(0,0,0,0.4)',
-            border: '1px solid rgba(255,255,255,0.08)'
-          }}>
-            <CardContent sx={{ p: 3 }}>
-              <Typography variant="subtitle2" sx={{ opacity: 0.8, textTransform: 'uppercase', fontWeight: 700, letterSpacing: 1 }}>
-                Outstanding Balance
-              </Typography>
-              <Typography variant="h3" sx={{ mt: 1, fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
-                ₹{stats.outstanding.toLocaleString()}
-              </Typography>
-            </CardContent>
-          </Card>
-        </Grid>
-      </Grid>
-
-      {/* Filter and Tab Select Layout */}
-      <Card sx={{ mb: 3, borderRadius: 3 }}>
-        <CardContent sx={{ py: 2 }}>
+      {/* Tabs Menu */}
+      <Card sx={{ mb: 4, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+        <CardContent sx={{ py: 1 }}>
           <Grid container spacing={2} alignItems="center" justifyContent="space-between">
             <Grid item xs={12} sm={8}>
               <Tabs 
@@ -656,7 +636,8 @@ function FeesList() {
                 onChange={(e, newValue) => setActiveTab(newValue)} 
                 sx={{ borderBottom: 0 }}
               >
-                <Tab label="Fee Structures & Invoices" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700 }} />
+                <Tab label="Collections Dashboard" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700 }} />
+                <Tab label="Fee Structures & Builder" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700 }} />
                 <Tab label="Student Payment Ledger" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700 }} />
               </Tabs>
             </Grid>
@@ -679,269 +660,645 @@ function FeesList() {
         </CardContent>
       </Card>
 
-      {/* Data Table */}
-      {activeTab === 0 ? (
-        feesLoading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}><CircularProgress /></Box>
-        ) : feesError ? (
-          <Alert severity="error">{feesError.message}</Alert>
-        ) : (
-          <>
-            <TableContainer component={Paper} sx={{ overflowX: 'auto', borderRadius: 3 }}>
-              <Table sx={{ minWidth: 760 }}>
-                <TableHead sx={{ backgroundColor: 'action.hover' }}>
-                  <TableRow>
-                    <TableCell sx={{ fontWeight: 700 }}>Fee Invoice Title</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Category</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Billing Amount</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Target Class</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Due Date</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Academic Term</TableCell>
-                    {isAdmin && <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>}
-                  </TableRow>
-                </TableHead>
-                <TableBody>
-                  {(feesData?.getFeesList || [])
-                    .slice(page * 10, (page + 1) * 10)
-                    .map((fee) => (
-                      <TableRow key={fee.id} hover>
-                        <TableCell sx={{ fontWeight: 700 }}>{fee.title}</TableCell>
-                        <TableCell>{fee.category}</TableCell>
-                        <TableCell sx={{ fontWeight: 600 }}>₹{fee.amount}</TableCell>
-                        <TableCell>{fee.classId?.name}</TableCell>
-                        <TableCell>{new Date(fee.dueDate).toISOString().split('T')[0]}</TableCell>
-                        <TableCell>{fee.academicYear}</TableCell>
+      {/* Tab 0: Collections Dashboard */}
+      {activeTab === 0 && (
+        <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
+          {/* KPI Summary Cards */}
+          <Grid container spacing={3}>
+            <Grid item xs={12} sm={4}>
+              <Card sx={{ 
+                background: 'linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)', 
+                color: '#FFFFFF', 
+                borderRadius: 4,
+                boxShadow: '0 8px 24px rgba(49, 46, 129, 0.25)',
+                transition: 'all 0.3s ease',
+                '&:hover': { transform: 'translateY(-4px)' }
+              }}>
+                <CardContent sx={{ p: 3.5 }}>
+                  <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+                    <Box>
+                      <Typography variant="subtitle2" sx={{ opacity: 0.8, textTransform: 'uppercase', fontWeight: 800, letterSpacing: 1.2 }}>
+                        Total Fees Billed
+                      </Typography>
+                      <Typography variant="h3" sx={{ mt: 1.5, fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
+                        ₹{stats.totalBilled.toLocaleString()}
+                      </Typography>
+                    </Box>
+                    <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.1)', width: 56, height: 56 }}>
+                      <PaymentIcon sx={{ fontSize: 32 }} />
+                    </Avatar>
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Card sx={{ 
+                background: 'linear-gradient(135deg, #064E3B 0%, #065F46 100%)', 
+                color: '#FFFFFF', 
+                borderRadius: 4,
+                boxShadow: '0 8px 24px rgba(6, 95, 70, 0.25)',
+                transition: 'all 0.3s ease',
+                '&:hover': { transform: 'translateY(-4px)' }
+              }}>
+                <CardContent sx={{ p: 3.5 }}>
+                  <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+                    <Box>
+                      <Typography variant="subtitle2" sx={{ opacity: 0.8, textTransform: 'uppercase', fontWeight: 800, letterSpacing: 1.2 }}>
+                        Total Collected
+                      </Typography>
+                      <Typography variant="h3" sx={{ mt: 1.5, fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
+                        ₹{stats.totalCollected.toLocaleString()}
+                      </Typography>
+                    </Box>
+                    <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.1)', width: 56, height: 56 }}>
+                      <TrendingIcon sx={{ fontSize: 32 }} />
+                    </Avatar>
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Grid>
+            <Grid item xs={12} sm={4}>
+              <Card sx={{ 
+                background: 'linear-gradient(135deg, #991B1B 0%, #7F1D1D 100%)', 
+                color: '#FFFFFF', 
+                borderRadius: 4,
+                boxShadow: '0 8px 24px rgba(127, 29, 29, 0.25)',
+                transition: 'all 0.3s ease',
+                '&:hover': { transform: 'translateY(-4px)' }
+              }}>
+                <CardContent sx={{ p: 3.5 }}>
+                  <Stack direction="row" spacing={2} alignItems="center" justifyContent="space-between">
+                    <Box>
+                      <Typography variant="subtitle2" sx={{ opacity: 0.8, textTransform: 'uppercase', fontWeight: 800, letterSpacing: 1.2 }}>
+                        Outstanding Balance
+                      </Typography>
+                      <Typography variant="h3" sx={{ mt: 1.5, fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
+                        ₹{stats.outstanding.toLocaleString()}
+                      </Typography>
+                    </Box>
+                    <Avatar sx={{ bgcolor: 'rgba(255,255,255,0.1)', width: 56, height: 56 }}>
+                      <ChartIcon sx={{ fontSize: 32 }} />
+                    </Avatar>
+                  </Stack>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+
+          {/* Collection Progress & Metrics */}
+          <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+            <CardContent sx={{ p: 4 }}>
+              <Typography variant="h6" sx={{ fontWeight: 800, mb: 1, fontFamily: "'Outfit', sans-serif" }}>
+                Fee Collection Coverage Rate
+              </Typography>
+              <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                Proportion of successfully collected fees against the total billed revenue for this term.
+              </Typography>
+              
+              {/* Progress gauge */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 3 }}>
+                <Box sx={{ flexGrow: 1 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 700 }}>
+                      Progress (Collected / Billed)
+                    </Typography>
+                    <Typography variant="subtitle2" sx={{ fontWeight: 800, color: 'primary.main' }}>
+                      {(stats.totalBilled > 0 ? (stats.totalCollected / stats.totalBilled) * 100 : 0).toFixed(1)}%
+                    </Typography>
+                  </Box>
+                  <LinearProgress 
+                    variant="determinate" 
+                    value={stats.totalBilled > 0 ? (stats.totalCollected / stats.totalBilled) * 100 : 0} 
+                    sx={{ height: 16, borderRadius: 8, bgcolor: 'action.hover', '& .MuiLinearProgress-bar': { borderRadius: 8, background: 'linear-gradient(90deg, #6366F1 0%, #10B981 100%)' } }}
+                  />
+                </Box>
+              </Box>
+            </CardContent>
+          </Card>
+
+          {/* Secondary breakdowns */}
+          <Grid container spacing={3}>
+            {/* Class Breakdown stats */}
+            <Grid item xs={12} md={6}>
+              <Card sx={{ height: '100%', borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+                <CardContent sx={{ p: 3.5 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 2.5, fontFamily: "'Outfit', sans-serif", display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <ClassIcon color="primary" /> Class-wise Collection Analysis
+                  </Typography>
+                  {Object.keys(stats.classStats).length === 0 ? (
+                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', py: 4, textAlign: 'center' }}>
+                      No ledger data available to break down class statistics.
+                    </Typography>
+                  ) : (
+                    <Stack spacing={2.5}>
+                      {Object.entries(stats.classStats).map(([className, classInfo]) => {
+                        const classRate = classInfo.billed > 0 ? (classInfo.collected / classInfo.billed) * 100 : 0;
+                        return (
+                          <Box key={className}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                              <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                                {className}
+                              </Typography>
+                              <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary' }}>
+                                ₹{classInfo.collected.toLocaleString()} collected / ₹{classInfo.billed.toLocaleString()} billed ({classRate.toFixed(0)}%)
+                              </Typography>
+                            </Box>
+                            <LinearProgress 
+                              variant="determinate" 
+                              value={classRate} 
+                              sx={{ height: 8, borderRadius: 4, bgcolor: 'action.hover' }}
+                            />
+                          </Box>
+                        );
+                      })}
+                    </Stack>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Category Breakdown stats */}
+            <Grid item xs={12} md={6}>
+              <Card sx={{ height: '100%', borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
+                <CardContent sx={{ p: 3.5 }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 800, mb: 2.5, fontFamily: "'Outfit', sans-serif", display: 'flex', alignItems: 'center', gap: 1 }}>
+                    <ChartIcon color="secondary" /> Category-wise Billing Breakdown
+                  </Typography>
+                  {Object.keys(stats.categoryStats).length === 0 ? (
+                    <Typography variant="body2" color="text.secondary" sx={{ fontStyle: 'italic', py: 4, textAlign: 'center' }}>
+                      No ledger data available to break down category statistics.
+                    </Typography>
+                  ) : (
+                    <Stack spacing={2.5}>
+                      {Object.entries(stats.categoryStats).map(([cat, catInfo]) => {
+                        const catRate = catInfo.billed > 0 ? (catInfo.collected / catInfo.billed) * 100 : 0;
+                        return (
+                          <Box key={cat}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 0.5 }}>
+                              <Typography variant="body2" sx={{ fontWeight: 700, textTransform: 'capitalize' }}>
+                                {cat.toLowerCase()} Fees
+                              </Typography>
+                              <Typography variant="caption" sx={{ fontWeight: 700, color: 'text.secondary' }}>
+                                ₹{catInfo.collected.toLocaleString()} / ₹{catInfo.billed.toLocaleString()} ({catRate.toFixed(0)}%)
+                              </Typography>
+                            </Box>
+                            <LinearProgress 
+                              variant="determinate" 
+                              value={catRate} 
+                              color="secondary"
+                              sx={{ height: 8, borderRadius: 4, bgcolor: 'action.hover' }}
+                            />
+                          </Box>
+                        );
+                      })}
+                    </Stack>
+                  )}
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        </Box>
+      )}
+
+      {/* Tab 1: Fee Structure & Simple Feeding */}
+      {activeTab === 1 && (
+        <Grid container spacing={4}>
+          {/* Left Column: Quick Builder Feeding System */}
+          <Grid item xs={12} md={5}>
+            <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)', height: '100%' }}>
+              <CardContent sx={{ p: 4 }}>
+                <Typography variant="h6" sx={{ fontWeight: 800, mb: 1, fontFamily: "'Outfit', sans-serif" }}>
+                  Quick Fee Structure Builder
+                </Typography>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+                  Use templates to populate details instantly, specify settings, and publish the invoice structure.
+                </Typography>
+
+                {/* Presets Grid */}
+                <Typography variant="subtitle2" sx={{ fontWeight: 800, mb: 1.5, color: 'text.secondary', display: 'block' }}>
+                  Quick Preset Templates
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 3.5 }}>
+                  {PRESETS.map((preset, index) => (
+                    <Chip
+                      key={index}
+                      label={preset.title}
+                      onClick={() => {
+                        setStructTitle(preset.title);
+                        setStructCategory(preset.category);
+                        setStructAmount(preset.amount.toString());
+                        setStructDescription(preset.desc);
+                        // Auto-fill due date to the end of this month
+                        const d = new Date();
+                        const lastDay = new Date(d.getFullYear(), d.getMonth() + 1, 0);
+                        setStructDueDate(lastDay.toISOString().split('T')[0]);
+                        dispatch(showToast({ message: `Loaded preset template: ${preset.title}`, severity: 'info' }));
+                      }}
+                      variant="outlined"
+                      color="secondary"
+                      sx={{ cursor: 'pointer', fontWeight: 650, borderStyle: 'dashed' }}
+                    />
+                  ))}
+                </Box>
+
+                <Divider sx={{ my: 2.5 }} />
+
+                {/* Feeding Form */}
+                <form onSubmit={handleStructSubmit}>
+                  {structFormError && <Alert severity="error" sx={{ mb: 2.5 }}>{structFormError}</Alert>}
+                  <Stack spacing={2.5}>
+                    <TextField 
+                      fullWidth required label="Fee Invoice Title" 
+                      placeholder="e.g. Tuition Fee - Q1"
+                      value={structTitle} 
+                      onChange={(e) => setStructTitle(e.target.value)} 
+                    />
+                    
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={6}>
+                        <TextField 
+                          fullWidth required select label="Category" 
+                          value={structCategory} 
+                          onChange={(e) => setStructCategory(e.target.value)}
+                        >
+                          <MenuItem value="TUITION">Tuition Fee</MenuItem>
+                          <MenuItem value="EXAMINATION">Examination Fee</MenuItem>
+                          <MenuItem value="TRANSPORT">Transport Fee</MenuItem>
+                          <MenuItem value="LIBRARY">Library Fee</MenuItem>
+                          <MenuItem value="ADMISSION">Admission Fee</MenuItem>
+                          <MenuItem value="SPORTS">Sports Fee</MenuItem>
+                          <MenuItem value="OTHER">Other Fee</MenuItem>
+                        </TextField>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <TextField 
+                          fullWidth required type="number" label="Billing Amount (₹)" 
+                          value={structAmount} 
+                          onChange={(e) => setStructAmount(e.target.value)} 
+                        />
+                      </Grid>
+                    </Grid>
+
+                    <Grid container spacing={2}>
+                      <Grid item xs={12} sm={6}>
+                        <TextField 
+                          fullWidth required select label="Target Class" 
+                          value={structClassId} 
+                          onChange={(e) => setStructClassId(e.target.value)}
+                        >
+                          {classesData?.getClasses.map((cls) => (
+                            <MenuItem key={cls.id} value={cls.id}>{cls.name}</MenuItem>
+                          ))}
+                        </TextField>
+                      </Grid>
+                      <Grid item xs={12} sm={6}>
+                        <CustomDatePicker 
+                          fullWidth required label="Due Date" 
+                          value={structDueDate} 
+                          onChange={(e) => setStructDueDate(e.target.value)} 
+                        />
+                      </Grid>
+                    </Grid>
+
+                    <TextField 
+                      fullWidth required label="Academic Term / Year" 
+                      value={structAcademicYear} 
+                      onChange={(e) => setStructAcademicYear(e.target.value)} 
+                    />
+
+                    <TextField 
+                      fullWidth multiline rows={2} label="Description" 
+                      value={structDescription} 
+                      onChange={(e) => setStructDescription(e.target.value)} 
+                      placeholder="Optional fee structure description details..."
+                    />
+
+                    <Box sx={{ display: 'flex', gap: 2, pt: 1 }}>
+                      <Button 
+                        type="button" 
+                        variant="outlined" 
+                        fullWidth 
+                        onClick={clearStructureForm}
+                      >
+                        Reset Form
+                      </Button>
+                      <Button 
+                        type="submit" 
+                        variant="contained" 
+                        color="secondary" 
+                        fullWidth 
+                        disabled={structLoading}
+                        sx={{ background: 'linear-gradient(135deg, #6366F1 0%, #D946EF 100%)', color: '#FFFFFF', fontWeight: 700 }}
+                      >
+                        {structLoading ? 'Creating...' : 'Publish Structure'}
+                      </Button>
+                    </Box>
+                  </Stack>
+                </form>
+              </CardContent>
+            </Card>
+          </Grid>
+
+          {/* Right Column: Visual Invoices / Cards Catalog */}
+          <Grid item xs={12} md={7}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3 }}>
+              <Typography variant="h6" sx={{ fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
+                Active Fee Structures ({feesData?.getFeesList?.length || 0})
+              </Typography>
+              {feesLoading ? (
+                <Box sx={{ display: 'flex', justifyContent: 'center', py: 6 }}><CircularProgress /></Box>
+              ) : feesError ? (
+                <Alert severity="error">{feesError.message}</Alert>
+              ) : !feesData?.getFeesList || feesData.getFeesList.length === 0 ? (
+                <Card sx={{ p: 4, textAlign: 'center', border: '1.5px dashed', borderColor: 'divider', bgcolor: 'transparent' }}>
+                  <Typography color="text.secondary">No fee structures configured for this class query.</Typography>
+                </Card>
+              ) : (
+                <Grid container spacing={2}>
+                  {feesData.getFeesList.map((fee) => {
+                    // Choose color and icon based on category
+                    let catColor = '#6366F1'; // Default Tuition/Indigo
+                    let CatIcon = SchoolIcon;
+                    if (fee.category === 'TRANSPORT') {
+                      catColor = '#F59E0B'; // Transport/Amber
+                      CatIcon = BusIcon;
+                    } else if (fee.category === 'EXAMINATION') {
+                      catColor = '#3B82F6'; // Examination/Blue
+                      CatIcon = AssessmentIcon;
+                    } else if (fee.category === 'LIBRARY') {
+                      catColor = '#8B5CF6'; // Library/Purple
+                      CatIcon = LibraryIcon;
+                    } else if (fee.category === 'SPORTS') {
+                      catColor = '#EC4899'; // Sports/Pink
+                      CatIcon = SportsIcon;
+                    } else if (fee.category === 'OTHER') {
+                      catColor = '#64748B'; // Other/Grey
+                      CatIcon = SettingsIcon;
+                    }
+
+                    return (
+                      <Grid item xs={12} sm={6} key={fee.id}>
+                        <Card sx={{ 
+                          borderTop: `6px solid ${catColor}`, 
+                          borderRadius: 3, 
+                          boxShadow: '0 4px 12px rgba(0,0,0,0.05)',
+                          transition: 'all 0.2s ease',
+                          '&:hover': { transform: 'translateY(-2px)', boxShadow: '0 8px 20px rgba(0,0,0,0.1)' }
+                        }}>
+                          <CardContent sx={{ p: 2.5 }}>
+                            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 1.5 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+                                <Avatar sx={{ bgcolor: `${catColor}15`, color: catColor, width: 40, height: 40 }}>
+                                  <CatIcon />
+                                </Avatar>
+                                <Box>
+                                  <Typography variant="subtitle2" sx={{ fontWeight: 800 }}>
+                                    {fee.title}
+                                  </Typography>
+                                  <Chip label={fee.classId?.name || 'All Classes'} size="small" sx={{ height: 20, fontSize: '0.7rem', fontWeight: 650, mt: 0.5 }} />
+                                </Box>
+                              </Box>
+                              
+                              {isAdmin && (
+                                <Box sx={{ display: 'flex' }}>
+                                  <IconButton size="small" color="primary" onClick={() => handleEditStruct(fee)}><EditIcon fontSize="small" /></IconButton>
+                                  <IconButton size="small" color="error" onClick={() => setFeeStructToDelete(fee)}><DeleteIcon fontSize="small" /></IconButton>
+                                </Box>
+                              )}
+                            </Box>
+                            
+                            <Divider sx={{ my: 1.5 }} />
+                            
+                            <Stack spacing={1}>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline' }}>
+                                <Typography variant="caption" color="text.secondary">Billing Amount</Typography>
+                                <Typography variant="h5" sx={{ fontWeight: 800, color: 'text.primary', fontFamily: "'Outfit', sans-serif" }}>
+                                  ₹{fee.amount.toLocaleString()}
+                                </Typography>
+                              </Box>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <Typography variant="caption" color="text.secondary">Due Date</Typography>
+                                <Typography variant="caption" sx={{ fontWeight: 700, color: new Date(fee.dueDate) < new Date() ? 'error.main' : 'text.secondary' }}>
+                                  {new Date(fee.dueDate).toISOString().split('T')[0]}
+                                </Typography>
+                              </Box>
+                              <Box sx={{ display: 'flex', justifyContent: 'space-between' }}>
+                                <Typography variant="caption" color="text.secondary">Academic Year</Typography>
+                                <Typography variant="caption" sx={{ fontWeight: 700 }}>
+                                  {fee.academicYear}
+                                </Typography>
+                              </Box>
+                            </Stack>
+                          </CardContent>
+                        </Card>
+                      </Grid>
+                    );
+                  })}
+                </Grid>
+              )}
+            </Box>
+          </Grid>
+        </Grid>
+      )}
+
+      {/* Tab 2: Student Ledger & Collection */}
+      {activeTab === 2 && (
+        <>
+          {/* Header with Filter Button */}
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+            <Typography variant="h6" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700 }}>
+              Student Ledger Records
+            </Typography>
+            <Button 
+              variant="outlined" 
+              startIcon={<FilterListIcon />} 
+              onClick={() => setOpenFilterModal(true)}
+              sx={{ borderRadius: 2, fontWeight: 700 }}
+            >
+              Filter Ledger
+            </Button>
+          </Box>
+
+          {/* Active Filters Chips */}
+          {hasActiveFilters && (
+            <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2, alignItems: 'center' }}>
+              <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 650 }}>
+                Active Filters:
+              </Typography>
+              {appliedFilters.name && (
+                <Chip 
+                  label={`Name: ${appliedFilters.name}`} 
+                  onDelete={() => {
+                    setAppliedFilters(prev => ({ ...prev, name: '' }));
+                    setFilterName('');
+                  }} 
+                  size="small"
+                />
+              )}
+              {appliedFilters.admissionNo && (
+                <Chip 
+                  label={`Adm No: ${appliedFilters.admissionNo}`} 
+                  onDelete={() => {
+                    setAppliedFilters(prev => ({ ...prev, admissionNo: '' }));
+                    setFilterAdmissionNo('');
+                  }} 
+                  size="small"
+                />
+              )}
+              {appliedFilters.classId && (
+                <Chip 
+                  label={`Class: ${classesData?.getClasses.find(c => c.id === appliedFilters.classId)?.name}`} 
+                  onDelete={() => {
+                    setAppliedFilters(prev => ({ ...prev, classId: '' }));
+                    setFilterClassId('');
+                  }} 
+                  size="small"
+                />
+              )}
+              {appliedFilters.status && (
+                <Chip 
+                  label={`Status: ${appliedFilters.status}`} 
+                  onDelete={() => {
+                    setAppliedFilters(prev => ({ ...prev, status: '' }));
+                    setFilterStatus('');
+                  }} 
+                  size="small"
+                />
+              )}
+              {appliedFilters.minOutstanding && (
+                <Chip 
+                  label={`Min Bal: ₹${appliedFilters.minOutstanding}`} 
+                  onDelete={() => {
+                    setAppliedFilters(prev => ({ ...prev, minOutstanding: '' }));
+                    setFilterMinOutstanding('');
+                  }} 
+                  size="small"
+                />
+              )}
+              {appliedFilters.maxOutstanding && (
+                <Chip 
+                  label={`Max Bal: ₹${appliedFilters.maxOutstanding}`} 
+                  onDelete={() => {
+                    setAppliedFilters(prev => ({ ...prev, maxOutstanding: '' }));
+                    setFilterMaxOutstanding('');
+                  }} 
+                  size="small"
+                />
+              )}
+              <Button 
+                size="small" 
+                onClick={clearAllFilters}
+                sx={{ textTransform: 'none', fontWeight: 700 }}
+              >
+                Clear All
+              </Button>
+            </Box>
+          )}
+
+          <TableContainer component={Paper} sx={{ overflowX: 'auto', borderRadius: 3 }}>
+            <Table sx={{ minWidth: 760 }}>
+              <TableHead sx={{ backgroundColor: 'action.hover' }}>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 700 }}>Student Name</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Admission No.</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Class</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Total Payable</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Total Paid</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Outstanding Balance</TableCell>
+                  <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
+                  {isAdmin && <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>}
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {filteredLedger
+                  .slice(pageLedger * 10, (pageLedger + 1) * 10)
+                  .map((ledgerItem) => {
+                    const outstanding = ledgerItem.outstanding;
+                    const payable = ledgerItem.totalPayable;
+                    const paid = ledgerItem.totalPaid;
+                    
+                    let statusText = 'NO FEES';
+                    let statusColor = 'default';
+                    
+                    if (payable > 0) {
+                      if (outstanding === 0) {
+                        statusText = 'PAID';
+                        statusColor = 'success';
+                      } else if (paid > 0) {
+                        statusText = 'PARTIAL';
+                        statusColor = 'warning';
+                      } else {
+                        statusText = 'UNPAID';
+                        statusColor = 'error';
+                      }
+                    }
+                    
+                    return (
+                      <TableRow key={ledgerItem.studentId} hover>
+                        <TableCell sx={{ fontWeight: 700 }}>{ledgerItem.studentName}</TableCell>
+                        <TableCell>{ledgerItem.admissionNo}</TableCell>
+                        <TableCell>{ledgerItem.className}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>₹{payable}</TableCell>
+                        <TableCell sx={{ fontWeight: 600 }}>₹{paid}</TableCell>
+                        <TableCell sx={{ fontWeight: 700, color: outstanding > 0 ? '#EF4444' : '#10B981' }}>
+                          ₹{outstanding}
+                        </TableCell>
+                        <TableCell>
+                          <Chip 
+                            label={statusText} 
+                            color={statusColor} 
+                            size="small" 
+                            sx={{ fontWeight: 700, fontSize: '0.75rem' }} 
+                          />
+                        </TableCell>
                         {isAdmin && (
                           <TableCell align="right">
-                            <IconButton color="primary" onClick={() => handleEditStruct(fee)}><EditIcon /></IconButton>
-                            <IconButton color="error" onClick={() => setFeeStructToDelete(fee)}><DeleteIcon /></IconButton>
+                            <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
+                              <Tooltip title="Record Payment">
+                                <IconButton 
+                                  color="success" 
+                                  onClick={() => {
+                                    setSelectedStudent(ledgerItem.studentId);
+                                    setOpenModal(true);
+                                  }}
+                                  disabled={outstanding === 0}
+                                >
+                                  <AddIcon />
+                                </IconButton>
+                              </Tooltip>
+                              <Tooltip title="Customize Student Fees">
+                                <IconButton 
+                                  color="secondary" 
+                                  onClick={() => handleOpenCustomizeModal(ledgerItem)}
+                                >
+                                  <SettingsIcon />
+                                </IconButton>
+                              </Tooltip>
+                            </Box>
                           </TableCell>
                         )}
                       </TableRow>
-                    ))}
-                  {(!feesData?.getFeesList || feesData.getFeesList.length === 0) && (
-                    <TableRow>
-                      <TableCell colSpan={isAdmin ? 7 : 6} align="center">No fee structures registered for this class.</TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            {feesData?.getFeesList?.length > 0 && (
-              <TablePagination
-                rowsPerPageOptions={[10]}
-                component="div"
-                count={feesData.getFeesList.length}
-                rowsPerPage={10}
-                page={page}
-                onPageChange={(e, newPage) => setPage(newPage)}
-              />
-            )}
-          </>
-        )
-      ) : (
-        ledgerLoading ? (
-          <Box sx={{ display: 'flex', justifyContent: 'center', p: 5 }}><CircularProgress /></Box>
-        ) : ledgerError ? (
-          <Alert severity="error">{ledgerError.message}</Alert>
-        ) : (
-          <>
-            {/* Header with Filter Button */}
-            <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-              <Typography variant="h6" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700 }}>
-                Student Ledger Records
-              </Typography>
-              <Button 
-                variant="outlined" 
-                startIcon={<FilterListIcon />} 
-                onClick={() => setOpenFilterModal(true)}
-                sx={{ borderRadius: 2, fontWeight: 700 }}
-              >
-                Filter Ledger
-              </Button>
-            </Box>
-
-            {/* Active Filters Chips */}
-            {hasActiveFilters && (
-              <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap', mb: 2, alignItems: 'center' }}>
-                <Typography variant="body2" color="text.secondary" sx={{ fontWeight: 650 }}>
-                  Active Filters:
-                </Typography>
-                {appliedFilters.name && (
-                  <Chip 
-                    label={`Name: ${appliedFilters.name}`} 
-                    onDelete={() => {
-                      setAppliedFilters(prev => ({ ...prev, name: '' }));
-                      setFilterName('');
-                    }} 
-                    size="small"
-                  />
-                )}
-                {appliedFilters.admissionNo && (
-                  <Chip 
-                    label={`Adm No: ${appliedFilters.admissionNo}`} 
-                    onDelete={() => {
-                      setAppliedFilters(prev => ({ ...prev, admissionNo: '' }));
-                      setFilterAdmissionNo('');
-                    }} 
-                    size="small"
-                  />
-                )}
-                {appliedFilters.classId && (
-                  <Chip 
-                    label={`Class: ${classesData?.getClasses.find(c => c.id === appliedFilters.classId)?.name}`} 
-                    onDelete={() => {
-                      setAppliedFilters(prev => ({ ...prev, classId: '' }));
-                      setFilterClassId('');
-                    }} 
-                    size="small"
-                  />
-                )}
-                {appliedFilters.status && (
-                  <Chip 
-                    label={`Status: ${appliedFilters.status}`} 
-                    onDelete={() => {
-                      setAppliedFilters(prev => ({ ...prev, status: '' }));
-                      setFilterStatus('');
-                    }} 
-                    size="small"
-                  />
-                )}
-                {appliedFilters.minOutstanding && (
-                  <Chip 
-                    label={`Min Bal: ₹${appliedFilters.minOutstanding}`} 
-                    onDelete={() => {
-                      setAppliedFilters(prev => ({ ...prev, minOutstanding: '' }));
-                      setFilterMinOutstanding('');
-                    }} 
-                    size="small"
-                  />
-                )}
-                {appliedFilters.maxOutstanding && (
-                  <Chip 
-                    label={`Max Bal: ₹${appliedFilters.maxOutstanding}`} 
-                    onDelete={() => {
-                      setAppliedFilters(prev => ({ ...prev, maxOutstanding: '' }));
-                      setFilterMaxOutstanding('');
-                    }} 
-                    size="small"
-                  />
-                )}
-                <Button 
-                  size="small" 
-                  onClick={clearAllFilters}
-                  sx={{ textTransform: 'none', fontWeight: 700 }}
-                >
-                  Clear All
-                </Button>
-              </Box>
-            )}
-
-            <TableContainer component={Paper} sx={{ overflowX: 'auto', borderRadius: 3 }}>
-              <Table sx={{ minWidth: 760 }}>
-                <TableHead sx={{ backgroundColor: 'action.hover' }}>
+                    );
+                  })}
+                {filteredLedger.length === 0 && (
                   <TableRow>
-                    <TableCell sx={{ fontWeight: 700 }}>Student Name</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Admission No.</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Class</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Total Payable</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Total Paid</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Outstanding Balance</TableCell>
-                    <TableCell sx={{ fontWeight: 700 }}>Status</TableCell>
-                    {isAdmin && <TableCell align="right" sx={{ fontWeight: 700 }}>Actions</TableCell>}
+                    <TableCell colSpan={isAdmin ? 8 : 7} align="center">No student ledger matches the filters.</TableCell>
                   </TableRow>
-                </TableHead>
-                <TableBody>
-                  {filteredLedger
-                    .slice(pageLedger * 10, (pageLedger + 1) * 10)
-                    .map((ledgerItem) => {
-                      const outstanding = ledgerItem.outstanding;
-                      const payable = ledgerItem.totalPayable;
-                      const paid = ledgerItem.totalPaid;
-                      
-                      let statusText = 'NO FEES';
-                      let statusColor = 'default';
-                      
-                      if (payable > 0) {
-                        if (outstanding === 0) {
-                          statusText = 'PAID';
-                          statusColor = 'success';
-                        } else if (paid > 0) {
-                          statusText = 'PARTIAL';
-                          statusColor = 'warning';
-                        } else {
-                          statusText = 'UNPAID';
-                          statusColor = 'error';
-                        }
-                      }
-                      
-                      return (
-                        <TableRow key={ledgerItem.studentId} hover>
-                          <TableCell sx={{ fontWeight: 700 }}>{ledgerItem.studentName}</TableCell>
-                          <TableCell>{ledgerItem.admissionNo}</TableCell>
-                          <TableCell>{ledgerItem.className}</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>₹{payable}</TableCell>
-                          <TableCell sx={{ fontWeight: 600 }}>₹{paid}</TableCell>
-                          <TableCell sx={{ fontWeight: 700, color: outstanding > 0 ? '#EF4444' : '#10B981' }}>
-                            ₹{outstanding}
-                          </TableCell>
-                          <TableCell>
-                            <Chip 
-                              label={statusText} 
-                              color={statusColor} 
-                              size="small" 
-                              sx={{ fontWeight: 700, fontSize: '0.75rem' }} 
-                            />
-                          </TableCell>
-                          {isAdmin && (
-                            <TableCell align="right">
-                              <Box sx={{ display: 'flex', justifyContent: 'flex-end', gap: 1 }}>
-                                <Tooltip title="Record Payment">
-                                  <IconButton 
-                                    color="success" 
-                                    onClick={() => {
-                                      setSelectedStudent(ledgerItem.studentId);
-                                      setOpenModal(true);
-                                    }}
-                                    disabled={outstanding === 0}
-                                  >
-                                    <AddIcon />
-                                  </IconButton>
-                                </Tooltip>
-                                <Tooltip title="Customize Student Fees">
-                                  <IconButton 
-                                    color="secondary" 
-                                    onClick={() => handleOpenCustomizeModal(ledgerItem)}
-                                  >
-                                    <SettingsIcon />
-                                  </IconButton>
-                                </Tooltip>
-                              </Box>
-                            </TableCell>
-                          )}
-                        </TableRow>
-                      );
-                    })}
-                  {filteredLedger.length === 0 && (
-                    <TableRow>
-                      <TableCell colSpan={isAdmin ? 8 : 7} align="center">No student ledger matches the filters.</TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </TableContainer>
-            {filteredLedger.length > 0 && (
-              <TablePagination
-                rowsPerPageOptions={[10]}
-                component="div"
-                count={filteredLedger.length}
-                rowsPerPage={10}
-                page={pageLedger}
-                onPageChange={(e, newPage) => setPageLedger(newPage)}
-              />
-            )}
-          </>
-        )
+                )}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          {filteredLedger.length > 0 && (
+            <TablePagination
+              rowsPerPageOptions={[10]}
+              component="div"
+              count={filteredLedger.length}
+              rowsPerPage={10}
+              page={pageLedger}
+              onPageChange={(e, newPage) => setPageLedger(newPage)}
+            />
+          )}
+        </>
       )}
 
       {/* Collect Fee Payment Dialog Modal */}
@@ -981,6 +1338,7 @@ function FeesList() {
                         fullWidth
                       />
                       <Button 
+                        type="button"
                         variant="contained" 
                         color="secondary"
                         onClick={handleApplyQuickPay}
@@ -1123,7 +1481,7 @@ function FeesList() {
             </Grid>
           </DialogContent>
           <DialogActions sx={{ p: 3 }}>
-            <Button onClick={() => setOpenModal(false)} variant="outlined">Cancel</Button>
+            <Button type="button" onClick={() => setOpenModal(false)} variant="outlined">Cancel</Button>
             <Button type="submit" variant="contained" color="secondary" disabled={isSubmittingPayment} sx={{ fontWeight: 700 }}>
               {isSubmittingPayment ? 'Saving...' : 'Record Payment'}
             </Button>
@@ -1209,7 +1567,7 @@ function FeesList() {
             </Grid>
           </DialogContent>
           <DialogActions sx={{ p: 3 }}>
-            <Button onClick={() => setOpenStructureModal(false)} variant="outlined">Cancel</Button>
+            <Button type="button" onClick={() => setOpenStructureModal(false)} variant="outlined">Cancel</Button>
             <Button type="submit" variant="contained" color="secondary" disabled={structLoading} sx={{ fontWeight: 700 }}>
               {structLoading ? 'Creating...' : selectedFeeStruct ? 'Update Structure' : 'Create Structure'}
             </Button>

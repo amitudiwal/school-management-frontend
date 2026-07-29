@@ -159,7 +159,7 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
 
   const hasPermission = (roleName, feature) => {
     if (roleName === 'SUPER_ADMIN') return true;
-    if (['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(roleName)) return true;
+    if (['SCHOOL_ADMIN', 'VICE_PRINCIPAL'].includes(roleName)) return true;
 
     let mappedRole = roleName;
     if (roleName === 'CLASS_TEACHER') mappedRole = 'TEACHER';
@@ -179,35 +179,35 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
 
     // SCHOOL_ADMIN / PRINCIPAL / VICE_PRINCIPAL
     ...((['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role)) ? [
-      { text: 'Dashboard', icon: <DashboardIcon />, path: '/' },
-      { text: 'Feature Permissions', icon: <SettingsIcon />, path: '/permissions' },
-      { text: 'Academics Management Register', icon: <PeopleIcon />, path: '/super-teachers' },
-      { text: 'Accountant Register', icon: <PeopleIcon />, path: '/accountants' },
-      { text: 'Teacher Registration', icon: <TeacherIcon />, path: '/teachers' },
-      { text: 'Student Registration', icon: <PeopleIcon />, path: '/students' },
-      { text: 'Alumni Directory', icon: <HistoryIcon />, path: '/alumni' },
-      { text: 'Class Management', icon: <SchoolIcon />, path: '/classes' },
-      { text: 'Shift Management', icon: <ScheduleIcon />, path: '/shifts' },
-      { text: 'Weekly Timetable', icon: <GradesIcon />, path: '/timetable' },
-      { text: 'Exam Schedule', icon: <GradesIcon />, path: '/exams' },
-      { text: 'Daily Attendance', icon: <AttendanceIcon />, path: '/attendance' },
-      { text: 'Staff Attendance', icon: <AttendanceIcon />, path: '/staff-attendance' },
-      { text: 'Mark Attendance', icon: <AttendanceIcon />, path: '/self-attendance' },
-      { text: 'Leave Management', icon: <LeaveIcon />, path: '/leaves' },
-      { text: 'Pending jobs', icon: <PendingJobsIcon />, path: '/pending-jobs' },
-      { text: 'Homework Board', icon: <HomeworkIcon />, path: '/homework' },
-      { text: 'Copy Submission', icon: <HomeworkIcon />, path: '/copy-submission' },
-      { text: 'Grades Entry', icon: <GradesIcon />, path: '/grades' },
-      { text: 'Performance Analytics', icon: <DashboardIcon />, path: '/analytics' },
-      { text: 'Fees Accounting', icon: <FeesIcon />, path: '/fees' },
-      { text: 'Payroll & Payslips', icon: <PayrollIcon />, path: '/payroll' },
-      { text: 'Bus Tracker', icon: <BusIcon />, path: '/bus-tracker' },
-      { text: 'Events & Holidays', icon: <EventsIcon />, path: '/events' },
-      { text: 'School Inventory', icon: <InventoryIcon />, path: '/inventory' },
-      { text: 'Library Bookshelf', icon: <LibraryIcon />, path: '/library' },
-      { text: 'Circular Portal', icon: <AnnouncementIcon />, path: '/announcements' },
-      { text: 'Settings', icon: <SettingsIcon />, path: '/settings' }
-    ] : []),
+      { text: 'Dashboard', icon: <DashboardIcon />, path: '/', feature: 'dashboard' },
+      ...(user?.role !== 'PRINCIPAL' ? [{ text: 'Feature Permissions', icon: <SettingsIcon />, path: '/permissions' }] : []),
+      { text: 'Academics Management Register', icon: <PeopleIcon />, path: '/super-teachers', feature: 'super-teachers' },
+      { text: 'Accountant Register', icon: <PeopleIcon />, path: '/accountants', feature: 'accountants' },
+      { text: 'Teacher Registration', icon: <TeacherIcon />, path: '/teachers', feature: 'teachers' },
+      { text: 'Student Registration', icon: <PeopleIcon />, path: '/students', feature: 'students' },
+      { text: 'Alumni Directory', icon: <HistoryIcon />, path: '/alumni', feature: 'alumni' },
+      { text: 'Class Management', icon: <SchoolIcon />, path: '/classes', feature: 'classes' },
+      { text: 'Shift Management', icon: <ScheduleIcon />, path: '/shifts', feature: 'shifts' },
+      { text: 'Weekly Timetable', icon: <GradesIcon />, path: '/timetable', feature: 'timetable' },
+      { text: 'Exam Schedule', icon: <GradesIcon />, path: '/exams', feature: 'exams' },
+      { text: 'Daily Attendance', icon: <AttendanceIcon />, path: '/attendance', feature: 'attendance' },
+      { text: 'Staff Attendance', icon: <AttendanceIcon />, path: '/staff-attendance', feature: 'staff-attendance' },
+      { text: 'Mark Attendance', icon: <AttendanceIcon />, path: '/self-attendance', feature: 'self-attendance' },
+      { text: 'Leave Management', icon: <LeaveIcon />, path: '/leaves', feature: 'leaves' },
+      { text: 'Pending jobs', icon: <PendingJobsIcon />, path: '/pending-jobs', feature: 'pending-jobs' },
+      { text: 'Homework Board', icon: <HomeworkIcon />, path: '/homework', feature: 'homework' },
+      { text: 'Copy Submission', icon: <HomeworkIcon />, path: '/copy-submission', feature: 'copy-submission' },
+      { text: 'Grades Entry', icon: <GradesIcon />, path: '/grades', feature: 'grades' },
+      { text: 'Performance Analytics', icon: <DashboardIcon />, path: '/analytics', feature: 'analytics' },
+      { text: 'Fees Accounting', icon: <FeesIcon />, path: '/fees', feature: 'fees' },
+      { text: 'Payroll & Payslips', icon: <PayrollIcon />, path: '/payroll', feature: 'payroll' },
+      { text: 'Bus Tracker', icon: <BusIcon />, path: '/bus-tracker', feature: 'bus-tracker' },
+      { text: 'Events & Holidays', icon: <EventsIcon />, path: '/events', feature: 'events' },
+      { text: 'School Inventory', icon: <InventoryIcon />, path: '/inventory', feature: 'inventory' },
+      { text: 'Library Bookshelf', icon: <LibraryIcon />, path: '/library', feature: 'library' },
+      { text: 'Circular Portal', icon: <AnnouncementIcon />, path: '/announcements', feature: 'announcements' },
+      { text: 'Settings', icon: <SettingsIcon />, path: '/settings', feature: 'settings' }
+    ].filter(item => !item.feature || hasPermission(user.role, item.feature)) : []),
 
     // SUPER_TEACHER
     ...(user?.role === 'SUPER_TEACHER' ? [

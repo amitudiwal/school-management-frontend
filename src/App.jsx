@@ -54,7 +54,6 @@ function App() {
   const { isAuthenticated, user } = useSelector((state) => state.auth);
   const [mobileOpen, setMobileOpen] = useState(false);
   const location = useLocation();
-  const canViewDashboard = ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role);
   const isPrintRoute = location.pathname.startsWith('/print');
 
   // Generate MUI Theme dynamically based on dark/light setting
@@ -73,7 +72,13 @@ function App() {
         SUPER_TEACHER: ['students', 'teachers', 'classes', 'timetable', 'exams', 'staff-attendance', 'leaves', 'copy-submission', 'events', 'inventory'],
         ACCOUNTANT: ['students', 'fees', 'payroll'],
         TEACHER: ['pending-jobs', 'timetable', 'bus-tracker', 'attendance', 'leaves', 'homework', 'grades', 'analytics', 'payroll'],
-        PARENT: ['parent-portal', 'bus-tracker', 'announcements']
+        PARENT: ['parent-portal', 'bus-tracker', 'announcements'],
+        PRINCIPAL: [
+          'dashboard', 'super-teachers', 'accountants', 'teachers', 'students', 'alumni', 'classes',
+          'shifts', 'timetable', 'exams', 'attendance', 'staff-attendance', 'self-attendance',
+          'leaves', 'pending-jobs', 'homework', 'copy-submission', 'grades', 'analytics',
+          'fees', 'payroll', 'bus-tracker', 'events', 'inventory', 'library', 'announcements', 'settings'
+        ]
       }[roleName] || [];
     }
     const perms = schoolData.getSchool.settings.featurePermissions;
@@ -82,7 +87,7 @@ function App() {
 
   const hasPermission = (roleName, feature) => {
     if (roleName === 'SUPER_ADMIN') return true;
-    if (['SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(roleName)) return true;
+    if (['SCHOOL_ADMIN', 'VICE_PRINCIPAL'].includes(roleName)) return true;
     
     let mappedRole = roleName;
     if (roleName === 'CLASS_TEACHER') mappedRole = 'TEACHER';
@@ -90,6 +95,15 @@ function App() {
     const rolePerms = getPermissionsForRole(mappedRole);
     return rolePerms.includes(feature);
   };
+
+  const checkPerm = (feature) => {
+    if (!isAuthenticated) return false;
+    if (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'VICE_PRINCIPAL'].includes(user?.role)) return true;
+    if (user?.role === 'PRINCIPAL' && hasPermission('PRINCIPAL', feature)) return true;
+    return false;
+  };
+
+  const canViewDashboard = checkPerm('dashboard');
 
   const handleDrawerToggle = () => {
     setMobileOpen((open) => !open);
@@ -173,6 +187,8 @@ function App() {
                     <Navigate to="/parent-portal" />
                   ) : user?.role === 'DRIVER' ? (
                     <Navigate to="/bus-tracker" />
+                  ) : user?.role === 'PRINCIPAL' ? (
+                    <Navigate to="/self-attendance" />
                   ) : (
                     <Navigate to="/login" />
                   )
@@ -199,112 +215,112 @@ function App() {
 
             <Route
               path="/teachers"
-              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'teachers'))) ? <TeacherList /> : <Navigate to="/" />}
+              element={isAuthenticated && (checkPerm('teachers') || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'teachers'))) ? <TeacherList /> : <Navigate to="/" />}
             />
 
             <Route
               path="/super-teachers"
-              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) ? <SuperTeacherRegister /> : <Navigate to="/" />}
+              element={isAuthenticated && checkPerm('super-teachers') ? <SuperTeacherRegister /> : <Navigate to="/" />}
             />
 
             <Route
               path="/accountants"
-              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) ? <AccountantRegister /> : <Navigate to="/" />}
+              element={isAuthenticated && checkPerm('accountants') ? <AccountantRegister /> : <Navigate to="/" />}
             />
 
             <Route
               path="/classes"
-              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'classes'))) ? <ClassManagement /> : <Navigate to="/" />}
+              element={isAuthenticated && (checkPerm('classes') || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'classes'))) ? <ClassManagement /> : <Navigate to="/" />}
             />
 
             <Route 
               path="/timetable" 
-              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'timetable')) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'timetable'))) ? <TimetableManagement /> : <Navigate to="/" />} 
+              element={isAuthenticated && (checkPerm('timetable') || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'timetable')) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'timetable'))) ? <TimetableManagement /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/fees" 
-              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (user?.role === 'ACCOUNTANT' && hasPermission('ACCOUNTANT', 'fees'))) ? <FeesList /> : <Navigate to="/" />} 
+              element={isAuthenticated && (checkPerm('fees') || (user?.role === 'ACCOUNTANT' && hasPermission('ACCOUNTANT', 'fees'))) ? <FeesList /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/attendance" 
-              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'attendance'))) ? <AttendanceMark /> : <Navigate to="/" />} 
+              element={isAuthenticated && (checkPerm('attendance') || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'attendance'))) ? <AttendanceMark /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/copy-submission" 
-              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'copy-submission'))) ? <CopySubmission /> : <Navigate to="/" />} 
+              element={isAuthenticated && (checkPerm('copy-submission') || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'copy-submission'))) ? <CopySubmission /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/staff-attendance" 
-              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'staff-attendance'))) ? <StaffAttendance /> : <Navigate to="/" />} 
+              element={isAuthenticated && (checkPerm('staff-attendance') || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'staff-attendance'))) ? <StaffAttendance /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/self-attendance" 
-              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'TEACHER', 'CLASS_TEACHER', 'SUPER_TEACHER', 'ACCOUNTANT'].includes(user?.role)) ? <SelfAttendance /> : <Navigate to="/" />} 
+              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'VICE_PRINCIPAL', 'TEACHER', 'CLASS_TEACHER', 'SUPER_TEACHER', 'ACCOUNTANT'].includes(user?.role) || (user?.role === 'PRINCIPAL' && hasPermission('PRINCIPAL', 'self-attendance'))) ? <SelfAttendance /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/homework" 
-              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'homework'))) ? <HomeworkList /> : <Navigate to="/login" />} 
+              element={isAuthenticated && (checkPerm('homework') || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'homework'))) ? <HomeworkList /> : <Navigate to="/login" />} 
             />
 
             <Route 
               path="/grades" 
-              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'grades'))) ? <GradesEntry /> : <Navigate to="/" />} 
+              element={isAuthenticated && (checkPerm('grades') || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'grades'))) ? <GradesEntry /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/analytics" 
-              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'analytics'))) ? <ClassAnalytics /> : <Navigate to="/" />} 
+              element={isAuthenticated && (checkPerm('analytics') || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'analytics'))) ? <ClassAnalytics /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/pending-jobs" 
-              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'pending-jobs'))) ? <PendingJobs /> : <Navigate to="/" />} 
+              element={isAuthenticated && (checkPerm('pending-jobs') || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'pending-jobs'))) ? <PendingJobs /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/bus-tracker" 
-              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'DRIVER'].includes(user?.role) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'bus-tracker')) || (user?.role === 'PARENT' && hasPermission('PARENT', 'bus-tracker'))) ? <BusTracker /> : <Navigate to="/" />} 
+              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'VICE_PRINCIPAL', 'DRIVER'].includes(user?.role) || (user?.role === 'PRINCIPAL' && hasPermission('PRINCIPAL', 'bus-tracker')) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'bus-tracker')) || (user?.role === 'PARENT' && hasPermission('PARENT', 'bus-tracker'))) ? <BusTracker /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/exams" 
-              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'exams'))) ? <ExamManagement /> : <Navigate to="/" />} 
+              element={isAuthenticated && (checkPerm('exams') || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'exams'))) ? <ExamManagement /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/leaves" 
-              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'leaves')) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'leaves'))) ? <LeaveManagement /> : <Navigate to="/" />} 
+              element={isAuthenticated && (checkPerm('leaves') || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'leaves')) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'leaves'))) ? <LeaveManagement /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/payroll" 
-              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (user?.role === 'ACCOUNTANT' && hasPermission('ACCOUNTANT', 'payroll')) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'payroll'))) ? <PayrollManagement /> : <Navigate to="/" />} 
+              element={isAuthenticated && (checkPerm('payroll') || (user?.role === 'ACCOUNTANT' && hasPermission('ACCOUNTANT', 'payroll')) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'payroll'))) ? <PayrollManagement /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/events" 
-              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'events'))) ? <EventsManagement /> : <Navigate to="/" />} 
+              element={isAuthenticated && (checkPerm('events') || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'events'))) ? <EventsManagement /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/inventory" 
-              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'inventory'))) ? <InventoryManagement /> : <Navigate to="/" />} 
+              element={isAuthenticated && (checkPerm('inventory') || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'inventory'))) ? <InventoryManagement /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/library" 
-              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL', 'LIBRARIAN'].includes(user?.role) || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'library')) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'library'))) ? <LibraryManagement /> : <Navigate to="/" />} 
+              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'VICE_PRINCIPAL', 'LIBRARIAN'].includes(user?.role) || (user?.role === 'PRINCIPAL' && hasPermission('PRINCIPAL', 'library')) || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'library')) || (['TEACHER', 'CLASS_TEACHER'].includes(user?.role) && hasPermission(user.role, 'library'))) ? <LibraryManagement /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/announcements" 
-              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'announcements')) || (['TEACHER', 'CLASS_TEACHER', 'PARENT'].includes(user?.role) && hasPermission(user.role, 'announcements'))) ? <AnnouncementPortal /> : <Navigate to="/" />} 
+              element={isAuthenticated && (['SUPER_ADMIN', 'SCHOOL_ADMIN', 'VICE_PRINCIPAL'].includes(user?.role) || (user?.role === 'PRINCIPAL' && hasPermission('PRINCIPAL', 'announcements')) || (user?.role === 'SUPER_TEACHER' && hasPermission('SUPER_TEACHER', 'announcements')) || (['TEACHER', 'CLASS_TEACHER', 'PARENT'].includes(user?.role) && hasPermission(user.role, 'announcements'))) ? <AnnouncementPortal /> : <Navigate to="/" />} 
             />
 
             <Route 
@@ -324,17 +340,17 @@ function App() {
 
             <Route 
               path="/permissions" 
-              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) ? <FeaturePermissions /> : <Navigate to="/" />} 
+              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'VICE_PRINCIPAL'].includes(user?.role) ? <FeaturePermissions /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/shifts" 
-              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) ? <ShiftManagement /> : <Navigate to="/" />} 
+              element={isAuthenticated && checkPerm('shifts') ? <ShiftManagement /> : <Navigate to="/" />} 
             />
 
             <Route 
               path="/alumni" 
-              element={isAuthenticated && ['SUPER_ADMIN', 'SCHOOL_ADMIN', 'PRINCIPAL', 'VICE_PRINCIPAL'].includes(user?.role) ? <AlumniManagement /> : <Navigate to="/" />} 
+              element={isAuthenticated && checkPerm('alumni') ? <AlumniManagement /> : <Navigate to="/" />} 
             />
 
             <Route 
