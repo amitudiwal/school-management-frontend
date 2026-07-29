@@ -42,6 +42,7 @@ import {
   CREATE_COMPLAINT
 } from '../graphql/operations';
 import { showToast } from '../store/slices/uiSlice';
+import AmLineChart from '../components/charts/AmLineChart';
 
 function ParentDashboard() {
   const theme = useTheme();
@@ -466,6 +467,30 @@ function ParentDashboard() {
                     <Alert severity="info">No grades or exam marks found for this student.</Alert>
                   ) : (
                     <>
+                      {/* amCharts 5 Performance Trajectory Line Graph */}
+                      <Card sx={{ p: 2.5, mb: 3, borderRadius: 3, border: `1px solid ${theme.palette.divider}` }}>
+                        <Typography variant="h6" sx={{ fontWeight: 800, mb: 1, color: theme.palette.text.primary }}>
+                          Academic Score Trajectory (amCharts 5)
+                        </Typography>
+                        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+                          Subject-wise marks trajectory and performance trend visualization
+                        </Typography>
+                        <Box sx={{ width: '100%', height: 280 }}>
+                          <AmLineChart
+                            categories={(marksData.getStudentMarks || []).map(m => m.subjectId?.name || 'Subject')}
+                            series={[{
+                              name: 'Marks Obtained',
+                              data: (marksData.getStudentMarks || []).map(m => m.marksObtained || 0),
+                              color: '#6366F1'
+                            }]}
+                            height={280}
+                            valueSuffix=" pts"
+                            smooth={true}
+                            showBullets={true}
+                          />
+                        </Box>
+                      </Card>
+
                       <TableContainer component={Paper} variant="outlined" sx={{ overflowX: 'auto' }}>
                         <Table>
                           <TableHead sx={{ bgcolor: theme.palette.background.neutral || (theme.palette.mode === 'dark' ? '#1F2937' : '#F1F5F9') }}>

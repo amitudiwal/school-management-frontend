@@ -19,6 +19,7 @@ import {
 import { GET_FEES_LIST, GET_STUDENT_FEE_LEDGER, GET_CLASSES, GET_STUDENTS, COLLECT_STUDENT_FEE, CREATE_FEE_STRUCTURE, UPDATE_FEE_STRUCTURE, DELETE_FEE_STRUCTURE, GET_STUDENT_FEE_STRUCTURE, SAVE_STUDENT_FEE_STRUCTURE } from '../graphql/operations';
 import { showToast } from '../store/slices/uiSlice';
 import CustomDatePicker from '../components/CustomDatePicker';
+import AmLineChart from '../components/charts/AmLineChart';
 import { BACKEND_URL } from '../graphql/client';
 
 const PRESETS = [
@@ -626,9 +627,97 @@ function FeesList() {
         </Box>
       </Box>
 
+<<<<<<< HEAD
       {/* Tabs Menu */}
       <Card sx={{ mb: 4, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
         <CardContent sx={{ py: 1 }}>
+=======
+      {/* Financial Summary Dashboard Cards */}
+      <Grid container spacing={3} sx={{ mb: 4 }}>
+        <Grid item xs={12} sm={4}>
+          <Card sx={{ 
+            background: 'linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)', 
+            color: '#FFFFFF', 
+            borderRadius: 3,
+            boxShadow: '0 8px 16px 0 rgba(0,0,0,0.4)',
+            border: '1px solid rgba(255,255,255,0.08)'
+          }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="subtitle2" sx={{ opacity: 0.8, textTransform: 'uppercase', fontWeight: 700, letterSpacing: 1 }}>
+                Total Fees Billed
+              </Typography>
+              <Typography variant="h3" sx={{ mt: 1, fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
+                ₹{stats.totalBilled.toLocaleString()}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <Card sx={{ 
+            background: 'linear-gradient(135deg, #064E3B 0%, #065F46 100%)', 
+            color: '#FFFFFF', 
+            borderRadius: 3,
+            boxShadow: '0 8px 16px 0 rgba(0,0,0,0.4)',
+            border: '1px solid rgba(255,255,255,0.08)'
+          }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="subtitle2" sx={{ opacity: 0.8, textTransform: 'uppercase', fontWeight: 700, letterSpacing: 1 }}>
+                Total Fees Collected
+              </Typography>
+              <Typography variant="h3" sx={{ mt: 1, fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
+                ₹{stats.totalCollected.toLocaleString()}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+        <Grid item xs={12} sm={4}>
+          <Card sx={{ 
+            background: 'linear-gradient(135deg, #991B1B 0%, #7F1D1D 100%)', 
+            color: '#FFFFFF', 
+            borderRadius: 3,
+            boxShadow: '0 8px 16px 0 rgba(0,0,0,0.4)',
+            border: '1px solid rgba(255,255,255,0.08)'
+          }}>
+            <CardContent sx={{ p: 3 }}>
+              <Typography variant="subtitle2" sx={{ opacity: 0.8, textTransform: 'uppercase', fontWeight: 700, letterSpacing: 1 }}>
+                Outstanding Balance
+              </Typography>
+              <Typography variant="h3" sx={{ mt: 1, fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
+                ₹{stats.outstanding.toLocaleString()}
+              </Typography>
+            </CardContent>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* amCharts 5 Fee Analytics Line Graph */}
+      <Card sx={{ mb: 4, p: 3, borderRadius: 3 }}>
+        <Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>
+          Fee Collection & Outstanding Distribution (amCharts 5)
+        </Typography>
+        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+          Financial collection overview comparing billed fees, total collected, and outstanding balances
+        </Typography>
+        <Box sx={{ width: '100%', height: 280 }}>
+          <AmLineChart
+            categories={['Total Billed', 'Total Collected', 'Outstanding Balance']}
+            series={[{
+              name: 'Amount (₹)',
+              data: [stats.totalBilled, stats.totalCollected, stats.outstanding],
+              color: '#10B981'
+            }]}
+            height={280}
+            valuePrefix="₹"
+            smooth={true}
+            showBullets={true}
+          />
+        </Box>
+      </Card>
+
+      {/* Filter and Tab Select Layout */}
+      <Card sx={{ mb: 3, borderRadius: 3 }}>
+        <CardContent sx={{ py: 2 }}>
+>>>>>>> e139b2b28b18a05ad95a0931053c1e16d2a7d80d
           <Grid container spacing={2} alignItems="center" justifyContent="space-between">
             <Grid item xs={12} sm={8}>
               <Tabs 

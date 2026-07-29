@@ -22,6 +22,7 @@ import {
   GET_TEACHER_ATTENDANCE_STATS
 } from '../graphql/operations';
 import { showToast } from '../store/slices/uiSlice';
+import AmLineChart from '../components/charts/AmLineChart';
 
 // Custom query to fetch teachers along with joining details and banking details
 const GET_TEACHERS_FOR_PAYROLL = gql`
@@ -599,7 +600,40 @@ function PayrollManagement() {
           ) : payrollError ? (
             <Alert severity="error">{payrollError.message}</Alert>
           ) : (
-            <TableContainer component={Paper} sx={{ borderRadius: 4, border: `1px solid ${theme.palette.divider}`, boxShadow: 'none', overflowX: 'auto' }}>
+            <>
+              {/* amCharts 5 Salary Disbursement Line Chart */}
+              <Card sx={{ p: 2.5, mb: 3, borderRadius: 4, border: `1px solid ${theme.palette.divider}` }}>
+                <Typography variant="h6" sx={{ fontWeight: 800, mb: 0.5 }}>
+                  Faculty Salary Disbursement Analytics (amCharts 5)
+                </Typography>
+                <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+                  Monthly distribution of basic salary vs net paid salary across faculty payslips
+                </Typography>
+                <Box sx={{ width: '100%', height: 280 }}>
+                  <AmLineChart
+                    categories={(payrollData?.getPayrollList || []).slice(0, 12).map(p => `${getMonthName(p.month).slice(0, 3)} ${p.year}`)}
+                    series={[
+                      {
+                        name: 'Basic Salary',
+                        data: (payrollData?.getPayrollList || []).slice(0, 12).map(p => p.basicSalary || 0),
+                        color: '#6366F1'
+                      },
+                      {
+                        name: 'Net Paid',
+                        data: (payrollData?.getPayrollList || []).slice(0, 12).map(p => p.netSalary || 0),
+                        color: '#10B981',
+                        dashed: true
+                      }
+                    ]}
+                    height={280}
+                    valuePrefix="₹"
+                    smooth={true}
+                    showBullets={true}
+                  />
+                </Box>
+              </Card>
+
+              <TableContainer component={Paper} sx={{ borderRadius: 4, border: `1px solid ${theme.palette.divider}`, boxShadow: 'none', overflowX: 'auto' }}>
               <Table sx={{ minWidth: 780 }}>
                 <TableHead sx={{ bgcolor: theme.palette.mode === 'dark' ? '#1E293B' : '#F8FAFC' }}>
                   <TableRow>
@@ -673,6 +707,7 @@ function PayrollManagement() {
                 </TableBody>
               </Table>
             </TableContainer>
+            </>
           )}
 
           {payrollData?.getPayrollList?.length > 10 && (
