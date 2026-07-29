@@ -13,6 +13,7 @@ import { Add as AddIcon, FileDownload as ExportIcon, Settings as SettingsIcon, E
 import { GET_FEES_LIST, GET_STUDENT_FEE_LEDGER, GET_CLASSES, GET_STUDENTS, COLLECT_STUDENT_FEE, CREATE_FEE_STRUCTURE, UPDATE_FEE_STRUCTURE, DELETE_FEE_STRUCTURE, GET_STUDENT_FEE_STRUCTURE, SAVE_STUDENT_FEE_STRUCTURE } from '../graphql/operations';
 import { showToast } from '../store/slices/uiSlice';
 import CustomDatePicker from '../components/CustomDatePicker';
+import AmLineChart from '../components/charts/AmLineChart';
 import { BACKEND_URL } from '../graphql/client';
 
 function FeesList() {
@@ -645,6 +646,30 @@ function FeesList() {
           </Card>
         </Grid>
       </Grid>
+
+      {/* amCharts 5 Fee Analytics Line Graph */}
+      <Card sx={{ mb: 4, p: 3, borderRadius: 3 }}>
+        <Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>
+          Fee Collection & Outstanding Distribution (amCharts 5)
+        </Typography>
+        <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+          Financial collection overview comparing billed fees, total collected, and outstanding balances
+        </Typography>
+        <Box sx={{ width: '100%', height: 280 }}>
+          <AmLineChart
+            categories={['Total Billed', 'Total Collected', 'Outstanding Balance']}
+            series={[{
+              name: 'Amount (₹)',
+              data: [stats.totalBilled, stats.totalCollected, stats.outstanding],
+              color: '#10B981'
+            }]}
+            height={280}
+            valuePrefix="₹"
+            smooth={true}
+            showBullets={true}
+          />
+        </Box>
+      </Card>
 
       {/* Filter and Tab Select Layout */}
       <Card sx={{ mb: 3, borderRadius: 3 }}>
