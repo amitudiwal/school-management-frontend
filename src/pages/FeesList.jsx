@@ -630,121 +630,36 @@ function FeesList() {
       {/* Tabs Menu */}
       <Card sx={{ mb: 4, borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
         <CardContent sx={{ py: 1 }}>
-          {/* Financial Summary Dashboard Cards */}
-          <Grid container spacing={3} sx={{ mb: 4 }}>
-            <Grid item xs={12} sm={4}>
-              <Card sx={{
-                background: 'linear-gradient(135deg, #1E1B4B 0%, #312E81 100%)',
-                color: '#FFFFFF',
-                borderRadius: 3,
-                boxShadow: '0 8px 16px 0 rgba(0,0,0,0.4)',
-                border: '1px solid rgba(255,255,255,0.08)'
-              }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Typography variant="subtitle2" sx={{ opacity: 0.8, textTransform: 'uppercase', fontWeight: 700, letterSpacing: 1 }}>
-                    Total Fees Billed
-                  </Typography>
-                  <Typography variant="h3" sx={{ mt: 1, fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
-                    ₹{stats.totalBilled.toLocaleString()}
-                  </Typography>
-                </CardContent>
-              </Card>
+          <Grid container spacing={2} alignItems="center" justifyContent="space-between">
+            <Grid item xs={12} sm={8}>
+              <Tabs
+                value={activeTab}
+                onChange={(e, newValue) => setActiveTab(newValue)}
+                sx={{ borderBottom: 0 }}
+              >
+                <Tab label="Collections Dashboard" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700 }} />
+                <Tab label="Fee Structures & Builder" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700 }} />
+                <Tab label="Student Payment Ledger" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700 }} />
+              </Tabs>
             </Grid>
             <Grid item xs={12} sm={4}>
-              <Card sx={{
-                background: 'linear-gradient(135deg, #064E3B 0%, #065F46 100%)',
-                color: '#FFFFFF',
-                borderRadius: 3,
-                boxShadow: '0 8px 16px 0 rgba(0,0,0,0.4)',
-                border: '1px solid rgba(255,255,255,0.08)'
-              }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Typography variant="subtitle2" sx={{ opacity: 0.8, textTransform: 'uppercase', fontWeight: 700, letterSpacing: 1 }}>
-                    Total Fees Collected
-                  </Typography>
-                  <Typography variant="h3" sx={{ mt: 1, fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
-                    ₹{stats.totalCollected.toLocaleString()}
-                  </Typography>
-                </CardContent>
-              </Card>
-            </Grid>
-            <Grid item xs={12} sm={4}>
-              <Card sx={{
-                background: 'linear-gradient(135deg, #991B1B 0%, #7F1D1D 100%)',
-                color: '#FFFFFF',
-                borderRadius: 3,
-                boxShadow: '0 8px 16px 0 rgba(0,0,0,0.4)',
-                border: '1px solid rgba(255,255,255,0.08)'
-              }}>
-                <CardContent sx={{ p: 3 }}>
-                  <Typography variant="subtitle2" sx={{ opacity: 0.8, textTransform: 'uppercase', fontWeight: 700, letterSpacing: 1 }}>
-                    Outstanding Balance
-                  </Typography>
-                  <Typography variant="h3" sx={{ mt: 1, fontWeight: 800, fontFamily: "'Outfit', sans-serif" }}>
-                    ₹{stats.outstanding.toLocaleString()}
-                  </Typography>
-                </CardContent>
-              </Card>
+              <TextField
+                fullWidth
+                select
+                size="small"
+                label="Filter Fees by Class"
+                value={classId}
+                onChange={(e) => setClassId(e.target.value)}
+              >
+                <MenuItem value="">All Classes</MenuItem>
+                {classesData?.getClasses.map((cls) => (
+                  <MenuItem key={cls.id} value={cls.id}>{cls.name}</MenuItem>
+                ))}
+              </TextField>
             </Grid>
           </Grid>
-
-          {/* amCharts 5 Fee Analytics Line Graph */}
-          <Card sx={{ mb: 4, p: 3, borderRadius: 3 }}>
-            <Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>
-              Fee Collection & Outstanding Distribution (amCharts 5)
-            </Typography>
-            <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
-              Financial collection overview comparing billed fees, total collected, and outstanding balances
-            </Typography>
-            <Box sx={{ width: '100%', height: 280 }}>
-              <AmLineChart
-                categories={['Total Billed', 'Total Collected', 'Outstanding Balance']}
-                series={[{
-                  name: 'Amount (₹)',
-                  data: [stats.totalBilled, stats.totalCollected, stats.outstanding],
-                  color: '#10B981'
-                }]}
-                height={280}
-                valuePrefix="₹"
-                smooth={true}
-                showBullets={true}
-              />
-            </Box>
-          </Card>
-
-          {/* Filter and Tab Select Layout */}
-          <Card sx={{ mb: 3, borderRadius: 3 }}>
-            <CardContent sx={{ py: 2 }}>
-              <Grid container spacing={2} alignItems="center" justifyContent="space-between">
-                <Grid item xs={12} sm={8}>
-                  <Tabs
-                    value={activeTab}
-                    onChange={(e, newValue) => setActiveTab(newValue)}
-                    sx={{ borderBottom: 0 }}
-                  >
-                    <Tab label="Collections Dashboard" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700 }} />
-                    <Tab label="Fee Structures & Builder" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700 }} />
-                    <Tab label="Student Payment Ledger" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 700 }} />
-                  </Tabs>
-                </Grid>
-                <Grid item xs={12} sm={4}>
-                  <TextField
-                    fullWidth
-                    select
-                    size="small"
-                    label="Filter Fees by Class"
-                    value={classId}
-                    onChange={(e) => setClassId(e.target.value)}
-                  >
-                    <MenuItem value="">All Classes</MenuItem>
-                    {classesData?.getClasses.map((cls) => (
-                      <MenuItem key={cls.id} value={cls.id}>{cls.name}</MenuItem>
-                    ))}
-                  </TextField>
-                </Grid>
-              </Grid>
-            </CardContent>
-          </Card>
+        </CardContent>
+      </Card>
 
           {/* Tab 0: Collections Dashboard */}
           {activeTab === 0 && (
@@ -830,6 +745,30 @@ function FeesList() {
                   </Card>
                 </Grid>
               </Grid>
+
+              {/* amCharts 5 Fee Analytics Line Graph */}
+              <Card sx={{ mb: 4, p: 3, borderRadius: 3 }}>
+                <Typography variant="h6" sx={{ fontWeight: 800, mb: 1 }}>
+                  Fee Collection & Outstanding Distribution (amCharts 5)
+                </Typography>
+                <Typography variant="caption" color="text.secondary" display="block" sx={{ mb: 2 }}>
+                  Financial collection overview comparing billed fees, total collected, and outstanding balances
+                </Typography>
+                <Box sx={{ width: '100%', height: 280 }}>
+                  <AmLineChart
+                    categories={['Total Billed', 'Total Collected', 'Outstanding Balance']}
+                    series={[{
+                      name: 'Amount (₹)',
+                      data: [stats.totalBilled, stats.totalCollected, stats.outstanding],
+                      color: '#10B981'
+                    }]}
+                    height={280}
+                    valuePrefix="₹"
+                    smooth={true}
+                    showBullets={true}
+                  />
+                </Box>
+              </Card>
 
               {/* Collection Progress & Metrics */}
               <Card sx={{ borderRadius: 3, boxShadow: '0 4px 20px rgba(0,0,0,0.05)' }}>
@@ -1386,8 +1325,6 @@ function FeesList() {
               )}
             </>
           )}
-        </CardContent>
-      </Card>
 
           {/* Collect Fee Payment Dialog Modal */}
           <Dialog open={openModal} onClose={() => setOpenModal(false)} maxWidth="sm" fullWidth>
