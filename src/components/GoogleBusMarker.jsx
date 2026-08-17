@@ -27,11 +27,12 @@ export default function GoogleBusMarker({ map, vehiclesList }) {
     const generateGooglePopupHtml = (v) => {
       const isOnline = v.status === 'Active';
       const isSos = !!v.sosMessage;
+      const isOverSpeed = (v.speed || 0) > 50;
       const labelVal = v.vehicleNo || v.label || 'School Bus';
       const routeVal = v.routeName || v.routeId?.routeName || 'Unassigned Route';
       const driverVal = v.driverName || 'Assigned Driver';
       const phoneVal = v.driverPhone || 'N/A';
-      const speedVal = v.speed ? `${v.speed} km/h` : (isOnline ? 'Moving' : 'Stopped');
+      const speedVal = v.speed ? `${Math.round(v.speed)} km/h` : (isOnline ? 'Moving' : 'Stopped');
 
       return `
         <div style="
@@ -47,7 +48,7 @@ export default function GoogleBusMarker({ map, vehiclesList }) {
               <div style="
                 width: 32px;
                 height: 32px;
-                background: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+                background: ${isOverSpeed ? 'linear-gradient(135deg, #EF4444 0%, #B91C1C 100%)' : 'linear-gradient(135deg, #F59E0B 0%, #D97706 100%)'};
                 border-radius: 8px;
                 display: flex;
                 align-items: center;
@@ -55,7 +56,7 @@ export default function GoogleBusMarker({ map, vehiclesList }) {
                 color: white;
                 font-weight: 800;
                 font-size: 14px;
-                box-shadow: 0 2px 6px rgba(245, 158, 11, 0.4);
+                box-shadow: ${isOverSpeed ? '0 2px 8px rgba(239, 68, 68, 0.5)' : '0 2px 6px rgba(245, 158, 11, 0.4)'};
               ">
                 🚌
               </div>
@@ -72,11 +73,11 @@ export default function GoogleBusMarker({ map, vehiclesList }) {
               border-radius: 12px;
               font-size: 11px;
               font-weight: 700;
-              background-color: ${isSos ? '#FEE2E2' : isOnline ? '#D1FAE5' : '#F3F4F6'};
-              color: ${isSos ? '#DC2626' : isOnline ? '#059669' : '#6B7280'};
+              background-color: ${isSos ? '#FEE2E2' : isOverSpeed ? '#FEF2F2' : isOnline ? '#D1FAE5' : '#F3F4F6'};
+              color: ${isSos ? '#DC2626' : isOverSpeed ? '#DC2626' : isOnline ? '#059669' : '#6B7280'};
             ">
-              <span style="width: 6px; height: 6px; border-radius: 50%; background-color: ${isSos ? '#DC2626' : isOnline ? '#10B981' : '#9CA3AF'};"></span>
-              ${isSos ? 'SOS ALERT' : isOnline ? 'Active' : 'Offline'}
+              <span style="width: 6px; height: 6px; border-radius: 50%; background-color: ${isSos ? '#DC2626' : isOverSpeed ? '#EF4444' : isOnline ? '#10B981' : '#9CA3AF'};"></span>
+              ${isSos ? 'SOS ALERT' : isOverSpeed ? '⚠️ OVERSPEED >50' : isOnline ? 'Active' : 'Offline'}
             </span>
           </div>
 
@@ -92,7 +93,9 @@ export default function GoogleBusMarker({ map, vehiclesList }) {
             </div>
             <div style="display: flex; justify-content: space-between;">
               <span style="color: #6B7280; font-weight: 600;">Current Speed:</span>
-              <span style="font-weight: 700; color: #2563EB;">${speedVal}</span>
+              <span style="font-weight: 800; color: ${isOverSpeed ? '#DC2626' : '#2563EB'};">
+                ${speedVal} ${isOverSpeed ? '⚠️ (> 50 limit)' : ''}
+              </span>
             </div>
           </div>
 

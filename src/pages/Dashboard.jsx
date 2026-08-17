@@ -20,7 +20,7 @@ import AmDonutChart from '../components/charts/AmDonutChart';
 import {
   GET_SUPER_ADMIN_DASHBOARD, GET_SCHOOL_ADMIN_DASHBOARD, GET_AUDIT_LOGS, GET_PENDING_JOBS,
   GET_EVENTS, GET_CLASSES, GET_SECTIONS, GET_GRADE_DISTRIBUTION, GET_COPY_SUBMISSION_ANALYTICS,
-  GET_INVENTORY_LIST, GET_COMPLAINTS, RESOLVE_COMPLAINT, DELETE_COMPLAINT
+  GET_INVENTORY_LIST, GET_COMPLAINTS, RESOLVE_COMPLAINT, DELETE_COMPLAINT, GET_VEHICLES_TRACKING
 } from '../graphql/operations';
 import CustomDatePicker from '../components/CustomDatePicker';
 import { showToast } from '../store/slices/uiSlice';
@@ -248,7 +248,13 @@ const FairCopyCompletionBlock = React.memo(({ classesData, cardStyle, isSuperAdm
           </Box>
         ) : (
           <AmAreaChart
-            categories={persistentCopyData.map(item => `${item.subjectName} (${item.className})`)}
+            categories={persistentCopyData.map(item => {
+              if (copyClassId) return item.subjectName;
+              const sName = item.subjectName || '';
+              const cName = item.className || '';
+              if (sName.toLowerCase().includes(cName.toLowerCase())) return sName;
+              return `${sName} (${cName})`;
+            })}
             series={[{ name: 'Completion Rate', data: persistentCopyData.map(item => item.completionRate), color: '#D946EF', fillOpacity: 0.25 }]}
             height={280}
             valueSuffix="%"
@@ -598,18 +604,19 @@ function Dashboard() {
   /* Theme-aware 2026 Enterprise Glassmorphic / Clean Card Styling */
   const cardStyle = {
     borderRadius: '20px',
-    border: isDark ? '1px solid rgba(255, 255, 255, 0.06)' : '1px solid #E2E8F0',
-    background: isDark ? '#161E2E' : '#FFFFFF',
+    border: isDark ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(226, 232, 240, 0.8)',
+    background: isDark ? 'rgba(22, 30, 46, 0.85)' : 'rgba(255, 255, 255, 0.88)',
+    backdropFilter: 'blur(16px)',
     boxShadow: isDark
-      ? '0 10px 30px 0 rgba(0, 0, 0, 0.25)'
-      : '0 4px 20px 0 rgba(99, 102, 241, 0.05)',
-    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+      ? '0 10px 30px 0 rgba(0, 0, 0, 0.35)'
+      : '0 6px 24px 0 rgba(99, 102, 241, 0.07)',
+    transition: 'all 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
     '&:hover': {
-      transform: 'translateY(-3px)',
+      transform: 'translateY(-4px)',
       boxShadow: isDark
-        ? '0 20px 40px -10px rgba(0, 0, 0, 0.45)'
-        : '0 12px 28px 0 rgba(99, 102, 241, 0.12)',
-      borderColor: isDark ? 'rgba(59, 130, 246, 0.3)' : '#3B82F6'
+        ? '0 20px 45px -10px rgba(0, 0, 0, 0.6)'
+        : '0 16px 36px 0 rgba(99, 102, 241, 0.16)',
+      borderColor: isDark ? 'rgba(99, 102, 241, 0.38)' : 'rgba(99, 102, 241, 0.35)'
     }
   };
 
@@ -640,6 +647,12 @@ function Dashboard() {
     skip: isSuperAdmin,
     fetchPolicy: 'network-only'
   });
+
+  const { data: vehicleData } = useQuery(GET_VEHICLES_TRACKING, {
+    pollInterval: 4000,
+    fetchPolicy: 'network-only'
+  });
+  const overspeedBuses = (vehicleData?.getVehicles || []).filter(v => (v.speed || 0) > 50);
 
   React.useEffect(() => {
     if (schoolData?.getSchoolAdminDashboard) {
@@ -969,6 +982,94 @@ function Dashboard() {
         </Box>
       </Paper>
 
+      {/* Fleet Over-Speed (> 50 km/h) Notification Banner */}
+      {overspeedBuses.length > 0 && (
+        <Card
+          sx={{
+            mb: 4,
+            p: 3,
+            borderRadius: '20px',
+            background: 'linear-gradient(135deg, #DC2626 0%, #991B1B 100%)',
+            color: '#FFFFFF',
+            boxShadow: '0 10px 30px rgba(220, 38, 38, 0.45)',
+            border: '1px solid rgba(255, 255, 255, 0.25)',
+            animation: 'pulse 2s infinite',
+            '@keyframes pulse': {
+              '0%': { opacity: 0.95 },
+              '50%': { opacity: 1, transform: 'scale(1.002)' },
+              '100%': { opacity: 0.95 }
+            }
+          }}
+        >
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 1.5, flexWrap: 'wrap', gap: 1.5 }}>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1.5 }}>
+              <Box sx={{ p: 1.2, borderRadius: '50%', bgcolor: 'rgba(255, 255, 255, 0.2)', display: 'flex' }}>
+                <AlertTriangle size={26} color="#FFF" />
+              </Box>
+              <Box>
+                <Typography variant="h6" sx={{ fontWeight: 900, fontSize: '1.15rem', color: '#FFF' }}>
+                  🚨 FLEET OVERSPEED WARNING: Bus Driver Exceeding 50 km/h Limit!
+                </Typography>
+                <Typography variant="body2" sx={{ color: 'rgba(255, 255, 255, 0.9)', fontWeight: 500 }}>
+                  Immediate safety alert: {overspeedBuses.length} school vehicle(s) are currently travelling above 50 km/h!
+                </Typography>
+              </Box>
+            </Box>
+            <Button
+              variant="contained"
+              size="medium"
+              onClick={() => navigate('/bus-tracker')}
+              sx={{
+                bgcolor: '#FFFFFF',
+                color: '#DC2626',
+                fontWeight: 900,
+                '&:hover': { bgcolor: '#F3F4F6' },
+                textTransform: 'none',
+                borderRadius: '12px',
+                px: 2.5
+              }}
+            >
+              Open Bus Tracker
+            </Button>
+          </Box>
+          <Stack spacing={1.5} sx={{ mt: 2 }}>
+            {overspeedBuses.map(v => (
+              <Paper
+                key={v.id}
+                elevation={0}
+                sx={{
+                  p: 2,
+                  borderRadius: '12px',
+                  bgcolor: 'rgba(0, 0, 0, 0.28)',
+                  color: '#FFFFFF',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  flexWrap: 'wrap',
+                  gap: 1.5
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, flexWrap: 'wrap' }}>
+                  <Typography variant="subtitle1" sx={{ fontWeight: 900 }}>
+                    🚌 Bus {v.vehicleNo}
+                  </Typography>
+                  <Typography variant="body2">
+                    Driver: <strong>{v.driverName}</strong> ({v.driverPhone})
+                  </Typography>
+                  <Typography variant="body2">
+                    Route: <strong>{v.routeId?.routeName || 'Unassigned'}</strong>
+                  </Typography>
+                </Box>
+                <Chip
+                  label={`CURRENT SPEED: ${Math.round(v.speed)} KM/H (LIMIT: 50 KM/H)`}
+                  sx={{ bgcolor: '#FFFFFF', color: '#DC2626', fontWeight: 900, fontSize: '0.85rem' }}
+                />
+              </Paper>
+            ))}
+          </Stack>
+        </Card>
+      )}
+
       {/* Quick Actions Bar */}
       <Box sx={{ mb: 4 }}>
         <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.6, display: 'block', mb: 1.5 }}>
@@ -981,23 +1082,26 @@ function Dashboard() {
                 fullWidth
                 variant="outlined"
                 onClick={() => navigate(action.path)}
-                startIcon={action.icon}
+                startIcon={<Box sx={{ color: action.color, display: 'flex' }}>{action.icon}</Box>}
                 sx={{
                   py: 1.2,
-                  px: 1.5,
+                  px: 1.8,
                   borderRadius: 3,
-                  borderColor: theme.palette.divider,
-                  background: theme.palette.background.paper,
+                  borderColor: isDark ? 'rgba(255, 255, 255, 0.08)' : 'rgba(226, 232, 240, 0.8)',
+                  background: isDark ? 'rgba(22, 30, 46, 0.7)' : 'rgba(255, 255, 255, 0.85)',
+                  backdropFilter: 'blur(10px)',
                   color: theme.palette.text.primary,
                   fontWeight: 700,
                   fontSize: '0.82rem',
                   textTransform: 'none',
                   justifyContent: 'flex-start',
-                  transition: 'all 0.2s',
+                  boxShadow: isDark ? '0 4px 12px rgba(0, 0, 0, 0.2)' : '0 4px 12px rgba(0, 0, 0, 0.03)',
+                  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                   '&:hover': {
                     borderColor: action.color,
-                    background: `${action.color}12`,
-                    transform: 'translateY(-2px)'
+                    background: `${action.color}15`,
+                    transform: 'translateY(-3px)',
+                    boxShadow: `0 8px 20px -4px ${action.color}35`
                   }
                 }}
               >
@@ -1023,25 +1127,39 @@ function Dashboard() {
                 height: '100%',
                 position: 'relative',
                 overflow: 'hidden',
+                background: isDark
+                  ? `radial-gradient(circle at 100% 0%, ${card.color}18 0%, rgba(22, 30, 46, 0.85) 75%)`
+                  : `radial-gradient(circle at 100% 0%, ${card.color}0D 0%, rgba(255, 255, 255, 0.95) 75%)`,
+                '&::before': {
+                  content: '""',
+                  position: 'absolute',
+                  top: 0,
+                  left: 0,
+                  right: 0,
+                  height: '4px',
+                  background: card.color,
+                  borderRadius: '20px 20px 0 0'
+                },
                 '&:hover': {
-                  borderColor: `${card.color}80`
+                  borderColor: `${card.color}80`,
+                  boxShadow: `0 16px 36px 0 ${card.color}25`
                 }
               }}
             >
               <CardContent sx={{ p: 3, '&:last-child': { pb: 3 } }}>
                 <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', mb: 2 }}>
-                  <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.6, fontSize: '0.72rem' }}>
+                  <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.7, fontSize: '0.73rem' }}>
                     {card.title}
                   </Typography>
-                  <Box sx={{ p: 1.2, borderRadius: 2.5, bgcolor: `${card.color}15`, color: card.color, display: 'flex' }}>
+                  <Box sx={{ p: 1.2, borderRadius: 2.5, bgcolor: `${card.color}20`, border: `1px solid ${card.color}35`, color: card.color, display: 'flex', boxShadow: `0 4px 14px 0 ${card.color}25` }}>
                     {card.icon}
                   </Box>
                 </Box>
-                <Typography variant="h4" sx={{ fontWeight: 900, mb: 1, letterSpacing: '-0.02em', color: theme.palette.text.primary }}>
+                <Typography variant="h4" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, mb: 1, letterSpacing: '-0.02em', color: theme.palette.text.primary }}>
                   {card.value ?? 0}
                 </Typography>
                 <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  <Chip label={card.trend} size="small" sx={{ bgcolor: isDark ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.04)', color: theme.palette.text.secondary, fontWeight: 700, fontSize: '0.7rem', height: 22 }} />
+                  <Chip label={card.trend} size="small" sx={{ bgcolor: `${card.color}15`, color: card.color, fontWeight: 800, fontSize: '0.7rem', height: 22 }} />
                 </Box>
               </CardContent>
             </Card>
@@ -1058,19 +1176,37 @@ function Dashboard() {
           <Grid container spacing={3} component={motion.div} variants={containerVariants} initial="hidden" whileInView="show" viewport={{ once: true, amount: 0.15 }}>
             {financialCards.map((fin, idx) => (
               <Grid item xs={12} sm={6} md={3} key={idx} component={motion.div} variants={itemVariants}>
-                <Card sx={{ ...cardStyle, p: 2.5, borderLeft: `4px solid ${fin.color}` }}>
+                <Card sx={{
+                  ...cardStyle,
+                  p: 2.5,
+                  position: 'relative',
+                  overflow: 'hidden',
+                  background: isDark
+                    ? `radial-gradient(circle at 100% 0%, ${fin.color}18 0%, rgba(22, 30, 46, 0.85) 75%)`
+                    : `radial-gradient(circle at 100% 0%, ${fin.color}0D 0%, rgba(255, 255, 255, 0.95) 75%)`,
+                  '&::before': {
+                    content: '""',
+                    position: 'absolute',
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    height: '4px',
+                    background: fin.color,
+                    borderRadius: '20px 20px 0 0'
+                  }
+                }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-                    <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontWeight: 700, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                    <Typography variant="caption" sx={{ color: theme.palette.text.secondary, fontWeight: 800, textTransform: 'uppercase', letterSpacing: 0.6 }}>
                       {fin.title}
                     </Typography>
-                    <Box sx={{ color: fin.color, display: 'flex' }}>
+                    <Box sx={{ p: 1, borderRadius: 2, bgcolor: `${fin.color}18`, color: fin.color, display: 'flex' }}>
                       {fin.icon}
                     </Box>
                   </Box>
-                  <Typography variant="h5" sx={{ fontWeight: 900, color: theme.palette.text.primary, mb: 1 }}>
+                  <Typography variant="h5" sx={{ fontFamily: "'Outfit', sans-serif", fontWeight: 800, color: theme.palette.text.primary, mb: 1 }}>
                     {fin.value}
                   </Typography>
-                  <Chip label={fin.badge} size="small" sx={{ bgcolor: `${fin.color}15`, color: fin.color, fontWeight: 800, fontSize: '0.68rem', height: 20 }} />
+                  <Chip label={fin.badge} size="small" sx={{ bgcolor: `${fin.color}18`, color: fin.color, fontWeight: 800, fontSize: '0.7rem', height: 22 }} />
                 </Card>
               </Grid>
             ))}

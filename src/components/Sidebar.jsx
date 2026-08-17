@@ -463,21 +463,31 @@ function Sidebar({ mobileOpen = false, onMobileClose, isMobile = false }) {
               <Tooltip title={!sidebarOpen ? item.text : ""} placement="right" arrow>
                 <ListItemButton
                   component={motion.div}
-                  whileHover={sidebarOpen ? { scale: 1.02, x: 6 } : { scale: 1.08 }}
+                  whileHover={sidebarOpen ? { scale: 1.02, x: 5 } : { scale: 1.08 }}
                   whileTap={{ scale: 0.98 }}
                   onClick={() => handleNavigate(item.path)}
                   sx={{
-                    borderRadius: 2,
+                    borderRadius: 2.5,
                     justifyContent: sidebarOpen ? 'flex-start' : 'center',
                     px: sidebarOpen ? 2 : 0,
                     py: 1.2,
-                    backgroundColor: isActive(item.path) ? 'action.selected' : 'transparent',
-                    color: isActive(item.path) ? theme.palette.primary.main : 'text.secondary',
+                    backgroundColor: isActive(item.path)
+                      ? (theme.palette.mode === 'dark' ? 'rgba(99, 102, 241, 0.22)' : 'rgba(79, 70, 229, 0.12)')
+                      : 'transparent',
+                    color: isActive(item.path)
+                      ? (theme.palette.mode === 'dark' ? '#818CF8' : '#4F46E5')
+                      : theme.palette.text.secondary,
+                    borderLeft: isActive(item.path) && sidebarOpen ? '4px solid #6366F1' : '4px solid transparent',
+                    boxShadow: isActive(item.path)
+                      ? (theme.palette.mode === 'dark' ? '0 4px 16px 0 rgba(99, 102, 241, 0.25)' : '0 4px 16px 0 rgba(79, 70, 229, 0.15)')
+                      : 'none',
                     cursor: 'pointer',
                     overflow: 'hidden',
-                    transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+                    transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                     '&:hover': {
-                      backgroundColor: 'action.hover',
+                      backgroundColor: isActive(item.path)
+                        ? (theme.palette.mode === 'dark' ? 'rgba(99, 102, 241, 0.28)' : 'rgba(79, 70, 229, 0.18)')
+                        : (theme.palette.mode === 'dark' ? 'rgba(255, 255, 255, 0.05)' : 'rgba(99, 102, 241, 0.06)'),
                       color: theme.palette.text.primary,
                     },
                   }}

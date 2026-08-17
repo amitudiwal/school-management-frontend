@@ -10,7 +10,8 @@ export default function AmAreaChart({
   series = [],
   height = 300,
   valuePrefix = '',
-  valueSuffix = ''
+  valueSuffix = '',
+  rotateXLabels = 'auto'
 }) {
   const chartRef = useRef(null);
   const theme = useTheme();
@@ -28,6 +29,9 @@ export default function AmAreaChart({
     }
     root.setThemes(themes);
 
+    const hasLongCategory = categories.some(cat => String(cat || '').length > 8);
+    const shouldRotate = rotateXLabels === true || (rotateXLabels !== false && (hasLongCategory || categories.length > 4));
+
     const chart = root.container.children.push(
       am5xy.XYChart.new(root, {
         panX: true,
@@ -35,7 +39,8 @@ export default function AmAreaChart({
         wheelX: 'none',
         wheelY: 'none',
         paddingLeft: 10,
-        paddingRight: 10
+        paddingRight: 15,
+        paddingBottom: shouldRotate ? 55 : 10
       })
     );
 
@@ -44,14 +49,36 @@ export default function AmAreaChart({
     }));
     cursor.lineY.set('visible', false);
 
+    const xRenderer = am5xy.AxisRendererX.new(root, {
+      minGridDistance: 45,
+      cellStartLocation: 0.1,
+      cellEndLocation: 0.9
+    });
+
+    if (shouldRotate) {
+      xRenderer.labels.template.setAll({
+        rotation: -35,
+        centerY: am5.p50,
+        centerX: am5.p100,
+        paddingRight: 5,
+        fontSize: 10.5,
+        oversizedBehavior: 'truncate',
+        maxWidth: 105,
+        tooltipText: '{category}'
+      });
+    } else {
+      xRenderer.labels.template.setAll({
+        fontSize: 11,
+        oversizedBehavior: 'truncate',
+        maxWidth: 90,
+        tooltipText: '{category}'
+      });
+    }
+
     const xAxis = chart.xAxes.push(
       am5xy.CategoryAxis.new(root, {
         categoryField: 'category',
-        renderer: am5xy.AxisRendererX.new(root, {
-          minGridDistance: 30,
-          cellStartLocation: 0.1,
-          cellEndLocation: 0.9
-        }),
+        renderer: xRenderer,
         tooltip: am5.Tooltip.new(root, {})
       })
     );
@@ -127,7 +154,7 @@ export default function AmAreaChart({
     return () => {
       root.dispose();
     };
-  }, [categories, series, isDark, valuePrefix, valueSuffix]);
+  }, [categories, series, isDark, valuePrefix, valueSuffix, rotateXLabels]);
 
   return (
     <div

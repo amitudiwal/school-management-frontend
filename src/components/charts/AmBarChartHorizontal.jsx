@@ -45,6 +45,13 @@ export default function AmBarChartHorizontal({
       cellEndLocation: 0.9
     });
 
+    yRenderer.labels.template.setAll({
+      fontSize: 11,
+      oversizedBehavior: 'truncate',
+      maxWidth: 120,
+      tooltipText: '{category}'
+    });
+
     const yAxis = chart.yAxes.push(
       am5xy.CategoryAxis.new(root, {
         categoryField: 'category',

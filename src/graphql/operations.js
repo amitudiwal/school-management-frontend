@@ -2220,6 +2220,7 @@ export const GET_VEHICLES_TRACKING = gql`
       status
       currentLatitude
       currentLongitude
+      speed
       sosMessage
       sosTimestamp
       lastUpdated
@@ -2240,13 +2241,14 @@ export const GET_VEHICLES_TRACKING = gql`
 `;
 
 export const UPDATE_VEHICLE_LOCATION = gql`
-  mutation UpdateVehicleLocation($id: ID!, $latitude: Float!, $longitude: Float!, $status: String!) {
-    updateVehicleLocation(id: $id, latitude: $latitude, longitude: $longitude, status: $status) {
+  mutation UpdateVehicleLocation($id: ID!, $latitude: Float!, $longitude: Float!, $status: String, $speed: Float) {
+    updateVehicleLocation(id: $id, latitude: $latitude, longitude: $longitude, status: $status, speed: $speed) {
       id
       vehicleNo
       status
       currentLatitude
       currentLongitude
+      speed
       sosMessage
       sosTimestamp
       lastUpdated

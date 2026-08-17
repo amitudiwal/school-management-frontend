@@ -114,15 +114,15 @@ const getDesignTokens = (mode) => ({
       styleOverrides: {
         'html, body, *': {
           '&::-webkit-scrollbar': {
-            width: '8px',
-            height: '8px',
+            width: '7px',
+            height: '7px',
           },
           '&::-webkit-scrollbar-track': {
             background: mode === 'dark' ? '#0B0F19' : '#F8FAFC',
           },
           '&::-webkit-scrollbar-thumb': {
             background: mode === 'dark' ? 'rgba(99, 102, 241, 0.4)' : 'rgba(79, 70, 229, 0.4)',
-            borderRadius: '4px',
+            borderRadius: '999px',
           },
           '&::-webkit-scrollbar-thumb:hover': {
             background: mode === 'dark' ? 'rgba(99, 102, 241, 0.6)' : 'rgba(79, 70, 229, 0.6)',
@@ -136,46 +136,90 @@ const getDesignTokens = (mode) => ({
       styleOverrides: {
         root: {
           borderRadius: '12px',
-          padding: '10px 20px',
+          padding: '10px 22px',
           boxShadow: 'none',
-          transition: 'all 0.2s ease-in-out',
+          transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
+          fontWeight: 700,
           '&:hover': {
             transform: 'translateY(-2px)',
-            boxShadow: '0px 8px 20px rgba(99, 102, 241, 0.24)',
+            boxShadow: mode === 'dark'
+              ? '0px 10px 25px rgba(99, 102, 241, 0.35)'
+              : '0px 10px 25px rgba(79, 70, 229, 0.25)',
           },
+          '&:active': {
+            transform: 'translateY(0)',
+          }
         },
+        containedPrimary: {
+          background: 'linear-gradient(135deg, #6366F1 0%, #4F46E5 100%)',
+        },
+        containedSecondary: {
+          background: 'linear-gradient(135deg, #EC4899 0%, #D946EF 100%)',
+        }
       },
     },
     MuiCard: {
       styleOverrides: {
         root: {
           backgroundImage: 'none',
-          borderRadius: '16px',
+          borderRadius: '18px',
           boxShadow: mode === 'dark' 
-            ? '0 4px 20px 0 rgba(0, 0, 0, 0.35)' 
-            : '0 4px 20px 0 rgba(99, 102, 241, 0.05)',
-          border: mode === 'dark' ? '1px solid #1F2937' : '1px solid #E2E8F0',
-          transition: 'transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out',
+            ? '0 10px 30px 0 rgba(0, 0, 0, 0.4)' 
+            : '0 10px 30px 0 rgba(99, 102, 241, 0.06)',
+          border: mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.08)' : '1px solid rgba(226, 232, 240, 0.8)',
+          transition: 'transform 0.28s cubic-bezier(0.4, 0, 0.2, 1), box-shadow 0.28s cubic-bezier(0.4, 0, 0.2, 1)',
           '&:hover': {
-            transform: 'translateY(-2px)',
+            transform: 'translateY(-3px)',
             boxShadow: mode === 'dark'
-              ? '0 8px 30px 0 rgba(0, 0, 0, 0.5)'
-              : '0 8px 30px 0 rgba(99, 102, 241, 0.12)',
+              ? '0 16px 40px 0 rgba(0, 0, 0, 0.6)'
+              : '0 16px 40px 0 rgba(99, 102, 241, 0.14)',
           }
         },
       },
     },
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          borderRadius: '10px',
+          fontWeight: 700,
+          transition: 'all 0.2s ease',
+          '&:hover': {
+            transform: 'scale(1.04)',
+          }
+        }
+      }
+    },
+    MuiDialog: {
+      styleOverrides: {
+        paper: {
+          borderRadius: '20px',
+          boxShadow: mode === 'dark'
+            ? '0 25px 60px -15px rgba(0, 0, 0, 0.8)'
+            : '0 25px 60px -15px rgba(99, 102, 241, 0.2)',
+          border: mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.12)' : '1px solid rgba(255, 255, 255, 0.8)',
+        }
+      }
+    },
     MuiTableCell: {
       styleOverrides: {
+        root: {
+          padding: '14px 18px',
+          borderBottom: mode === 'dark' ? '1px solid rgba(255, 255, 255, 0.06)' : '1px solid #F1F5F9',
+        },
         head: {
-          fontWeight: 700,
-          backgroundColor: mode === 'dark' ? '#1F2937' : '#F1F5F9',
+          fontWeight: 800,
+          fontSize: '0.85rem',
+          textTransform: 'uppercase',
+          letterSpacing: '0.05em',
+          color: mode === 'dark' ? '#94A3B8' : '#64748B',
+          backgroundColor: mode === 'dark' ? 'rgba(31, 41, 55, 0.7)' : '#F8FAFC',
         },
       },
     },
     MuiOutlinedInput: {
       styleOverrides: {
         root: {
+          borderRadius: '12px',
           transition: 'all 0.2s ease-in-out',
           '& input[type="date"]': {
             cursor: 'pointer',

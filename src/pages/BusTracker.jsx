@@ -60,6 +60,7 @@ function BusTracker() {
   const [realCoords, setRealCoords] = useState(null);
   const [gpsError, setGpsError] = useState(null);
   const [useMockSimulation, setUseMockSimulation] = useState(true);
+  const [simSpeedVal, setSimSpeedVal] = useState(38);
   const simIntervalRef = useRef(null);
   const currentSimIndexRef = useRef(0);
 
@@ -917,13 +918,15 @@ function BusTracker() {
             const jitterLat = baseLat + (Math.sin(step) * 0.005);
             const jitterLng = baseLng + (Math.cos(step) * 0.005);
             step += 0.5;
-            setRealCoords({ latitude: jitterLat, longitude: jitterLng, accuracy: 5, speed: 25 });
+            const currentSpeed = simSpeedVal;
+            setRealCoords({ latitude: jitterLat, longitude: jitterLng, accuracy: 5, speed: currentSpeed });
             updateLocation({
               variables: {
                 id: selectedSimVehicle,
                 latitude: jitterLat,
                 longitude: jitterLng,
-                status: 'Active'
+                status: 'Active',
+                speed: currentSpeed
               }
             }).then(() => refetch());
           }, 3000);
@@ -931,26 +934,30 @@ function BusTracker() {
           currentSimIndexRef.current = 0;
           // Trigger first point immediately
           const initialPoint = routePoints[0];
-          setRealCoords({ latitude: initialPoint.lat, longitude: initialPoint.lng, accuracy: 3, speed: 30 });
+          const initialSpeed = simSpeedVal;
+          setRealCoords({ latitude: initialPoint.lat, longitude: initialPoint.lng, accuracy: 3, speed: initialSpeed });
           updateLocation({
             variables: {
               id: selectedSimVehicle,
               latitude: initialPoint.lat,
               longitude: initialPoint.lng,
-              status: 'Active'
+              status: 'Active',
+              speed: initialSpeed
             }
           }).then(() => refetch());
           currentSimIndexRef.current = 1 % routePoints.length;
 
           simIntervalRef.current = setInterval(() => {
             const point = routePoints[currentSimIndexRef.current];
-            setRealCoords({ latitude: point.lat, longitude: point.lng, accuracy: 3, speed: 30 });
+            const currentSpeed = simSpeedVal;
+            setRealCoords({ latitude: point.lat, longitude: point.lng, accuracy: 3, speed: currentSpeed });
             updateLocation({
               variables: {
                 id: selectedSimVehicle,
                 latitude: point.lat,
                 longitude: point.lng,
-                status: 'Active'
+                status: 'Active',
+                speed: currentSpeed
               }
             }).then(() => refetch());
             currentSimIndexRef.current = (currentSimIndexRef.current + 1) % routePoints.length;
@@ -973,7 +980,8 @@ function BusTracker() {
                 id: selectedSimVehicle,
                 latitude,
                 longitude,
-                status: 'Active'
+                status: 'Active',
+                speed: speedKmH
               }
             }).then(() => refetch());
           },
@@ -1102,6 +1110,25 @@ function BusTracker() {
           </Alert>
         ))}
 
+        {/* OVERSPEED WARNING BANNERS */}
+        {vehiclesList.filter(v => (v.speed || 0) > 50).map(v => (
+          <Alert
+            key={`overspeed-${v.id}`}
+            severity="warning"
+            variant="filled"
+            sx={{
+              mb: 3,
+              borderRadius: 2,
+              bgcolor: '#DC2626',
+              color: '#FFFFFF',
+              boxShadow: '0 4px 15px rgba(220, 38, 38, 0.45)',
+              fontWeight: 700
+            }}
+          >
+            🚨 OVERSPEED WARNING: Bus Driver {v.driverName} (Vehicle {v.vehicleNo}) is driving at {Math.round(v.speed)} km/h — EXCEEDING 50 KM/H SPEED LIMIT!
+          </Alert>
+        ))}
+
         <Grid container spacing={3}>
           {/* Map Column */}
           <Grid item xs={12} lg={8}>
@@ -1150,13 +1177,23 @@ function BusTracker() {
                                   Model: {vehicle.model}
                                 </Typography>
                               </Box>
-                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, flexWrap: 'wrap' }}>
                                 <Chip
                                   label={isOnline ? 'Active' : 'Inactive'}
                                   size="small"
                                   color={isOnline ? 'success' : 'default'}
                                   sx={{ fontWeight: 700 }}
                                 />
+                                {isOnline && (
+                                  <Chip
+                                    icon={<SpeedIcon style={{ fontSize: '0.9rem', color: (vehicle.speed || 0) > 50 ? '#fff' : 'inherit' }} />}
+                                    label={`${Math.round(vehicle.speed || 0)} km/h${(vehicle.speed || 0) > 50 ? ' 🚨 OVER 50!' : ''}`}
+                                    size="small"
+                                    color={(vehicle.speed || 0) > 50 ? 'error' : 'primary'}
+                                    variant={(vehicle.speed || 0) > 50 ? 'filled' : 'outlined'}
+                                    sx={{ fontWeight: 800 }}
+                                  />
+                                )}
                                 {['SUPER_ADMIN', 'SCHOOL_ADMIN', 'TRANSPORT_MANAGER'].includes(user?.role) && (
                                   <IconButton
                                     size="small"
@@ -1314,6 +1351,28 @@ function BusTracker() {
                       <Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
                         💡 <strong>Notice:</strong> Keep this browser tab open and ensure your phone screen stays active while driving. Turn on high accuracy location mode on your device.
                       </Typography>
+                    </Stack>
+                  </Card>
+
+                  <Card variant="outlined" sx={{ p: 2, border: simSpeedVal > 50 ? '2px solid #EF4444' : '1px solid', borderColor: simSpeedVal > 50 ? 'error.main' : 'divider' }}>
+                    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 700, display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <SpeedIcon color={simSpeedVal > 50 ? 'error' : 'primary'} /> Broadcast Speed Setting: <strong>{simSpeedVal} km/h</strong>
+                      </Typography>
+                      {simSpeedVal > 50 && (
+                        <Chip label="🚨 OVERSPEED WARNING (>50 limit)" color="error" size="small" sx={{ fontWeight: 800 }} />
+                      )}
+                    </Box>
+                    <Stack direction="row" spacing={1} sx={{ mt: 1, flexWrap: 'wrap', gap: 1 }}>
+                      <Button size="small" variant={simSpeedVal === 25 ? 'contained' : 'outlined'} onClick={() => setSimSpeedVal(25)}>
+                        25 km/h
+                      </Button>
+                      <Button size="small" variant={simSpeedVal === 38 ? 'contained' : 'outlined'} onClick={() => setSimSpeedVal(38)}>
+                        38 km/h (Normal)
+                      </Button>
+                      <Button size="small" color="error" variant={simSpeedVal === 58 ? 'contained' : 'outlined'} onClick={() => setSimSpeedVal(58)} sx={{ fontWeight: 800 }}>
+                        🚨 58 km/h (Test OverSpeed Alert)
+                      </Button>
                     </Stack>
                   </Card>
 
